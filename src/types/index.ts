@@ -1,8 +1,36 @@
+export interface Position {
+  x: number;
+  y: number;
+}
+
+export interface StarRatingDecoration {
+  type: 'stars';
+  enabled: boolean;
+  count: number;        // 1-5 stars
+  size: number;         // star size in pixels
+  color: string;
+  position: Position;
+}
+
+export interface LaurelDecoration {
+  type: 'laurel';
+  enabled: boolean;
+  size: number;         // scale factor (1 = default)
+  color: string;
+  position: Position;
+  innerText: string;    // text inside the laurel (e.g., "1", "#1", "5M+")
+  innerTextColor: string;
+  innerTextSize: number;
+}
+
+export type Decoration = StarRatingDecoration | LaurelDecoration;
+
 export interface Screenshot {
   id: string;
   file: File | null;  // null for text-only slides
   preview: string;    // empty string for text-only slides
   text: string;
+  decorations?: Decoration[];
 }
 
 export interface GradientConfig {
@@ -14,11 +42,6 @@ export interface GradientConfig {
 
 export type MockupVisibility = 'full' | '2/3' | '1/2';
 export type MockupAlignment = 'top' | 'center' | 'bottom';
-
-export interface Position {
-  x: number;
-  y: number;
-}
 
 export interface StyleConfig {
   backgroundColor: string;

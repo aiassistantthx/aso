@@ -39,7 +39,8 @@ export const generateZipArchive = async (options: ExportOptions): Promise<void> 
           screenshot: screenshot.preview,
           text,
           style,
-          deviceSize
+          deviceSize,
+          decorations: screenshot.decorations
         });
 
         const fileName = `screenshot_${String(i + 1).padStart(2, '0')}.png`;

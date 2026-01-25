@@ -3,6 +3,7 @@ import { Screenshot, StyleConfig, DeviceSize } from './types';
 import { ScreenshotUploader } from './components/ScreenshotUploader';
 import { TextEditor } from './components/TextEditor';
 import { StyleEditor } from './components/StyleEditor';
+import { DecorationsEditor } from './components/DecorationsEditor';
 import { Preview } from './components/Preview';
 import { LanguageSelector } from './components/LanguageSelector';
 import { ExportButton } from './components/ExportButton';
@@ -144,6 +145,15 @@ function App() {
               onStyleChange={setStyleConfig}
               deviceSize={deviceSize}
               onDeviceSizeChange={setDeviceSize}
+            />
+          </div>
+
+          <div style={styles.card}>
+            <DecorationsEditor
+              screenshots={screenshots}
+              selectedIndex={selectedPreviewIndex}
+              onScreenshotsChange={setScreenshots}
+              deviceSize={deviceSize}
             />
           </div>
 

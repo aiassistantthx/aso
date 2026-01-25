@@ -1,4 +1,4 @@
-import { StyleConfig, DeviceSize, DEVICE_SIZES } from '../types';
+import { StyleConfig, DeviceSize, DEVICE_SIZES, Decoration, StarRatingDecoration, LaurelDecoration } from '../types';
 
 export interface ElementBounds {
   mockup: { x: number; y: number; width: number; height: number };
@@ -10,6 +10,7 @@ export interface GenerateImageOptions {
   text: string;
   style: StyleConfig;
   deviceSize: DeviceSize;
+  decorations?: Decoration[];
 }
 
 // Mockup image cache
@@ -193,6 +194,155 @@ const drawFormattedText = (
   });
 };
 
+// Draw a 5-pointed star
+const drawStar = (
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  size: number,
+  color: string
+): void => {
+  const spikes = 5;
+  const outerRadius = size / 2;
+  const innerRadius = outerRadius * 0.4;
+  const rotation = -Math.PI / 2; // Start from top
+
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+
+  for (let i = 0; i < spikes * 2; i++) {
+    const radius = i % 2 === 0 ? outerRadius : innerRadius;
+    const angle = (i * Math.PI) / spikes + rotation;
+    const x = cx + Math.cos(angle) * radius;
+    const y = cy + Math.sin(angle) * radius;
+
+    if (i === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  }
+
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+};
+
+// Draw star rating decoration
+const drawStarRating = (
+  ctx: CanvasRenderingContext2D,
+  decoration: StarRatingDecoration
+): void => {
+  if (!decoration.enabled) return;
+
+  const { count, size, color, position } = decoration;
+  const gap = size * 0.2;
+  const totalWidth = count * size + (count - 1) * gap;
+  const startX = position.x - totalWidth / 2 + size / 2;
+
+  for (let i = 0; i < count; i++) {
+    const x = startX + i * (size + gap);
+    drawStar(ctx, x, position.y, size, color);
+  }
+};
+
+// Draw a single laurel leaf
+const drawLaurelLeaf = (
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  angle: number,
+  color: string
+): void => {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.fillStyle = color;
+
+  ctx.beginPath();
+  ctx.moveTo(0, -height / 2);
+  ctx.quadraticCurveTo(width / 2, -height / 4, width / 2, 0);
+  ctx.quadraticCurveTo(width / 2, height / 4, 0, height / 2);
+  ctx.quadraticCurveTo(-width / 2, height / 4, -width / 2, 0);
+  ctx.quadraticCurveTo(-width / 2, -height / 4, 0, -height / 2);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+};
+
+// Draw laurel wreath decoration
+const drawLaurelWreath = (
+  ctx: CanvasRenderingContext2D,
+  decoration: LaurelDecoration
+): void => {
+  if (!decoration.enabled) return;
+
+  const { size, color, position, innerText, innerTextColor, innerTextSize } = decoration;
+  const baseSize = 300 * size;
+  const leafWidth = 25 * size;
+  const leafHeight = 50 * size;
+  const numLeaves = 12;
+
+  ctx.save();
+  ctx.translate(position.x, position.y);
+
+  // Draw left branch (curving left)
+  for (let i = 0; i < numLeaves; i++) {
+    const progress = i / (numLeaves - 1);
+    const angle = -Math.PI * 0.15 + progress * Math.PI * 0.7; // Arc from top-left to bottom-left
+    const radius = baseSize * 0.5;
+    const x = -radius * 0.3 - Math.sin(angle) * radius;
+    const y = -baseSize * 0.3 + Math.cos(angle) * radius;
+    const leafAngle = angle + Math.PI * 0.3;
+
+    drawLaurelLeaf(ctx, x, y, leafWidth, leafHeight, leafAngle, color);
+  }
+
+  // Draw right branch (curving right - mirrored)
+  for (let i = 0; i < numLeaves; i++) {
+    const progress = i / (numLeaves - 1);
+    const angle = Math.PI * 0.15 - progress * Math.PI * 0.7; // Arc from top-right to bottom-right
+    const radius = baseSize * 0.5;
+    const x = radius * 0.3 + Math.sin(-angle) * radius;
+    const y = -baseSize * 0.3 + Math.cos(-angle) * radius;
+    const leafAngle = -angle - Math.PI * 0.3;
+
+    drawLaurelLeaf(ctx, x, y, leafWidth, leafHeight, leafAngle, color);
+  }
+
+  ctx.restore();
+
+  // Draw inner text
+  if (innerText) {
+    ctx.save();
+    ctx.fillStyle = innerTextColor;
+    ctx.font = `bold ${innerTextSize}px SF Pro Display, -apple-system, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(innerText, position.x, position.y);
+    ctx.restore();
+  }
+};
+
+// Draw all decorations
+const drawDecorations = (
+  ctx: CanvasRenderingContext2D,
+  decorations: Decoration[] | undefined
+): void => {
+  if (!decorations) return;
+
+  for (const decoration of decorations) {
+    if (decoration.type === 'stars') {
+      drawStarRating(ctx, decoration);
+    } else if (decoration.type === 'laurel') {
+      drawLaurelWreath(ctx, decoration);
+    }
+  }
+};
 
 const drawGradientBackground = (
   ctx: CanvasRenderingContext2D,
@@ -624,6 +774,9 @@ export const generateScreenshotImage = async (
     drawFormattedText(ctx, lines, finalX, finalY, lineHeight, style, maxTextWidth);
   }
 
+  // Draw decorations (stars, laurels, etc.)
+  drawDecorations(ctx, options.decorations);
+
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
@@ -734,4 +887,7 @@ export const generatePreviewCanvas = async (
 
     drawFormattedText(ctx, lines, finalX, finalY, lineHeight, style, maxTextWidth);
   }
+
+  // Draw decorations (stars, laurels, etc.)
+  drawDecorations(ctx, options.decorations);
 };

@@ -117,7 +117,8 @@ export const Preview: React.FC<Props> = ({
         screenshot: selectedScreenshot?.preview || null,
         text: selectedScreenshot?.text || 'Your headline here',
         style,
-        deviceSize
+        deviceSize,
+        decorations: selectedScreenshot?.decorations
       });
     }
   }, [selectedScreenshot, style, deviceSize]);
