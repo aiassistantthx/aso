@@ -94,13 +94,13 @@ const MOCKUP_CONFIG = {
   phoneY: 42,
   phoneWidth: 850,
   phoneHeight: 1740,
-  // Screen bounds within the image (inside the phone)
-  screenX: 605,
-  screenY: 72,
-  screenWidth: 790,
-  screenHeight: 1665,
+  // Screen bounds within the image (inside the phone frame, covers full white area)
+  screenX: 590,
+  screenY: 57,
+  screenWidth: 820,
+  screenHeight: 1708,
   // Corner radius for the screen
-  screenCornerRadius: 70
+  screenCornerRadius: 85
 };
 
 const drawMockupWithScreenshot = async (
@@ -131,10 +131,7 @@ const drawMockupWithScreenshot = async (
   const screenHeight = MOCKUP_CONFIG.screenHeight * scale;
   const cornerRadius = MOCKUP_CONFIG.screenCornerRadius * scale;
 
-  // Draw the mockup frame first (it will be behind the screenshot due to compositing)
-  ctx.drawImage(mockupImg, imgX, imgY, scaledImgWidth, scaledImgHeight);
-
-  // Draw screenshot into the screen area using source-atop to replace the white screen
+  // Draw screenshot FIRST into the screen area
   if (screenshot) {
     const screenshotImg = await loadImage(screenshot);
 
@@ -175,6 +172,9 @@ const drawMockupWithScreenshot = async (
     ctx.roundRect(screenX, screenY, screenWidth, screenHeight, cornerRadius);
     ctx.fill();
   }
+
+  // Draw the mockup frame ON TOP (so Dynamic Island covers the screenshot)
+  ctx.drawImage(mockupImg, imgX, imgY, scaledImgWidth, scaledImgHeight);
 };
 
 export const generateScreenshotImage = async (
