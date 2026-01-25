@@ -1,5 +1,5 @@
 import React from 'react';
-import { Screenshot, Decoration, StarRatingDecoration, LaurelDecoration, DEVICE_SIZES, DeviceSize } from '../types';
+import { Screenshot, Decoration, StarRatingDecoration, LaurelDecoration, LaurelTextBlock, DEVICE_SIZES, DeviceSize } from '../types';
 
 interface Props {
   screenshots: Screenshot[];
@@ -138,9 +138,12 @@ const createDefaultLaurel = (deviceSize: DeviceSize): LaurelDecoration => {
     size: 1.5,
     color: '#E91E8B',
     position: { x: dimensions.width / 2, y: dimensions.height * 0.5 },
-    innerText: '1',
-    innerTextColor: '#000000',
-    innerTextSize: 200
+    textBlocks: [
+      { text: 'You need only', size: 60 },
+      { text: '1', size: 200 },
+      { text: 'App to create|Viral Video', size: 50 }
+    ],
+    textColor: '#000000'
   };
 };
 
@@ -318,19 +321,9 @@ export const DecorationsEditor: React.FC<Props> = ({
 
           {decoration.type === 'laurel' && (
             <div style={styles.grid}>
-              <div style={{ ...styles.field as React.CSSProperties, gridColumn: '1 / -1' }}>
-                <span style={styles.fieldLabel}>Inner Text (use | for line breaks)</span>
-                <input
-                  type="text"
-                  value={decoration.innerText}
-                  onChange={(e) => updateDecoration(index, { innerText: e.target.value })}
-                  placeholder="1|App|Store"
-                  style={styles.input}
-                />
-              </div>
-
+              {/* Laurel wreath settings */}
               <div style={styles.field as React.CSSProperties}>
-                <span style={styles.fieldLabel}>Size</span>
+                <span style={styles.fieldLabel}>Wreath Size</span>
                 <div style={styles.rangeContainer}>
                   <input
                     type="range"
@@ -359,25 +352,95 @@ export const DecorationsEditor: React.FC<Props> = ({
                 <span style={styles.fieldLabel}>Text Color</span>
                 <input
                   type="color"
-                  value={decoration.innerTextColor}
-                  onChange={(e) => updateDecoration(index, { innerTextColor: e.target.value })}
+                  value={decoration.textColor}
+                  onChange={(e) => updateDecoration(index, { textColor: e.target.value })}
                   style={styles.colorInput}
                 />
               </div>
 
-              <div style={styles.field as React.CSSProperties}>
-                <span style={styles.fieldLabel}>Text Size</span>
-                <div style={styles.rangeContainer}>
-                  <input
-                    type="range"
-                    min="50"
-                    max="400"
-                    value={decoration.innerTextSize}
-                    onChange={(e) => updateDecoration(index, { innerTextSize: Number(e.target.value) })}
-                    style={styles.range}
-                  />
-                  <span style={styles.rangeValue as React.CSSProperties}>{decoration.innerTextSize}px</span>
+              {/* Text blocks section */}
+              <div style={{ ...styles.field as React.CSSProperties, gridColumn: '1 / -1' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={styles.fieldLabel}>Text Blocks (use | for line breaks)</span>
+                  <button
+                    onClick={() => {
+                      const newBlocks = [...(decoration.textBlocks || []), { text: 'New text', size: 60 }];
+                      updateDecoration(index, { textBlocks: newBlocks });
+                    }}
+                    style={{
+                      ...styles.addButton,
+                      padding: '2px 8px',
+                      fontSize: '11px',
+                      marginRight: 0
+                    }}
+                  >
+                    + Add Block
+                  </button>
                 </div>
+
+                {(decoration.textBlocks || []).map((block: LaurelTextBlock, blockIndex: number) => (
+                  <div key={blockIndex} style={{
+                    display: 'flex',
+                    gap: '8px',
+                    marginBottom: '8px',
+                    padding: '8px',
+                    backgroundColor: '#fff',
+                    borderRadius: '6px',
+                    border: '1px solid #e8e8ed'
+                  }}>
+                    <div style={{ flex: 1 }}>
+                      <input
+                        type="text"
+                        value={block.text}
+                        onChange={(e) => {
+                          const newBlocks = decoration.textBlocks.map((b: LaurelTextBlock, i: number) =>
+                            i === blockIndex ? { ...b, text: e.target.value } : b
+                          );
+                          updateDecoration(index, { textBlocks: newBlocks });
+                        }}
+                        placeholder="Text..."
+                        style={{ ...styles.input, width: '100%', marginBottom: '4px' }}
+                      />
+                      <div style={styles.rangeContainer}>
+                        <span style={{ ...styles.fieldLabel, minWidth: '30px' }}>Size:</span>
+                        <input
+                          type="range"
+                          min="20"
+                          max="400"
+                          value={block.size}
+                          onChange={(e) => {
+                            const newBlocks = decoration.textBlocks.map((b: LaurelTextBlock, i: number) =>
+                              i === blockIndex ? { ...b, size: Number(e.target.value) } : b
+                            );
+                            updateDecoration(index, { textBlocks: newBlocks });
+                          }}
+                          style={styles.range}
+                        />
+                        <span style={styles.rangeValue as React.CSSProperties}>{block.size}px</span>
+                      </div>
+                    </div>
+                    {decoration.textBlocks.length > 1 && (
+                      <button
+                        onClick={() => {
+                          const newBlocks = decoration.textBlocks.filter((_: LaurelTextBlock, i: number) => i !== blockIndex);
+                          updateDecoration(index, { textBlocks: newBlocks });
+                        }}
+                        style={{
+                          padding: '4px 8px',
+                          fontSize: '14px',
+                          border: 'none',
+                          borderRadius: '4px',
+                          backgroundColor: '#ff3b30',
+                          color: '#fff',
+                          cursor: 'pointer',
+                          alignSelf: 'flex-start'
+                        }}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
 
               <div style={styles.field as React.CSSProperties}>

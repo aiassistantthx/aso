@@ -12,15 +12,19 @@ export interface StarRatingDecoration {
   position: Position;
 }
 
+export interface LaurelTextBlock {
+  text: string;
+  size: number;
+}
+
 export interface LaurelDecoration {
   type: 'laurel';
   enabled: boolean;
   size: number;         // scale factor (1 = default)
   color: string;
   position: Position;
-  innerText: string;    // text inside the laurel (e.g., "1", "#1", "5M+")
-  innerTextColor: string;
-  innerTextSize: number;
+  textBlocks: LaurelTextBlock[];  // array of text blocks with individual sizes
+  textColor: string;
 }
 
 export type Decoration = StarRatingDecoration | LaurelDecoration;

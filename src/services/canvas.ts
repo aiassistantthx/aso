@@ -290,7 +290,7 @@ const drawLaurelWreath = async (
 ): Promise<void> => {
   if (!decoration.enabled) return;
 
-  const { size, color, position, innerText, innerTextColor, innerTextSize } = decoration;
+  const { size, color, position, textBlocks, textColor } = decoration;
 
   try {
     const laurelImg = await loadLaurelImage();
@@ -312,22 +312,36 @@ const drawLaurelWreath = async (
     console.error('Failed to load laurel image:', e);
   }
 
-  // Draw inner text (supports multi-line with | or \n)
-  if (innerText) {
+  // Draw text blocks with individual sizes
+  if (textBlocks && textBlocks.length > 0) {
     ctx.save();
-    ctx.fillStyle = innerTextColor;
-    ctx.font = `bold ${innerTextSize}px SF Pro Display, -apple-system, sans-serif`;
+    ctx.fillStyle = textColor;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Split by | or newline for multi-line support
-    const lines = innerText.split(/\||\n/);
-    const lineHeight = innerTextSize * 1.2;
-    const totalHeight = (lines.length - 1) * lineHeight;
-    const startY = position.y - totalHeight / 2;
+    // Calculate total height of all blocks (including line breaks within blocks)
+    let totalHeight = 0;
+    const blockData: { lines: string[]; size: number; lineHeight: number }[] = [];
 
-    lines.forEach((line, index) => {
-      ctx.fillText(line.trim(), position.x, startY + index * lineHeight);
+    textBlocks.forEach((block) => {
+      // Split by | or newline for line breaks within each block
+      const lines = block.text.split(/\||\n/).map(l => l.trim());
+      const lineHeight = block.size * 1.1;
+      const blockHeight = lines.length * lineHeight;
+      blockData.push({ lines, size: block.size, lineHeight });
+      totalHeight += blockHeight;
+    });
+
+    // Draw each block centered
+    let currentY = position.y - totalHeight / 2;
+    blockData.forEach((block) => {
+      ctx.font = `bold ${block.size}px SF Pro Display, -apple-system, sans-serif`;
+
+      block.lines.forEach((line) => {
+        currentY += block.lineHeight / 2;
+        ctx.fillText(line, position.x, currentY);
+        currentY += block.lineHeight / 2;
+      });
     });
 
     ctx.restore();

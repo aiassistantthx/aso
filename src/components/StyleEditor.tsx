@@ -408,7 +408,7 @@ export const StyleEditor: React.FC<Props> = ({
             <input
               type="range"
               min="40"
-              max="120"
+              max="400"
               value={style.fontSize}
               onChange={(e) => updateStyle('fontSize', Number(e.target.value))}
               style={cssStyles.range}
