@@ -94,13 +94,19 @@ const MOCKUP_CONFIG = {
   phoneY: 42,
   phoneWidth: 850,
   phoneHeight: 1740,
-  // Screen bounds within the image (inside the phone frame, covers full white area)
-  screenX: 590,
-  screenY: 57,
-  screenWidth: 820,
-  screenHeight: 1708,
+  // Screen bounds within the image (inside the phone frame)
+  screenX: 600,
+  screenY: 60,
+  screenWidth: 800,
+  screenHeight: 1700,
   // Corner radius for the screen
-  screenCornerRadius: 85
+  screenCornerRadius: 80,
+  // Dynamic Island coordinates (relative to image)
+  dynamicIslandX: 870,
+  dynamicIslandY: 100,
+  dynamicIslandWidth: 260,
+  dynamicIslandHeight: 75,
+  dynamicIslandRadius: 37
 };
 
 const drawMockupWithScreenshot = async (
@@ -131,7 +137,14 @@ const drawMockupWithScreenshot = async (
   const screenHeight = MOCKUP_CONFIG.screenHeight * scale;
   const cornerRadius = MOCKUP_CONFIG.screenCornerRadius * scale;
 
-  // Draw screenshot FIRST into the screen area
+  // Dynamic Island coordinates scaled
+  const diX = mockupX + ((MOCKUP_CONFIG.dynamicIslandX - MOCKUP_CONFIG.phoneX) * scale);
+  const diY = mockupY + ((MOCKUP_CONFIG.dynamicIslandY - MOCKUP_CONFIG.phoneY) * scale);
+  const diWidth = MOCKUP_CONFIG.dynamicIslandWidth * scale;
+  const diHeight = MOCKUP_CONFIG.dynamicIslandHeight * scale;
+  const diRadius = MOCKUP_CONFIG.dynamicIslandRadius * scale;
+
+  // 1. Draw screenshot clipped to screen area
   if (screenshot) {
     const screenshotImg = await loadImage(screenshot);
 
@@ -165,6 +178,12 @@ const drawMockupWithScreenshot = async (
 
     ctx.drawImage(screenshotImg, drawX, drawY, drawWidth, drawHeight);
     ctx.restore();
+
+    // 2. Draw Dynamic Island on top of screenshot (cutout effect)
+    ctx.fillStyle = '#000000';
+    ctx.beginPath();
+    ctx.roundRect(diX, diY, diWidth, diHeight, diRadius);
+    ctx.fill();
   } else {
     // Draw black screen if no screenshot
     ctx.fillStyle = '#000000';
@@ -173,8 +192,10 @@ const drawMockupWithScreenshot = async (
     ctx.fill();
   }
 
-  // Draw the mockup frame ON TOP (so Dynamic Island covers the screenshot)
+  // 3. Draw mockup frame BEHIND everything (destination-over)
+  ctx.globalCompositeOperation = 'destination-over';
   ctx.drawImage(mockupImg, imgX, imgY, scaledImgWidth, scaledImgHeight);
+  ctx.globalCompositeOperation = 'source-over'; // Reset
 };
 
 export const generateScreenshotImage = async (
