@@ -84,23 +84,23 @@ const drawGradientBackground = (
   ctx.fillRect(0, 0, width, height);
 };
 
-// Screen area coordinates within the mockup image (5000x5000)
-// These are approximate values based on the mockup image
+// Screen area coordinates within the mockup image (2000x2000)
+// Blue iPhone 15 mockup with transparent background
 const MOCKUP_CONFIG = {
-  imageWidth: 5000,
-  imageHeight: 5000,
+  imageWidth: 2000,
+  imageHeight: 2000,
   // Phone bounds within the image
-  phoneX: 1565,
-  phoneY: 295,
-  phoneWidth: 1870,
-  phoneHeight: 4015,
+  phoneX: 590,
+  phoneY: 55,
+  phoneWidth: 820,
+  phoneHeight: 1680,
   // Screen bounds within the image (inside the phone)
-  screenX: 1610,
-  screenY: 340,
-  screenWidth: 1780,
-  screenHeight: 3860,
+  screenX: 620,
+  screenY: 85,
+  screenWidth: 760,
+  screenHeight: 1545,
   // Corner radius for the screen
-  screenCornerRadius: 110
+  screenCornerRadius: 55
 };
 
 const drawMockupWithScreenshot = async (
