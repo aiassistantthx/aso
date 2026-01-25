@@ -184,31 +184,47 @@ const drawMockupWithScreenshot = async (
   const scaledImgWidth = MOCKUP_CONFIG.imageWidth * scale;
   const scaledImgHeight = MOCKUP_CONFIG.imageHeight * scale;
 
-  // Calculate how much of the phone is hidden
+  // Calculate visible area dimensions
   const fullPhoneHeight = mockupHeight;
   const visibleHeight = fullPhoneHeight * visibilityRatio;
-  const hiddenHeight = fullPhoneHeight - visibleHeight;
 
-  // Adjust Y position based on alignment
+  // Calculate clip region and phone offset based on alignment
+  let clipY = mockupY;
   let adjustedMockupY = mockupY;
+
   if (visibilityRatio < 1) {
+    const hiddenHeight = fullPhoneHeight - visibleHeight;
+
     switch (style.mockupAlignment) {
       case 'top':
-        // Phone at top, bottom part hidden (extends below visible area)
-        // Upper part of phone is cropped - phone starts above the visible area
+        // Phone at top of screen, UPPER part of phone is cropped
+        // We see the BOTTOM portion of the phone
+        // Clip starts at mockupY, phone needs to move UP
+        clipY = mockupY;
         adjustedMockupY = mockupY - hiddenHeight;
         break;
       case 'bottom':
-        // Phone at bottom, top part hidden (extends above visible area)
-        // Lower part of phone is cropped - phone starts at mockupY and extends down
+        // Phone at bottom of screen, LOWER part of phone is cropped
+        // We see the TOP portion of the phone
+        // Clip starts at mockupY, phone stays at mockupY
+        clipY = mockupY;
         adjustedMockupY = mockupY;
         break;
       case 'center':
       default:
         // Centered - equal parts hidden top and bottom
+        clipY = mockupY;
         adjustedMockupY = mockupY - hiddenHeight / 2;
         break;
     }
+  }
+
+  // Apply clipping for partial visibility
+  ctx.save();
+  if (visibilityRatio < 1) {
+    ctx.beginPath();
+    ctx.rect(mockupX - 100, clipY, mockupWidth + 200, visibleHeight);
+    ctx.clip();
   }
 
   // Calculate offset to position the phone correctly
@@ -298,6 +314,9 @@ const drawMockupWithScreenshot = async (
   ctx.globalCompositeOperation = 'destination-over';
   ctx.drawImage(mockupImg, imgX, imgY, scaledImgWidth, scaledImgHeight);
   ctx.globalCompositeOperation = 'source-over'; // Reset
+
+  // Restore clipping context
+  ctx.restore();
 };
 
 export const generateScreenshotImage = async (
