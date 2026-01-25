@@ -312,14 +312,24 @@ const drawLaurelWreath = async (
     console.error('Failed to load laurel image:', e);
   }
 
-  // Draw inner text
+  // Draw inner text (supports multi-line with | or \n)
   if (innerText) {
     ctx.save();
     ctx.fillStyle = innerTextColor;
     ctx.font = `bold ${innerTextSize}px SF Pro Display, -apple-system, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(innerText, position.x, position.y);
+
+    // Split by | or newline for multi-line support
+    const lines = innerText.split(/\||\n/);
+    const lineHeight = innerTextSize * 1.2;
+    const totalHeight = (lines.length - 1) * lineHeight;
+    const startY = position.y - totalHeight / 2;
+
+    lines.forEach((line, index) => {
+      ctx.fillText(line.trim(), position.x, startY + index * lineHeight);
+    });
+
     ctx.restore();
   }
 };

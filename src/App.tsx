@@ -184,6 +184,7 @@ function App() {
               screenshots={screenshots}
               selectedIndex={selectedPreviewIndex}
               onSelectIndex={setSelectedPreviewIndex}
+              onScreenshotsChange={setScreenshots}
               style={styleConfig}
               deviceSize={deviceSize}
               onStyleChange={setStyleConfig}

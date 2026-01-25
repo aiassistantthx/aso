@@ -6,12 +6,13 @@ interface Props {
   screenshots: Screenshot[];
   selectedIndex: number;
   onSelectIndex: (index: number) => void;
+  onScreenshotsChange: (screenshots: Screenshot[]) => void;
   style: StyleConfig;
   deviceSize: DeviceSize;
   onStyleChange: (style: StyleConfig) => void;
 }
 
-type DragTarget = 'mockup' | 'text' | null;
+type DragTarget = 'mockup' | 'text' | { type: 'decoration'; index: number } | null;
 
 const cssStyles: Record<string, React.CSSProperties> = {
   container: {
@@ -95,12 +96,14 @@ export const Preview: React.FC<Props> = ({
   screenshots,
   selectedIndex,
   onSelectIndex,
+  onScreenshotsChange,
   style,
   deviceSize,
   onStyleChange
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const selectedScreenshot = screenshots[selectedIndex];
+  const decorations = selectedScreenshot?.decorations || [];
 
   const [isDragging, setIsDragging] = useState(false);
   const [dragTarget, setDragTarget] = useState<DragTarget>(null);
@@ -135,9 +138,35 @@ export const Preview: React.FC<Props> = ({
   }, [scale]);
 
   const hitTest = useCallback((x: number, y: number): DragTarget => {
+    // Check decorations first (they're on top)
+    for (let i = decorations.length - 1; i >= 0; i--) {
+      const dec = decorations[i];
+      if (!dec.enabled) continue;
+
+      if (dec.type === 'stars') {
+        // Stars hit area
+        const totalWidth = dec.count * dec.size + (dec.count - 1) * dec.size * 0.2;
+        const hitX = dec.position.x - totalWidth / 2;
+        const hitY = dec.position.y - dec.size / 2;
+        if (x >= hitX && x <= hitX + totalWidth &&
+            y >= hitY && y <= hitY + dec.size) {
+          return { type: 'decoration', index: i };
+        }
+      } else if (dec.type === 'laurel') {
+        // Laurel hit area (roughly square based on size)
+        const hitSize = 500 * dec.size;
+        const hitX = dec.position.x - hitSize / 2;
+        const hitY = dec.position.y - hitSize / 2;
+        if (x >= hitX && x <= hitX + hitSize &&
+            y >= hitY && y <= hitY + hitSize) {
+          return { type: 'decoration', index: i };
+        }
+      }
+    }
+
     const bounds = getElementBounds(style, deviceSize);
 
-    // Check mockup bounds first (it's usually larger)
+    // Check mockup bounds
     if (style.showMockup) {
       const mockup = bounds.mockup;
       if (x >= mockup.x && x <= mockup.x + mockup.width &&
@@ -154,7 +183,7 @@ export const Preview: React.FC<Props> = ({
     }
 
     return null;
-  }, [style, deviceSize]);
+  }, [style, deviceSize, decorations]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const coords = getCanvasCoordinates(e);
@@ -164,12 +193,18 @@ export const Preview: React.FC<Props> = ({
       setIsDragging(true);
       setDragTarget(target);
       setDragStart(coords);
-      setInitialOffset(
-        target === 'mockup' ? style.mockupOffset : style.textOffset
-      );
+
+      if (target === 'mockup') {
+        setInitialOffset(style.mockupOffset);
+      } else if (target === 'text') {
+        setInitialOffset(style.textOffset);
+      } else if (typeof target === 'object' && target.type === 'decoration') {
+        const dec = decorations[target.index];
+        setInitialOffset(dec.position);
+      }
       e.preventDefault();
     }
-  }, [getCanvasCoordinates, hitTest, style.mockupOffset, style.textOffset]);
+  }, [getCanvasCoordinates, hitTest, style.mockupOffset, style.textOffset, decorations]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDragging || !dragTarget) return;
@@ -178,17 +213,26 @@ export const Preview: React.FC<Props> = ({
     const deltaX = coords.x - dragStart.x;
     const deltaY = coords.y - dragStart.y;
 
-    const newOffset = {
+    const newPosition = {
       x: initialOffset.x + deltaX,
       y: initialOffset.y + deltaY
     };
 
     if (dragTarget === 'mockup') {
-      onStyleChange({ ...style, mockupOffset: newOffset });
-    } else {
-      onStyleChange({ ...style, textOffset: newOffset });
+      onStyleChange({ ...style, mockupOffset: newPosition });
+    } else if (dragTarget === 'text') {
+      onStyleChange({ ...style, textOffset: newPosition });
+    } else if (typeof dragTarget === 'object' && dragTarget.type === 'decoration') {
+      // Update decoration position
+      const newDecorations = decorations.map((dec, i) =>
+        i === dragTarget.index ? { ...dec, position: newPosition } : dec
+      );
+      const newScreenshots = screenshots.map((s, i) =>
+        i === selectedIndex ? { ...s, decorations: newDecorations } : s
+      );
+      onScreenshotsChange(newScreenshots);
     }
-  }, [isDragging, dragTarget, getCanvasCoordinates, dragStart, initialOffset, onStyleChange, style]);
+  }, [isDragging, dragTarget, getCanvasCoordinates, dragStart, initialOffset, onStyleChange, style, decorations, screenshots, selectedIndex, onScreenshotsChange]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -232,7 +276,7 @@ export const Preview: React.FC<Props> = ({
       </div>
 
       <p style={cssStyles.dragHint as React.CSSProperties}>
-        Drag to move mockup or text
+        Drag to move elements (mockup, text, decorations)
       </p>
 
       {hasCustomPosition && (

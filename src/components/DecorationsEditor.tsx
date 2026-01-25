@@ -197,7 +197,7 @@ export const DecorationsEditor: React.FC<Props> = ({
     <div style={styles.container}>
       <label style={styles.label}>Decorations</label>
       <p style={styles.hint}>
-        Add stars or laurel wreaths to screenshot {selectedIndex + 1}
+        Add stars or laurel wreaths to screenshot {selectedIndex + 1}. Drag in preview to position.
       </p>
 
       <div style={{ marginBottom: '12px' }}>
@@ -318,13 +318,13 @@ export const DecorationsEditor: React.FC<Props> = ({
 
           {decoration.type === 'laurel' && (
             <div style={styles.grid}>
-              <div style={styles.field as React.CSSProperties}>
-                <span style={styles.fieldLabel}>Inner Text</span>
+              <div style={{ ...styles.field as React.CSSProperties, gridColumn: '1 / -1' }}>
+                <span style={styles.fieldLabel}>Inner Text (use | for line breaks)</span>
                 <input
                   type="text"
                   value={decoration.innerText}
                   onChange={(e) => updateDecoration(index, { innerText: e.target.value })}
-                  placeholder="1, #1, 5M+..."
+                  placeholder="1|App|Store"
                   style={styles.input}
                 />
               </div>
