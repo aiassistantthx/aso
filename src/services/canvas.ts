@@ -1,5 +1,10 @@
 import { StyleConfig, DeviceSize, DEVICE_SIZES } from '../types';
 
+export interface ElementBounds {
+  mockup: { x: number; y: number; width: number; height: number };
+  text: { x: number; y: number; width: number; height: number };
+}
+
 export interface GenerateImageOptions {
   screenshot: string | null;
   text: string;
@@ -29,33 +34,165 @@ const loadMockupImage = async (): Promise<HTMLImageElement> => {
   return img;
 };
 
-const wrapText = (
+// Text segment with optional highlight
+interface TextSegment {
+  text: string;
+  highlighted: boolean;
+}
+
+// Line containing multiple text segments
+interface ParsedLine {
+  segments: TextSegment[];
+}
+
+// Parse text with [highlighted] syntax and | line breaks
+const parseFormattedText = (text: string): ParsedLine[] => {
+  // Split by | or newline for manual line breaks
+  const rawLines = text.split(/\||\n/);
+
+  return rawLines.map(line => {
+    const segments: TextSegment[] = [];
+    // Match [highlighted text] patterns
+    const regex = /\[([^\]]+)\]|([^\[]+)/g;
+    let match;
+
+    while ((match = regex.exec(line)) !== null) {
+      if (match[1]) {
+        // Highlighted text (inside brackets)
+        segments.push({ text: match[1], highlighted: true });
+      } else if (match[2]) {
+        // Normal text
+        segments.push({ text: match[2], highlighted: false });
+      }
+    }
+
+    return { segments };
+  });
+};
+
+// Measure total width of a line with all its segments
+const measureLineWidth = (ctx: CanvasRenderingContext2D, line: ParsedLine): number => {
+  return line.segments.reduce((total, segment) => {
+    return total + ctx.measureText(segment.text).width;
+  }, 0);
+};
+
+// Wrap formatted text to fit within maxWidth
+const wrapFormattedText = (
   ctx: CanvasRenderingContext2D,
   text: string,
   maxWidth: number
-): string[] => {
-  const words = text.split(' ');
-  const lines: string[] = [];
-  let currentLine = '';
+): ParsedLine[] => {
+  const parsedLines = parseFormattedText(text);
+  const wrappedLines: ParsedLine[] = [];
 
-  for (const word of words) {
-    const testLine = currentLine ? `${currentLine} ${word}` : word;
-    const metrics = ctx.measureText(testLine);
+  for (const line of parsedLines) {
+    let currentLine: TextSegment[] = [];
+    let currentWidth = 0;
 
-    if (metrics.width > maxWidth && currentLine) {
-      lines.push(currentLine);
-      currentLine = word;
-    } else {
-      currentLine = testLine;
+    for (const segment of line.segments) {
+      const words = segment.text.split(' ');
+
+      for (let i = 0; i < words.length; i++) {
+        const word = words[i];
+        const wordWithSpace = i > 0 || currentLine.length > 0 ? ' ' + word : word;
+        const wordWidth = ctx.measureText(wordWithSpace).width;
+
+        if (currentWidth + wordWidth > maxWidth && currentLine.length > 0) {
+          // Start new line
+          wrappedLines.push({ segments: currentLine });
+          currentLine = [];
+          currentWidth = 0;
+
+          // Add word to new line without leading space
+          const trimmedWord = word;
+          currentLine.push({ text: trimmedWord, highlighted: segment.highlighted });
+          currentWidth = ctx.measureText(trimmedWord).width;
+        } else {
+          // Add to current line
+          if (currentLine.length > 0 && currentLine[currentLine.length - 1].highlighted === segment.highlighted) {
+            // Same highlight state, append to last segment
+            currentLine[currentLine.length - 1].text += wordWithSpace;
+          } else {
+            // Different highlight state, create new segment
+            currentLine.push({ text: wordWithSpace.trimStart() ? wordWithSpace : word, highlighted: segment.highlighted });
+          }
+          currentWidth += wordWidth;
+        }
+      }
+    }
+
+    if (currentLine.length > 0) {
+      wrappedLines.push({ segments: currentLine });
     }
   }
 
-  if (currentLine) {
-    lines.push(currentLine);
-  }
-
-  return lines;
+  return wrappedLines;
 };
+
+// Draw formatted text with highlights
+const drawFormattedText = (
+  ctx: CanvasRenderingContext2D,
+  lines: ParsedLine[],
+  startX: number,
+  startY: number,
+  lineHeight: number,
+  style: StyleConfig,
+  maxWidth: number
+): void => {
+  const textAlign = style.textAlign;
+
+  lines.forEach((line, lineIndex) => {
+    const y = startY + lineIndex * lineHeight;
+    const lineWidth = measureLineWidth(ctx, line);
+
+    // Calculate starting X based on alignment
+    let x: number;
+    switch (textAlign) {
+      case 'left':
+        x = startX;
+        break;
+      case 'right':
+        x = startX + maxWidth - lineWidth;
+        break;
+      case 'center':
+      default:
+        x = startX + (maxWidth - lineWidth) / 2;
+        break;
+    }
+
+    // Draw each segment
+    for (const segment of line.segments) {
+      const segmentWidth = ctx.measureText(segment.text).width;
+
+      if (segment.highlighted && segment.text.trim()) {
+        // Draw highlight background
+        const padding = style.highlightPadding || 12;
+        const radius = style.highlightBorderRadius || 8;
+
+        ctx.save();
+        ctx.fillStyle = style.highlightColor || '#FFE135';
+        ctx.beginPath();
+        ctx.roundRect(
+          x - padding / 2,
+          y - style.fontSize * 0.85,
+          segmentWidth + padding,
+          style.fontSize * 1.15,
+          radius
+        );
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Draw text
+      ctx.fillStyle = style.textColor;
+      ctx.fillText(segment.text, x, y);
+
+      x += segmentWidth;
+    }
+  });
+};
+
 
 const drawGradientBackground = (
   ctx: CanvasRenderingContext2D,
@@ -127,6 +264,89 @@ const getVisibilityRatio = (visibility: StyleConfig['mockupVisibility']): number
   }
 };
 
+// Calculate element bounds for hit testing (in original canvas coordinates)
+export const getElementBounds = (style: StyleConfig, deviceSize: DeviceSize): ElementBounds => {
+  const dimensions = DEVICE_SIZES[deviceSize];
+  const visibilityRatio = getVisibilityRatio(style.mockupVisibility);
+
+  // Calculate mockup dimensions
+  const textAreaHeight = style.textPosition === 'top'
+    ? style.paddingTop + style.fontSize * 2.5
+    : style.paddingBottom + style.fontSize * 2.5;
+
+  const availableHeight = dimensions.height - textAreaHeight - 80;
+  const mockupHeight = Math.min(availableHeight, dimensions.height * 0.75);
+  const phoneAspect = MOCKUP_CONFIG.phoneWidth / MOCKUP_CONFIG.phoneHeight;
+  const mockupWidth = mockupHeight * phoneAspect;
+
+  // Calculate mockup position
+  const visiblePhoneHeight = mockupHeight * visibilityRatio;
+  const hiddenHeight = mockupHeight - visiblePhoneHeight;
+
+  let mockupY: number;
+  switch (style.mockupAlignment) {
+    case 'top':
+      mockupY = -hiddenHeight;
+      break;
+    case 'bottom':
+      mockupY = dimensions.height - visiblePhoneHeight - 40;
+      break;
+    case 'center':
+    default:
+      mockupY = (dimensions.height - mockupHeight) / 2;
+      break;
+  }
+
+  const mockupX = (dimensions.width - mockupWidth) / 2;
+
+  // Apply offsets
+  const finalMockupX = mockupX + (style.mockupOffset?.x || 0);
+  const finalMockupY = mockupY + (style.mockupOffset?.y || 0);
+
+  // Calculate text bounds
+  const maxTextWidth = dimensions.width * 0.85;
+  const lineHeight = style.fontSize * 1.2;
+  const estimatedLines = 2; // Approximate
+
+  let textX: number;
+  switch (style.textAlign) {
+    case 'left':
+      textX = (dimensions.width - maxTextWidth) / 2;
+      break;
+    case 'right':
+      textX = dimensions.width - maxTextWidth - (dimensions.width - maxTextWidth) / 2;
+      break;
+    default:
+      textX = (dimensions.width - maxTextWidth) / 2;
+  }
+
+  let textY: number;
+  if (style.textPosition === 'top') {
+    textY = style.paddingTop;
+  } else {
+    textY = dimensions.height - style.paddingBottom - estimatedLines * lineHeight;
+  }
+
+  // Apply text offset
+  const finalTextX = textX + (style.textOffset?.x || 0);
+  const finalTextY = textY + (style.textOffset?.y || 0);
+
+  return {
+    mockup: {
+      x: finalMockupX,
+      y: finalMockupY,
+      width: mockupWidth,
+      height: mockupHeight
+    },
+    text: {
+      x: finalTextX,
+      y: finalTextY,
+      width: maxTextWidth,
+      height: estimatedLines * lineHeight + style.fontSize
+    }
+  };
+};
+
 const drawSideButtons = (
   ctx: CanvasRenderingContext2D,
   mockupX: number,
@@ -193,7 +413,7 @@ const drawMockupWithScreenshot = async (
   const scaledImgHeight = MOCKUP_CONFIG.imageHeight * scale;
 
   // Center phone horizontally on canvas
-  const adjustedMockupX = (canvasWidth - fullPhoneWidth) / 2;
+  let adjustedMockupX = (canvasWidth - fullPhoneWidth) / 2;
 
   // How much of phone is visible (based on visibility setting)
   const visiblePhoneHeight = fullPhoneHeight * visibilityRatio;
@@ -220,6 +440,10 @@ const drawMockupWithScreenshot = async (
       adjustedMockupY = (canvasHeight - fullPhoneHeight) / 2;
       break;
   }
+
+  // Apply custom offset from drag & drop
+  adjustedMockupX += style.mockupOffset?.x || 0;
+  adjustedMockupY += style.mockupOffset?.y || 0;
 
   ctx.save();
 
@@ -345,9 +569,10 @@ export const generateScreenshotImage = async (
     ? textAreaHeight + 40
     : 40;
 
-  if (style.showMockup) {
+  // Only show mockup if there's a screenshot AND showMockup is enabled
+  if (style.showMockup && screenshot) {
     await drawMockupWithScreenshot(ctx, mockupX, mockupY, mockupWidth, mockupHeight, canvas.width, canvas.height, screenshot, style);
-  } else if (screenshot) {
+  } else if (screenshot && !style.showMockup) {
     // Draw screenshot without mockup (legacy mode)
     const img = await loadImage(screenshot);
     const imgAspect = img.width / img.height;
@@ -372,27 +597,18 @@ export const generateScreenshotImage = async (
     ctx.restore();
   }
 
-  // Draw text
+  // Draw text with formatting support
   if (text) {
     ctx.fillStyle = style.textColor;
     ctx.font = `bold ${style.fontSize}px ${style.fontFamily}`;
-    ctx.textAlign = style.textAlign;
+    ctx.textAlign = 'left'; // We handle alignment manually for highlights
 
     const maxTextWidth = canvas.width * 0.85;
-    const lines = wrapText(ctx, text, maxTextWidth);
-    const lineHeight = style.fontSize * 1.2;
+    const lines = wrapFormattedText(ctx, text, maxTextWidth);
+    const lineHeight = style.fontSize * 1.4;
 
-    let textX: number;
-    switch (style.textAlign) {
-      case 'left':
-        textX = (canvas.width - maxTextWidth) / 2;
-        break;
-      case 'right':
-        textX = canvas.width - (canvas.width - maxTextWidth) / 2;
-        break;
-      default:
-        textX = canvas.width / 2;
-    }
+    // Calculate text area left edge
+    const textAreaX = (canvas.width - maxTextWidth) / 2;
 
     let textY: number;
     if (style.textPosition === 'top') {
@@ -401,9 +617,11 @@ export const generateScreenshotImage = async (
       textY = canvas.height - style.paddingBottom - (lines.length - 1) * lineHeight;
     }
 
-    lines.forEach((line, index) => {
-      ctx.fillText(line, textX, textY + index * lineHeight);
-    });
+    // Apply custom offset from drag & drop
+    const finalX = textAreaX + (style.textOffset?.x || 0);
+    const finalY = textY + (style.textOffset?.y || 0);
+
+    drawFormattedText(ctx, lines, finalX, finalY, lineHeight, style, maxTextWidth);
   }
 
   return new Promise((resolve, reject) => {
@@ -451,7 +669,8 @@ export const generatePreviewCanvas = async (
     ? textAreaHeight + 40
     : 40;
 
-  if (style.showMockup) {
+  // Only show mockup if there's a screenshot AND showMockup is enabled
+  if (style.showMockup && screenshot) {
     try {
       await drawMockupWithScreenshot(ctx, mockupX, mockupY, mockupWidth, mockupHeight, dimensions.width, dimensions.height, screenshot, style);
     } catch (e) {
@@ -461,7 +680,7 @@ export const generatePreviewCanvas = async (
       ctx.roundRect(mockupX, mockupY, mockupWidth, mockupHeight, 60);
       ctx.fill();
     }
-  } else if (screenshot) {
+  } else if (screenshot && !style.showMockup) {
     try {
       const img = await loadImage(screenshot);
       const imgAspect = img.width / img.height;
@@ -489,27 +708,18 @@ export const generatePreviewCanvas = async (
     }
   }
 
-  // Draw text
+  // Draw text with formatting support
   if (text) {
     ctx.fillStyle = style.textColor;
     ctx.font = `bold ${style.fontSize}px ${style.fontFamily}`;
-    ctx.textAlign = style.textAlign;
+    ctx.textAlign = 'left'; // We handle alignment manually for highlights
 
     const maxTextWidth = dimensions.width * 0.85;
-    const lines = wrapText(ctx, text, maxTextWidth);
-    const lineHeight = style.fontSize * 1.2;
+    const lines = wrapFormattedText(ctx, text, maxTextWidth);
+    const lineHeight = style.fontSize * 1.4;
 
-    let textX: number;
-    switch (style.textAlign) {
-      case 'left':
-        textX = (dimensions.width - maxTextWidth) / 2;
-        break;
-      case 'right':
-        textX = dimensions.width - (dimensions.width - maxTextWidth) / 2;
-        break;
-      default:
-        textX = dimensions.width / 2;
-    }
+    // Calculate text area left edge
+    const textAreaX = (dimensions.width - maxTextWidth) / 2;
 
     let textY: number;
     if (style.textPosition === 'top') {
@@ -518,8 +728,10 @@ export const generatePreviewCanvas = async (
       textY = dimensions.height - style.paddingBottom - (lines.length - 1) * lineHeight;
     }
 
-    lines.forEach((line, index) => {
-      ctx.fillText(line, textX, textY + index * lineHeight);
-    });
+    // Apply custom offset from drag & drop
+    const finalX = textAreaX + (style.textOffset?.x || 0);
+    const finalY = textY + (style.textOffset?.y || 0);
+
+    drawFormattedText(ctx, lines, finalX, finalY, lineHeight, style, maxTextWidth);
   }
 };

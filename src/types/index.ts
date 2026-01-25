@@ -1,7 +1,7 @@
 export interface Screenshot {
   id: string;
-  file: File;
-  preview: string;
+  file: File | null;  // null for text-only slides
+  preview: string;    // empty string for text-only slides
   text: string;
 }
 
@@ -14,6 +14,11 @@ export interface GradientConfig {
 
 export type MockupVisibility = 'full' | '2/3' | '1/2';
 export type MockupAlignment = 'top' | 'center' | 'bottom';
+
+export interface Position {
+  x: number;
+  y: number;
+}
 
 export interface StyleConfig {
   backgroundColor: string;
@@ -29,6 +34,13 @@ export interface StyleConfig {
   mockupColor: 'black' | 'white' | 'natural';
   mockupVisibility: MockupVisibility;
   mockupAlignment: MockupAlignment;
+  // Custom position offsets (relative to default position)
+  mockupOffset: Position;
+  textOffset: Position;
+  // Highlight settings for [text] syntax
+  highlightColor: string;
+  highlightPadding: number;
+  highlightBorderRadius: number;
 }
 
 export interface Language {

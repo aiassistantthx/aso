@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Screenshot } from '../types';
 
 interface Props {
@@ -41,6 +41,22 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '12px',
     marginTop: '8px'
   },
+  buttonRow: {
+    display: 'flex',
+    gap: '8px',
+    marginTop: '12px'
+  },
+  addTextButton: {
+    flex: 1,
+    padding: '10px 16px',
+    fontSize: '13px',
+    border: '1px solid #0071e3',
+    borderRadius: '8px',
+    backgroundColor: '#fff',
+    color: '#0071e3',
+    cursor: 'pointer',
+    transition: 'all 0.2s'
+  },
   previewGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
@@ -52,12 +68,34 @@ const styles: Record<string, React.CSSProperties> = {
     aspectRatio: '9/16',
     borderRadius: '8px',
     overflow: 'hidden',
-    backgroundColor: '#f5f5f7'
+    backgroundColor: '#f5f5f7',
+    cursor: 'grab',
+    transition: 'transform 0.2s, box-shadow 0.2s'
+  },
+  previewItemDragging: {
+    opacity: 0.5,
+    transform: 'scale(0.95)'
+  },
+  previewItemDragOver: {
+    transform: 'scale(1.05)',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
   },
   previewImage: {
     width: '100%',
     height: '100%',
     objectFit: 'cover'
+  },
+  emptyPreview: {
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'linear-gradient(135deg, #667eea, #764ba2)',
+    color: '#fff',
+    fontSize: '10px',
+    textAlign: 'center',
+    padding: '8px'
   },
   removeButton: {
     position: 'absolute',
@@ -84,6 +122,23 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '10px',
     padding: '2px 6px',
     borderRadius: '4px'
+  },
+  dragHandle: {
+    position: 'absolute',
+    top: '4px',
+    left: '4px',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    color: '#fff',
+    fontSize: '10px',
+    padding: '2px 6px',
+    borderRadius: '4px',
+    cursor: 'grab'
+  },
+  hint: {
+    fontSize: '11px',
+    color: '#86868b',
+    marginTop: '8px',
+    textAlign: 'center'
   }
 };
 
@@ -92,7 +147,9 @@ export const ScreenshotUploader: React.FC<Props> = ({
   onScreenshotsChange,
   maxScreenshots = 10
 }) => {
-  const [isDragging, setIsDragging] = React.useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const handleFiles = useCallback((files: FileList | null) => {
@@ -114,7 +171,11 @@ export const ScreenshotUploader: React.FC<Props> = ({
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    handleFiles(e.dataTransfer.files);
+
+    // Check if it's a file drop (not reordering)
+    if (e.dataTransfer.files.length > 0) {
+      handleFiles(e.dataTransfer.files);
+    }
   }, [handleFiles]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -132,11 +193,68 @@ export const ScreenshotUploader: React.FC<Props> = ({
 
   const handleRemove = useCallback((id: string) => {
     const screenshot = screenshots.find(s => s.id === id);
-    if (screenshot) {
+    if (screenshot && screenshot.preview) {
       URL.revokeObjectURL(screenshot.preview);
     }
     onScreenshotsChange(screenshots.filter(s => s.id !== id));
   }, [screenshots, onScreenshotsChange]);
+
+  // Add empty screenshot (text only)
+  const handleAddTextOnly = useCallback(() => {
+    if (screenshots.length >= maxScreenshots) return;
+
+    const newScreenshot: Screenshot = {
+      id: `${Date.now()}-text`,
+      file: null as unknown as File, // No file for text-only
+      preview: '', // Empty preview
+      text: 'Your text here'
+    };
+
+    onScreenshotsChange([...screenshots, newScreenshot]);
+  }, [screenshots, onScreenshotsChange, maxScreenshots]);
+
+  // Reordering drag handlers
+  const handleItemDragStart = useCallback((e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
+  }, []);
+
+  const handleItemDragOver = useCallback((e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (draggedIndex !== null && draggedIndex !== index) {
+      setDragOverIndex(index);
+    }
+  }, [draggedIndex]);
+
+  const handleItemDragLeave = useCallback(() => {
+    setDragOverIndex(null);
+  }, []);
+
+  const handleItemDrop = useCallback((e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    const newScreenshots = [...screenshots];
+    const [removed] = newScreenshots.splice(draggedIndex, 1);
+    newScreenshots.splice(dropIndex, 0, removed);
+
+    onScreenshotsChange(newScreenshots);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  }, [draggedIndex, screenshots, onScreenshotsChange]);
+
+  const handleItemDragEnd = useCallback(() => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  }, []);
 
   return (
     <div style={styles.container}>
@@ -170,30 +288,69 @@ export const ScreenshotUploader: React.FC<Props> = ({
         </p>
       </div>
 
+      <div style={styles.buttonRow}>
+        <button
+          style={{
+            ...styles.addTextButton,
+            opacity: screenshots.length >= maxScreenshots ? 0.5 : 1,
+            cursor: screenshots.length >= maxScreenshots ? 'not-allowed' : 'pointer'
+          }}
+          onClick={handleAddTextOnly}
+          disabled={screenshots.length >= maxScreenshots}
+        >
+          + Add Text-Only Slide
+        </button>
+      </div>
+
       {screenshots.length > 0 && (
-        <div style={styles.previewGrid}>
-          {screenshots.map((screenshot, index) => (
-            <div key={screenshot.id} style={styles.previewItem as React.CSSProperties}>
-              <img
-                src={screenshot.preview}
-                alt={`Screenshot ${index + 1}`}
-                style={styles.previewImage}
-              />
-              <button
-                style={styles.removeButton as React.CSSProperties}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRemove(screenshot.id);
+        <>
+          <div style={styles.previewGrid}>
+            {screenshots.map((screenshot, index) => (
+              <div
+                key={screenshot.id}
+                style={{
+                  ...styles.previewItem as React.CSSProperties,
+                  ...(draggedIndex === index ? styles.previewItemDragging : {}),
+                  ...(dragOverIndex === index ? styles.previewItemDragOver : {})
                 }}
+                draggable
+                onDragStart={(e) => handleItemDragStart(e, index)}
+                onDragOver={(e) => handleItemDragOver(e, index)}
+                onDragLeave={handleItemDragLeave}
+                onDrop={(e) => handleItemDrop(e, index)}
+                onDragEnd={handleItemDragEnd}
               >
-                ×
-              </button>
-              <span style={styles.indexBadge as React.CSSProperties}>
-                {index + 1}
-              </span>
-            </div>
-          ))}
-        </div>
+                {screenshot.preview ? (
+                  <img
+                    src={screenshot.preview}
+                    alt={`Screenshot ${index + 1}`}
+                    style={styles.previewImage}
+                    draggable={false}
+                  />
+                ) : (
+                  <div style={styles.emptyPreview as React.CSSProperties}>
+                    Text Only
+                  </div>
+                )}
+                <button
+                  style={styles.removeButton as React.CSSProperties}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemove(screenshot.id);
+                  }}
+                >
+                  ×
+                </button>
+                <span style={styles.indexBadge as React.CSSProperties}>
+                  {index + 1}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p style={styles.hint as React.CSSProperties}>
+            Drag to reorder screenshots
+          </p>
+        </>
       )}
     </div>
   );

@@ -25,7 +25,12 @@ const defaultStyle: StyleConfig = {
   showMockup: true,
   mockupColor: 'black',
   mockupVisibility: 'full',
-  mockupAlignment: 'center'
+  mockupAlignment: 'center',
+  mockupOffset: { x: 0, y: 0 },
+  textOffset: { x: 0, y: 0 },
+  highlightColor: '#FFE135',
+  highlightPadding: 12,
+  highlightBorderRadius: 8
 };
 
 const styles: Record<string, React.CSSProperties> = {
@@ -171,6 +176,7 @@ function App() {
               onSelectIndex={setSelectedPreviewIndex}
               style={styleConfig}
               deviceSize={deviceSize}
+              onStyleChange={setStyleConfig}
             />
           </div>
         </div>

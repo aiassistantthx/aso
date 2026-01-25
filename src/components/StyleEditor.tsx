@@ -393,6 +393,16 @@ export const StyleEditor: React.FC<Props> = ({
         </div>
 
         <div style={cssStyles.field as React.CSSProperties}>
+          <span style={cssStyles.fieldLabel}>Highlight Color</span>
+          <input
+            type="color"
+            value={style.highlightColor || '#FFE135'}
+            onChange={(e) => updateStyle('highlightColor', e.target.value)}
+            style={cssStyles.colorInput}
+          />
+        </div>
+
+        <div style={cssStyles.field as React.CSSProperties}>
           <span style={cssStyles.fieldLabel}>Font Size</span>
           <div style={cssStyles.rangeContainer}>
             <input
