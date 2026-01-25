@@ -130,6 +130,15 @@ const createDefaultStars = (deviceSize: DeviceSize): StarRatingDecoration => {
   };
 };
 
+const FONT_OPTIONS = [
+  { value: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif', label: 'SF Pro Display' },
+  { value: 'Helvetica Neue, Helvetica, Arial, sans-serif', label: 'Helvetica Neue' },
+  { value: 'Georgia, serif', label: 'Georgia' },
+  { value: 'Menlo, monospace', label: 'Menlo' },
+  { value: 'Arial, sans-serif', label: 'Arial' },
+  { value: 'Times New Roman, serif', label: 'Times New Roman' }
+];
+
 const createDefaultLaurel = (deviceSize: DeviceSize): LaurelDecoration => {
   const dimensions = DEVICE_SIZES[deviceSize];
   return {
@@ -143,7 +152,8 @@ const createDefaultLaurel = (deviceSize: DeviceSize): LaurelDecoration => {
       { text: '1', size: 200, bold: true },
       { text: 'App to create|Viral Video', size: 50, bold: false }
     ],
-    textColor: '#000000'
+    textColor: '#000000',
+    fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif'
   };
 };
 
@@ -290,31 +300,20 @@ export const DecorationsEditor: React.FC<Props> = ({
               </div>
 
               <div style={styles.field as React.CSSProperties}>
-                <span style={styles.fieldLabel}>Position X</span>
-                <div style={styles.rangeContainer}>
-                  <input
-                    type="range"
-                    min="0"
-                    max={DEVICE_SIZES[deviceSize].width}
-                    value={decoration.position.x}
-                    onChange={(e) => updateDecoration(index, { position: { ...decoration.position, x: Number(e.target.value) } })}
-                    style={styles.range}
-                  />
-                </div>
-              </div>
-
-              <div style={styles.field as React.CSSProperties}>
-                <span style={styles.fieldLabel}>Position Y</span>
-                <div style={styles.rangeContainer}>
-                  <input
-                    type="range"
-                    min="0"
-                    max={DEVICE_SIZES[deviceSize].height}
-                    value={decoration.position.y}
-                    onChange={(e) => updateDecoration(index, { position: { ...decoration.position, y: Number(e.target.value) } })}
-                    style={styles.range}
-                  />
-                </div>
+                <span style={styles.fieldLabel}>Position</span>
+                <button
+                  onClick={() => {
+                    const dimensions = DEVICE_SIZES[deviceSize];
+                    updateDecoration(index, { position: { ...decoration.position, x: dimensions.width / 2 } });
+                  }}
+                  style={{
+                    ...styles.addButton,
+                    width: '100%',
+                    marginRight: 0
+                  }}
+                >
+                  Center Horizontally
+                </button>
               </div>
             </div>
           )}
@@ -356,6 +355,38 @@ export const DecorationsEditor: React.FC<Props> = ({
                   onChange={(e) => updateDecoration(index, { textColor: e.target.value })}
                   style={styles.colorInput}
                 />
+              </div>
+
+              <div style={styles.field as React.CSSProperties}>
+                <span style={styles.fieldLabel}>Font</span>
+                <select
+                  value={decoration.fontFamily || FONT_OPTIONS[0].value}
+                  onChange={(e) => updateDecoration(index, { fontFamily: e.target.value })}
+                  style={styles.input}
+                >
+                  {FONT_OPTIONS.map((font) => (
+                    <option key={font.value} value={font.value}>
+                      {font.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={styles.field as React.CSSProperties}>
+                <span style={styles.fieldLabel}>Position</span>
+                <button
+                  onClick={() => {
+                    const dimensions = DEVICE_SIZES[deviceSize];
+                    updateDecoration(index, { position: { ...decoration.position, x: dimensions.width / 2 } });
+                  }}
+                  style={{
+                    ...styles.addButton,
+                    width: '100%',
+                    marginRight: 0
+                  }}
+                >
+                  Center Horizontally
+                </button>
               </div>
 
               {/* Text blocks section */}
@@ -459,33 +490,6 @@ export const DecorationsEditor: React.FC<Props> = ({
                 ))}
               </div>
 
-              <div style={styles.field as React.CSSProperties}>
-                <span style={styles.fieldLabel}>Position X</span>
-                <div style={styles.rangeContainer}>
-                  <input
-                    type="range"
-                    min="0"
-                    max={DEVICE_SIZES[deviceSize].width}
-                    value={decoration.position.x}
-                    onChange={(e) => updateDecoration(index, { position: { ...decoration.position, x: Number(e.target.value) } })}
-                    style={styles.range}
-                  />
-                </div>
-              </div>
-
-              <div style={styles.field as React.CSSProperties}>
-                <span style={styles.fieldLabel}>Position Y</span>
-                <div style={styles.rangeContainer}>
-                  <input
-                    type="range"
-                    min="0"
-                    max={DEVICE_SIZES[deviceSize].height}
-                    value={decoration.position.y}
-                    onChange={(e) => updateDecoration(index, { position: { ...decoration.position, y: Number(e.target.value) } })}
-                    style={styles.range}
-                  />
-                </div>
-              </div>
             </div>
           )}
         </div>

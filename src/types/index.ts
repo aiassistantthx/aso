@@ -26,6 +26,7 @@ export interface LaurelDecoration {
   position: Position;
   textBlocks: LaurelTextBlock[];  // array of text blocks with individual sizes
   textColor: string;
+  fontFamily: string;
 }
 
 export type Decoration = StarRatingDecoration | LaurelDecoration;

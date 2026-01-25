@@ -290,7 +290,7 @@ const drawLaurelWreath = async (
 ): Promise<void> => {
   if (!decoration.enabled) return;
 
-  const { size, color, position, textBlocks, textColor } = decoration;
+  const { size, color, position, textBlocks, textColor, fontFamily } = decoration;
 
   try {
     const laurelImg = await loadLaurelImage();
@@ -333,10 +333,11 @@ const drawLaurelWreath = async (
     });
 
     // Draw each block centered
+    const font = fontFamily || 'SF Pro Display, -apple-system, sans-serif';
     let currentY = position.y - totalHeight / 2;
     blockData.forEach((block, blockIndex) => {
       const fontWeight = textBlocks[blockIndex].bold ? 'bold ' : '';
-      ctx.font = `${fontWeight}${block.size}px SF Pro Display, -apple-system, sans-serif`;
+      ctx.font = `${fontWeight}${block.size}px ${font}`;
 
       block.lines.forEach((line) => {
         currentY += block.lineHeight / 2;
