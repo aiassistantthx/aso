@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleConfig, DeviceSize, DEVICE_SIZES } from '../types';
+import { StyleConfig, DeviceSize, DEVICE_SIZES, MockupPosition } from '../types';
 
 interface Props {
   style: StyleConfig;
@@ -229,6 +229,32 @@ export const StyleEditor: React.FC<Props> = ({
                   onClick={() => updateStyle('mockupColor', color)}
                 >
                   {color.charAt(0).toUpperCase() + color.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {style.showMockup && (
+          <div style={{ ...cssStyles.field as React.CSSProperties, gridColumn: '1 / -1' }}>
+            <span style={cssStyles.fieldLabel}>Mockup Position</span>
+            <div style={{ ...cssStyles.buttonGroup, flexWrap: 'wrap' }}>
+              {([
+                { value: 'full', label: 'Full' },
+                { value: 'top-3/4', label: '3/4 Top' },
+                { value: 'top-1/2', label: '1/2 Top' },
+                { value: 'bottom-3/4', label: '3/4 Bottom' },
+                { value: 'bottom-1/2', label: '1/2 Bottom' }
+              ] as { value: MockupPosition; label: string }[]).map((pos) => (
+                <button
+                  key={pos.value}
+                  style={{
+                    ...cssStyles.button,
+                    ...(style.mockupPosition === pos.value ? cssStyles.buttonActive : {})
+                  }}
+                  onClick={() => updateStyle('mockupPosition', pos.value)}
+                >
+                  {pos.label}
                 </button>
               ))}
             </div>

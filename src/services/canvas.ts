@@ -1,4 +1,4 @@
-import { StyleConfig, DeviceSize, DEVICE_SIZES } from '../types';
+import { StyleConfig, DeviceSize, DEVICE_SIZES, MockupPosition } from '../types';
 
 export interface GenerateImageOptions {
   screenshot: string | null;
@@ -106,7 +106,65 @@ const MOCKUP_CONFIG = {
   dynamicIslandY: 100,
   dynamicIslandWidth: 260,
   dynamicIslandHeight: 75,
-  dynamicIslandRadius: 37
+  dynamicIslandRadius: 37,
+  // Side buttons (relative to phone bounds)
+  buttons: {
+    // Left side - Silent switch and Volume buttons
+    leftSwitch: { x: -12, y: 280, width: 12, height: 60 },
+    leftVolumeUp: { x: -12, y: 380, width: 12, height: 120 },
+    leftVolumeDown: { x: -12, y: 520, width: 12, height: 120 },
+    // Right side - Power button
+    rightPower: { x: 850, y: 420, width: 12, height: 180 }
+  }
+};
+
+const getPositionMultiplier = (position: MockupPosition): { visible: number; fromTop: boolean } => {
+  switch (position) {
+    case 'top-3/4': return { visible: 0.75, fromTop: true };
+    case 'top-1/2': return { visible: 0.5, fromTop: true };
+    case 'bottom-3/4': return { visible: 0.75, fromTop: false };
+    case 'bottom-1/2': return { visible: 0.5, fromTop: false };
+    default: return { visible: 1, fromTop: true };
+  }
+};
+
+const drawSideButtons = (
+  ctx: CanvasRenderingContext2D,
+  mockupX: number,
+  mockupY: number,
+  scale: number,
+  frameColor: string
+): void => {
+  const buttons = MOCKUP_CONFIG.buttons;
+  const buttonRadius = 4 * scale;
+
+  // Darker shade for buttons
+  ctx.fillStyle = frameColor === '#F5F5F7' ? '#D2D2D7' :
+                  frameColor === '#E3D5C8' ? '#C5B5A6' : '#2D2D2F';
+
+  // Draw each button
+  const drawButton = (btn: { x: number; y: number; width: number; height: number }) => {
+    const x = mockupX + btn.x * scale;
+    const y = mockupY + btn.y * scale;
+    const w = btn.width * scale;
+    const h = btn.height * scale;
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, buttonRadius);
+    ctx.fill();
+  };
+
+  drawButton(buttons.leftSwitch);
+  drawButton(buttons.leftVolumeUp);
+  drawButton(buttons.leftVolumeDown);
+  drawButton(buttons.rightPower);
+};
+
+const getFrameColor = (color: 'black' | 'white' | 'natural'): string => {
+  switch (color) {
+    case 'white': return '#F5F5F7';
+    case 'natural': return '#E3D5C8';
+    default: return '#1D1D1F';
+  }
 };
 
 const drawMockupWithScreenshot = async (
@@ -114,37 +172,69 @@ const drawMockupWithScreenshot = async (
   mockupX: number,
   mockupY: number,
   mockupWidth: number,
-  _mockupHeight: number,
-  screenshot: string | null
+  mockupHeight: number,
+  screenshot: string | null,
+  style: StyleConfig
 ): Promise<void> => {
   const mockupImg = await loadMockupImage();
+  const { visible, fromTop } = getPositionMultiplier(style.mockupPosition);
 
-  // Calculate scale factor (mockupHeight is implicit from aspect ratio)
+  // Calculate scale factor
   const scale = mockupWidth / MOCKUP_CONFIG.phoneWidth;
 
   // Calculate the full mockup image dimensions at this scale
   const scaledImgWidth = MOCKUP_CONFIG.imageWidth * scale;
   const scaledImgHeight = MOCKUP_CONFIG.imageHeight * scale;
 
+  // Adjust Y position based on mockup position setting
+  let adjustedMockupY = mockupY;
+  if (visible < 1) {
+    const hiddenPortion = mockupHeight * (1 - visible);
+    if (fromTop) {
+      // Show top portion, phone extends below canvas
+      adjustedMockupY = mockupY;
+    } else {
+      // Show bottom portion, phone extends above
+      adjustedMockupY = mockupY - hiddenPortion;
+    }
+  }
+
   // Calculate offset to position the phone correctly
   const imgX = mockupX - (MOCKUP_CONFIG.phoneX * scale);
-  const imgY = mockupY - (MOCKUP_CONFIG.phoneY * scale);
+  const imgY = adjustedMockupY - (MOCKUP_CONFIG.phoneY * scale);
 
   // Calculate screen position and size
   const screenX = mockupX + ((MOCKUP_CONFIG.screenX - MOCKUP_CONFIG.phoneX) * scale);
-  const screenY = mockupY + ((MOCKUP_CONFIG.screenY - MOCKUP_CONFIG.phoneY) * scale);
+  const screenY = adjustedMockupY + ((MOCKUP_CONFIG.screenY - MOCKUP_CONFIG.phoneY) * scale);
   const screenWidth = MOCKUP_CONFIG.screenWidth * scale;
   const screenHeight = MOCKUP_CONFIG.screenHeight * scale;
   const cornerRadius = MOCKUP_CONFIG.screenCornerRadius * scale;
 
   // Dynamic Island coordinates scaled
   const diX = mockupX + ((MOCKUP_CONFIG.dynamicIslandX - MOCKUP_CONFIG.phoneX) * scale);
-  const diY = mockupY + ((MOCKUP_CONFIG.dynamicIslandY - MOCKUP_CONFIG.phoneY) * scale);
+  const diY = adjustedMockupY + ((MOCKUP_CONFIG.dynamicIslandY - MOCKUP_CONFIG.phoneY) * scale);
   const diWidth = MOCKUP_CONFIG.dynamicIslandWidth * scale;
   const diHeight = MOCKUP_CONFIG.dynamicIslandHeight * scale;
   const diRadius = MOCKUP_CONFIG.dynamicIslandRadius * scale;
 
-  // 1. Draw screenshot clipped to screen area
+  const frameColor = getFrameColor(style.mockupColor);
+
+  // 0. Draw shadow for 3D depth effect
+  ctx.save();
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+  ctx.shadowBlur = 60 * scale;
+  ctx.shadowOffsetX = 15 * scale;
+  ctx.shadowOffsetY = 25 * scale;
+  ctx.fillStyle = frameColor;
+  ctx.beginPath();
+  ctx.roundRect(mockupX, adjustedMockupY, mockupWidth, mockupHeight, cornerRadius);
+  ctx.fill();
+  ctx.restore();
+
+  // 1. Draw side buttons
+  drawSideButtons(ctx, mockupX, adjustedMockupY, scale, frameColor);
+
+  // 2. Draw screenshot clipped to screen area
   if (screenshot) {
     const screenshotImg = await loadImage(screenshot);
 
@@ -179,7 +269,7 @@ const drawMockupWithScreenshot = async (
     ctx.drawImage(screenshotImg, drawX, drawY, drawWidth, drawHeight);
     ctx.restore();
 
-    // 2. Draw Dynamic Island on top of screenshot (cutout effect)
+    // 3. Draw Dynamic Island on top of screenshot (cutout effect)
     ctx.fillStyle = '#000000';
     ctx.beginPath();
     ctx.roundRect(diX, diY, diWidth, diHeight, diRadius);
@@ -192,7 +282,7 @@ const drawMockupWithScreenshot = async (
     ctx.fill();
   }
 
-  // 3. Draw mockup frame BEHIND everything (destination-over)
+  // 4. Draw mockup frame BEHIND everything (destination-over)
   ctx.globalCompositeOperation = 'destination-over';
   ctx.drawImage(mockupImg, imgX, imgY, scaledImgWidth, scaledImgHeight);
   ctx.globalCompositeOperation = 'source-over'; // Reset
@@ -229,7 +319,7 @@ export const generateScreenshotImage = async (
     : 40;
 
   if (style.showMockup) {
-    await drawMockupWithScreenshot(ctx, mockupX, mockupY, mockupWidth, mockupHeight, screenshot);
+    await drawMockupWithScreenshot(ctx, mockupX, mockupY, mockupWidth, mockupHeight, screenshot, style);
   } else if (screenshot) {
     // Draw screenshot without mockup (legacy mode)
     const img = await loadImage(screenshot);
@@ -336,7 +426,7 @@ export const generatePreviewCanvas = async (
 
   if (style.showMockup) {
     try {
-      await drawMockupWithScreenshot(ctx, mockupX, mockupY, mockupWidth, mockupHeight, screenshot);
+      await drawMockupWithScreenshot(ctx, mockupX, mockupY, mockupWidth, mockupHeight, screenshot, style);
     } catch (e) {
       // Mockup not loaded yet, draw fallback
       ctx.fillStyle = '#1d1d1f';

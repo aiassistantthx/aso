@@ -23,7 +23,8 @@ const defaultStyle: StyleConfig = {
   paddingTop: 80,
   paddingBottom: 60,
   showMockup: true,
-  mockupColor: 'black'
+  mockupColor: 'black',
+  mockupPosition: 'full'
 };
 
 const styles: Record<string, React.CSSProperties> = {
