@@ -90,17 +90,17 @@ const MOCKUP_CONFIG = {
   imageWidth: 2000,
   imageHeight: 2000,
   // Phone bounds within the image
-  phoneX: 590,
-  phoneY: 55,
-  phoneWidth: 820,
-  phoneHeight: 1680,
+  phoneX: 575,
+  phoneY: 42,
+  phoneWidth: 850,
+  phoneHeight: 1740,
   // Screen bounds within the image (inside the phone)
-  screenX: 620,
-  screenY: 85,
-  screenWidth: 760,
-  screenHeight: 1545,
+  screenX: 605,
+  screenY: 72,
+  screenWidth: 790,
+  screenHeight: 1665,
   // Corner radius for the screen
-  screenCornerRadius: 55
+  screenCornerRadius: 70
 };
 
 const drawMockupWithScreenshot = async (
@@ -131,7 +131,10 @@ const drawMockupWithScreenshot = async (
   const screenHeight = MOCKUP_CONFIG.screenHeight * scale;
   const cornerRadius = MOCKUP_CONFIG.screenCornerRadius * scale;
 
-  // Draw screenshot into the screen area first
+  // Draw the mockup frame first (it will be behind the screenshot due to compositing)
+  ctx.drawImage(mockupImg, imgX, imgY, scaledImgWidth, scaledImgHeight);
+
+  // Draw screenshot into the screen area using source-atop to replace the white screen
   if (screenshot) {
     const screenshotImg = await loadImage(screenshot);
 
@@ -172,9 +175,6 @@ const drawMockupWithScreenshot = async (
     ctx.roundRect(screenX, screenY, screenWidth, screenHeight, cornerRadius);
     ctx.fill();
   }
-
-  // Draw the mockup frame on top
-  ctx.drawImage(mockupImg, imgX, imgY, scaledImgWidth, scaledImgHeight);
 };
 
 export const generateScreenshotImage = async (
