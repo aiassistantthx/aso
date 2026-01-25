@@ -247,74 +247,70 @@ const drawStarRating = (
   }
 };
 
-// Draw a single laurel leaf
-const drawLaurelLeaf = (
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  angle: number,
-  color: string
-): void => {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(angle);
-  ctx.fillStyle = color;
+// Laurel wreath image cache
+let laurelImageCache: HTMLImageElement | null = null;
 
-  ctx.beginPath();
-  ctx.moveTo(0, -height / 2);
-  ctx.quadraticCurveTo(width / 2, -height / 4, width / 2, 0);
-  ctx.quadraticCurveTo(width / 2, height / 4, 0, height / 2);
-  ctx.quadraticCurveTo(-width / 2, height / 4, -width / 2, 0);
-  ctx.quadraticCurveTo(-width / 2, -height / 4, 0, -height / 2);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.restore();
+const loadLaurelImage = async (): Promise<HTMLImageElement> => {
+  if (laurelImageCache) {
+    return laurelImageCache;
+  }
+  const img = await loadImage('/mockups/laurel-wreath.png');
+  laurelImageCache = img;
+  return img;
 };
 
-// Draw laurel wreath decoration
-const drawLaurelWreath = (
+// Tint an image with a specific color
+const tintImage = (
+  img: HTMLImageElement,
+  color: string,
+  width: number,
+  height: number
+): HTMLCanvasElement => {
+  // Create off-screen canvas
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d')!;
+
+  // Draw the original image
+  ctx.drawImage(img, 0, 0, width, height);
+
+  // Apply color tint using multiply blend mode
+  ctx.globalCompositeOperation = 'source-in';
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, width, height);
+
+  return canvas;
+};
+
+// Draw laurel wreath decoration using image
+const drawLaurelWreath = async (
   ctx: CanvasRenderingContext2D,
   decoration: LaurelDecoration
-): void => {
+): Promise<void> => {
   if (!decoration.enabled) return;
 
   const { size, color, position, innerText, innerTextColor, innerTextSize } = decoration;
-  const baseSize = 300 * size;
-  const leafWidth = 25 * size;
-  const leafHeight = 50 * size;
-  const numLeaves = 12;
 
-  ctx.save();
-  ctx.translate(position.x, position.y);
+  try {
+    const laurelImg = await loadLaurelImage();
 
-  // Draw left branch (curving left)
-  for (let i = 0; i < numLeaves; i++) {
-    const progress = i / (numLeaves - 1);
-    const angle = -Math.PI * 0.15 + progress * Math.PI * 0.7; // Arc from top-left to bottom-left
-    const radius = baseSize * 0.5;
-    const x = -radius * 0.3 - Math.sin(angle) * radius;
-    const y = -baseSize * 0.3 + Math.cos(angle) * radius;
-    const leafAngle = angle + Math.PI * 0.3;
+    // Calculate dimensions based on size multiplier
+    // Original image is roughly square, we'll scale it
+    const baseWidth = 500 * size;
+    const baseHeight = baseWidth * (laurelImg.height / laurelImg.width);
 
-    drawLaurelLeaf(ctx, x, y, leafWidth, leafHeight, leafAngle, color);
+    // Tint the image with the selected color
+    const tintedCanvas = tintImage(laurelImg, color, baseWidth, baseHeight);
+
+    // Draw centered at position
+    const drawX = position.x - baseWidth / 2;
+    const drawY = position.y - baseHeight / 2;
+
+    ctx.drawImage(tintedCanvas, drawX, drawY, baseWidth, baseHeight);
+  } catch (e) {
+    console.error('Failed to load laurel image:', e);
   }
-
-  // Draw right branch (curving right - mirrored)
-  for (let i = 0; i < numLeaves; i++) {
-    const progress = i / (numLeaves - 1);
-    const angle = Math.PI * 0.15 - progress * Math.PI * 0.7; // Arc from top-right to bottom-right
-    const radius = baseSize * 0.5;
-    const x = radius * 0.3 + Math.sin(-angle) * radius;
-    const y = -baseSize * 0.3 + Math.cos(-angle) * radius;
-    const leafAngle = -angle - Math.PI * 0.3;
-
-    drawLaurelLeaf(ctx, x, y, leafWidth, leafHeight, leafAngle, color);
-  }
-
-  ctx.restore();
 
   // Draw inner text
   if (innerText) {
@@ -329,17 +325,17 @@ const drawLaurelWreath = (
 };
 
 // Draw all decorations
-const drawDecorations = (
+const drawDecorations = async (
   ctx: CanvasRenderingContext2D,
   decorations: Decoration[] | undefined
-): void => {
+): Promise<void> => {
   if (!decorations) return;
 
   for (const decoration of decorations) {
     if (decoration.type === 'stars') {
       drawStarRating(ctx, decoration);
     } else if (decoration.type === 'laurel') {
-      drawLaurelWreath(ctx, decoration);
+      await drawLaurelWreath(ctx, decoration);
     }
   }
 };
@@ -775,7 +771,7 @@ export const generateScreenshotImage = async (
   }
 
   // Draw decorations (stars, laurels, etc.)
-  drawDecorations(ctx, options.decorations);
+  await drawDecorations(ctx, options.decorations);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(
@@ -889,5 +885,5 @@ export const generatePreviewCanvas = async (
   }
 
   // Draw decorations (stars, laurels, etc.)
-  drawDecorations(ctx, options.decorations);
+  await drawDecorations(ctx, options.decorations);
 };
