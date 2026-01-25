@@ -118,6 +118,7 @@ const MOCKUP_CONFIG = {
   }
 };
 
+
 const getVisibilityRatio = (visibility: StyleConfig['mockupVisibility']): number => {
   switch (visibility) {
     case '2/3': return 2 / 3;
@@ -167,79 +168,74 @@ const getFrameColor = (color: 'black' | 'white' | 'natural'): string => {
 
 const drawMockupWithScreenshot = async (
   ctx: CanvasRenderingContext2D,
-  mockupX: number,
-  mockupY: number,
-  mockupWidth: number,
+  _mockupX: number,
+  _mockupY: number,
+  _mockupWidth: number,
   mockupHeight: number,
+  canvasWidth: number,
+  canvasHeight: number,
   screenshot: string | null,
   style: StyleConfig
 ): Promise<void> => {
   const mockupImg = await loadMockupImage();
   const visibilityRatio = getVisibilityRatio(style.mockupVisibility);
 
+  // Phone size is FIXED - never changes with visibility
+  const fullPhoneHeight = mockupHeight;
+  const phoneAspect = MOCKUP_CONFIG.phoneWidth / MOCKUP_CONFIG.phoneHeight;
+  const fullPhoneWidth = fullPhoneHeight * phoneAspect;
+
   // Calculate scale factor
-  const scale = mockupWidth / MOCKUP_CONFIG.phoneWidth;
+  const scale = fullPhoneWidth / MOCKUP_CONFIG.phoneWidth;
 
   // Calculate the full mockup image dimensions at this scale
   const scaledImgWidth = MOCKUP_CONFIG.imageWidth * scale;
   const scaledImgHeight = MOCKUP_CONFIG.imageHeight * scale;
 
-  // Calculate visible area dimensions
-  const fullPhoneHeight = mockupHeight;
-  const visibleHeight = fullPhoneHeight * visibilityRatio;
+  // Center phone horizontally on canvas
+  const adjustedMockupX = (canvasWidth - fullPhoneWidth) / 2;
 
-  // Calculate clip region and phone offset based on alignment
-  let clipY = mockupY;
-  let adjustedMockupY = mockupY;
+  // How much of phone is visible (based on visibility setting)
+  const visiblePhoneHeight = fullPhoneHeight * visibilityRatio;
 
-  if (visibilityRatio < 1) {
-    const hiddenHeight = fullPhoneHeight - visibleHeight;
+  // Calculate phone Y position based on alignment
+  // hiddenHeight = part of phone that extends beyond canvas
+  const hiddenHeight = fullPhoneHeight - visiblePhoneHeight;
+  let adjustedMockupY: number;
 
-    switch (style.mockupAlignment) {
-      case 'top':
-        // Phone at top of screen, UPPER part of phone is cropped
-        // We see the BOTTOM portion of the phone
-        // Clip starts at mockupY, phone needs to move UP
-        clipY = mockupY;
-        adjustedMockupY = mockupY - hiddenHeight;
-        break;
-      case 'bottom':
-        // Phone at bottom of screen, LOWER part of phone is cropped
-        // We see the TOP portion of the phone
-        // Clip starts at mockupY, phone stays at mockupY
-        clipY = mockupY;
-        adjustedMockupY = mockupY;
-        break;
-      case 'center':
-      default:
-        // Centered - equal parts hidden top and bottom
-        clipY = mockupY;
-        adjustedMockupY = mockupY - hiddenHeight / 2;
-        break;
-    }
+  switch (style.mockupAlignment) {
+    case 'top':
+      // iPhone at TOP - top part extends ABOVE canvas (cropped from top)
+      // Bottom part of iPhone visible, positioned at top of canvas
+      adjustedMockupY = -hiddenHeight;
+      break;
+    case 'bottom':
+      // iPhone at BOTTOM - bottom part extends BELOW canvas (cropped from bottom)
+      // Top part of iPhone visible, positioned so visible part is at bottom
+      adjustedMockupY = canvasHeight - visiblePhoneHeight - 40;
+      break;
+    case 'center':
+    default:
+      // iPhone centered in canvas
+      adjustedMockupY = (canvasHeight - fullPhoneHeight) / 2;
+      break;
   }
 
-  // Apply clipping for partial visibility
   ctx.save();
-  if (visibilityRatio < 1) {
-    ctx.beginPath();
-    ctx.rect(mockupX - 100, clipY, mockupWidth + 200, visibleHeight);
-    ctx.clip();
-  }
 
   // Calculate offset to position the phone correctly
-  const imgX = mockupX - (MOCKUP_CONFIG.phoneX * scale);
+  const imgX = adjustedMockupX - (MOCKUP_CONFIG.phoneX * scale);
   const imgY = adjustedMockupY - (MOCKUP_CONFIG.phoneY * scale);
 
   // Calculate screen position and size
-  const screenX = mockupX + ((MOCKUP_CONFIG.screenX - MOCKUP_CONFIG.phoneX) * scale);
+  const screenX = adjustedMockupX + ((MOCKUP_CONFIG.screenX - MOCKUP_CONFIG.phoneX) * scale);
   const screenY = adjustedMockupY + ((MOCKUP_CONFIG.screenY - MOCKUP_CONFIG.phoneY) * scale);
   const screenWidth = MOCKUP_CONFIG.screenWidth * scale;
   const screenHeight = MOCKUP_CONFIG.screenHeight * scale;
   const cornerRadius = MOCKUP_CONFIG.screenCornerRadius * scale;
 
   // Dynamic Island coordinates scaled
-  const diX = mockupX + ((MOCKUP_CONFIG.dynamicIslandX - MOCKUP_CONFIG.phoneX) * scale);
+  const diX = adjustedMockupX + ((MOCKUP_CONFIG.dynamicIslandX - MOCKUP_CONFIG.phoneX) * scale);
   const diY = adjustedMockupY + ((MOCKUP_CONFIG.dynamicIslandY - MOCKUP_CONFIG.phoneY) * scale);
   const diWidth = MOCKUP_CONFIG.dynamicIslandWidth * scale;
   const diHeight = MOCKUP_CONFIG.dynamicIslandHeight * scale;
@@ -255,12 +251,12 @@ const drawMockupWithScreenshot = async (
   ctx.shadowOffsetY = 25 * scale;
   ctx.fillStyle = frameColor;
   ctx.beginPath();
-  ctx.roundRect(mockupX, adjustedMockupY, mockupWidth, mockupHeight, cornerRadius);
+  ctx.roundRect(adjustedMockupX, adjustedMockupY, fullPhoneWidth, fullPhoneHeight, cornerRadius);
   ctx.fill();
   ctx.restore();
 
   // 1. Draw side buttons
-  drawSideButtons(ctx, mockupX, adjustedMockupY, scale, frameColor);
+  drawSideButtons(ctx, adjustedMockupX, adjustedMockupY, scale, frameColor);
 
   // 2. Draw screenshot clipped to screen area
   if (screenshot) {
@@ -350,7 +346,7 @@ export const generateScreenshotImage = async (
     : 40;
 
   if (style.showMockup) {
-    await drawMockupWithScreenshot(ctx, mockupX, mockupY, mockupWidth, mockupHeight, screenshot, style);
+    await drawMockupWithScreenshot(ctx, mockupX, mockupY, mockupWidth, mockupHeight, canvas.width, canvas.height, screenshot, style);
   } else if (screenshot) {
     // Draw screenshot without mockup (legacy mode)
     const img = await loadImage(screenshot);
@@ -457,7 +453,7 @@ export const generatePreviewCanvas = async (
 
   if (style.showMockup) {
     try {
-      await drawMockupWithScreenshot(ctx, mockupX, mockupY, mockupWidth, mockupHeight, screenshot, style);
+      await drawMockupWithScreenshot(ctx, mockupX, mockupY, mockupWidth, mockupHeight, dimensions.width, dimensions.height, screenshot, style);
     } catch (e) {
       // Mockup not loaded yet, draw fallback
       ctx.fillStyle = '#1d1d1f';
