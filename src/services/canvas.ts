@@ -7,6 +7,9 @@ export interface GenerateImageOptions {
   deviceSize: DeviceSize;
 }
 
+// Mockup image cache
+let mockupImageCache: HTMLImageElement | null = null;
+
 const loadImage = (src: string): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -15,6 +18,15 @@ const loadImage = (src: string): Promise<HTMLImageElement> => {
     img.onerror = reject;
     img.src = src;
   });
+};
+
+const loadMockupImage = async (): Promise<HTMLImageElement> => {
+  if (mockupImageCache) {
+    return mockupImageCache;
+  }
+  const img = await loadImage('/mockups/iphone-black.png');
+  mockupImageCache = img;
+  return img;
 };
 
 const wrapText = (
@@ -72,128 +84,97 @@ const drawGradientBackground = (
   ctx.fillRect(0, 0, width, height);
 };
 
-const getMockupColors = (color: 'black' | 'white' | 'natural'): { frame: string; bezel: string; accent: string } => {
-  switch (color) {
-    case 'white':
-      return { frame: '#F5F5F7', bezel: '#E8E8ED', accent: '#D2D2D7' };
-    case 'natural':
-      return { frame: '#E3D5C8', bezel: '#D4C4B5', accent: '#C5B5A6' };
-    case 'black':
-    default:
-      return { frame: '#1D1D1F', bezel: '#2D2D2F', accent: '#3D3D3F' };
-  }
+// Screen area coordinates within the mockup image (5000x5000)
+// These are approximate values based on the mockup image
+const MOCKUP_CONFIG = {
+  imageWidth: 5000,
+  imageHeight: 5000,
+  // Phone bounds within the image
+  phoneX: 1565,
+  phoneY: 295,
+  phoneWidth: 1870,
+  phoneHeight: 4015,
+  // Screen bounds within the image (inside the phone)
+  screenX: 1610,
+  screenY: 340,
+  screenWidth: 1780,
+  screenHeight: 3860,
+  // Corner radius for the screen
+  screenCornerRadius: 110
 };
 
-const drawIPhoneMockup = (
+const drawMockupWithScreenshot = async (
   ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  style: StyleConfig,
-  deviceSize: DeviceSize
-): { screenX: number; screenY: number; screenWidth: number; screenHeight: number } => {
-  const dimensions = DEVICE_SIZES[deviceSize];
-  const colors = getMockupColors(style.mockupColor);
+  mockupX: number,
+  mockupY: number,
+  mockupWidth: number,
+  _mockupHeight: number,
+  screenshot: string | null
+): Promise<void> => {
+  const mockupImg = await loadMockupImage();
 
-  const frameWidth = 16;
-  const cornerRadius = dimensions.cornerRadius * (width / dimensions.width);
-  const dynamicIslandWidth = dimensions.dynamicIslandWidth * (width / dimensions.width);
-  const dynamicIslandHeight = dimensions.dynamicIslandHeight * (width / dimensions.width);
+  // Calculate scale factor (mockupHeight is implicit from aspect ratio)
+  const scale = mockupWidth / MOCKUP_CONFIG.phoneWidth;
 
-  // Draw outer frame (phone body)
-  ctx.save();
+  // Calculate the full mockup image dimensions at this scale
+  const scaledImgWidth = MOCKUP_CONFIG.imageWidth * scale;
+  const scaledImgHeight = MOCKUP_CONFIG.imageHeight * scale;
 
-  // Phone body shadow
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-  ctx.shadowBlur = 40;
-  ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 20;
+  // Calculate offset to position the phone correctly
+  const imgX = mockupX - (MOCKUP_CONFIG.phoneX * scale);
+  const imgY = mockupY - (MOCKUP_CONFIG.phoneY * scale);
 
-  // Draw phone frame
-  ctx.fillStyle = colors.frame;
-  ctx.beginPath();
-  ctx.roundRect(x, y, width, height, cornerRadius);
-  ctx.fill();
+  // Calculate screen position and size
+  const screenX = mockupX + ((MOCKUP_CONFIG.screenX - MOCKUP_CONFIG.phoneX) * scale);
+  const screenY = mockupY + ((MOCKUP_CONFIG.screenY - MOCKUP_CONFIG.phoneY) * scale);
+  const screenWidth = MOCKUP_CONFIG.screenWidth * scale;
+  const screenHeight = MOCKUP_CONFIG.screenHeight * scale;
+  const cornerRadius = MOCKUP_CONFIG.screenCornerRadius * scale;
 
-  ctx.shadowColor = 'transparent';
+  // Draw screenshot into the screen area first
+  if (screenshot) {
+    const screenshotImg = await loadImage(screenshot);
 
-  // Draw bezel highlight (top edge)
-  ctx.strokeStyle = colors.accent;
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.roundRect(x + 0.5, y + 0.5, width - 1, height - 1, cornerRadius);
-  ctx.stroke();
+    ctx.save();
 
-  // Screen area
-  const screenX = x + frameWidth;
-  const screenY = y + frameWidth;
-  const screenWidth = width - frameWidth * 2;
-  const screenHeight = height - frameWidth * 2;
-  const screenCornerRadius = cornerRadius - frameWidth / 2;
+    // Clip to screen area with rounded corners
+    ctx.beginPath();
+    ctx.roundRect(screenX, screenY, screenWidth, screenHeight, cornerRadius);
+    ctx.clip();
 
-  // Draw screen background (black for empty state)
-  ctx.fillStyle = '#000000';
-  ctx.beginPath();
-  ctx.roundRect(screenX, screenY, screenWidth, screenHeight, screenCornerRadius);
-  ctx.fill();
+    // Calculate scaling to cover the screen area
+    const imgAspect = screenshotImg.width / screenshotImg.height;
+    const screenAspect = screenWidth / screenHeight;
 
-  // Draw Dynamic Island
-  const islandX = x + (width - dynamicIslandWidth) / 2;
-  const islandY = y + frameWidth + 15;
-  const islandRadius = dynamicIslandHeight / 2;
+    let drawWidth: number;
+    let drawHeight: number;
+    let drawX: number;
+    let drawY: number;
 
-  ctx.fillStyle = '#000000';
-  ctx.beginPath();
-  ctx.roundRect(islandX, islandY, dynamicIslandWidth, dynamicIslandHeight, islandRadius);
-  ctx.fill();
+    if (imgAspect > screenAspect) {
+      drawHeight = screenHeight;
+      drawWidth = drawHeight * imgAspect;
+      drawX = screenX - (drawWidth - screenWidth) / 2;
+      drawY = screenY;
+    } else {
+      drawWidth = screenWidth;
+      drawHeight = drawWidth / imgAspect;
+      drawX = screenX;
+      drawY = screenY - (drawHeight - screenHeight) / 2;
+    }
 
-  ctx.restore();
-
-  return { screenX, screenY, screenWidth, screenHeight };
-};
-
-const drawScreenshotInMockup = (
-  ctx: CanvasRenderingContext2D,
-  img: HTMLImageElement,
-  screenX: number,
-  screenY: number,
-  screenWidth: number,
-  screenHeight: number,
-  cornerRadius: number
-): void => {
-  ctx.save();
-
-  // Clip to screen area
-  ctx.beginPath();
-  ctx.roundRect(screenX, screenY, screenWidth, screenHeight, cornerRadius);
-  ctx.clip();
-
-  // Calculate scaling to cover the screen area
-  const imgAspect = img.width / img.height;
-  const screenAspect = screenWidth / screenHeight;
-
-  let drawWidth: number;
-  let drawHeight: number;
-  let drawX: number;
-  let drawY: number;
-
-  if (imgAspect > screenAspect) {
-    // Image is wider - fit height, crop width
-    drawHeight = screenHeight;
-    drawWidth = drawHeight * imgAspect;
-    drawX = screenX - (drawWidth - screenWidth) / 2;
-    drawY = screenY;
+    ctx.drawImage(screenshotImg, drawX, drawY, drawWidth, drawHeight);
+    ctx.restore();
   } else {
-    // Image is taller - fit width, crop height
-    drawWidth = screenWidth;
-    drawHeight = drawWidth / imgAspect;
-    drawX = screenX;
-    drawY = screenY - (drawHeight - screenHeight) / 2;
+    // Draw black screen if no screenshot
+    ctx.fillStyle = '#000000';
+    ctx.beginPath();
+    ctx.roundRect(screenX, screenY, screenWidth, screenHeight, cornerRadius);
+    ctx.fill();
   }
 
-  ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
-  ctx.restore();
+  // Draw the mockup frame on top
+  ctx.drawImage(mockupImg, imgX, imgY, scaledImgWidth, scaledImgHeight);
 };
 
 export const generateScreenshotImage = async (
@@ -217,7 +198,9 @@ export const generateScreenshotImage = async (
 
   const availableHeight = canvas.height - textAreaHeight - 80;
   const mockupHeight = Math.min(availableHeight, canvas.height * 0.75);
-  const mockupWidth = mockupHeight * (dimensions.width / dimensions.height) * 0.85;
+  // Maintain phone aspect ratio
+  const phoneAspect = MOCKUP_CONFIG.phoneWidth / MOCKUP_CONFIG.phoneHeight;
+  const mockupWidth = mockupHeight * phoneAspect;
 
   const mockupX = (canvas.width - mockupWidth) / 2;
   const mockupY = style.textPosition === 'top'
@@ -225,23 +208,7 @@ export const generateScreenshotImage = async (
     : 40;
 
   if (style.showMockup) {
-    // Draw iPhone mockup
-    const { screenX, screenY, screenWidth, screenHeight } = drawIPhoneMockup(
-      ctx,
-      mockupX,
-      mockupY,
-      mockupWidth,
-      mockupHeight,
-      style,
-      deviceSize
-    );
-
-    // Draw screenshot inside mockup if provided
-    if (screenshot) {
-      const img = await loadImage(screenshot);
-      const cornerRadius = DEVICE_SIZES[deviceSize].cornerRadius * (mockupWidth / dimensions.width) - 8;
-      drawScreenshotInMockup(ctx, img, screenX, screenY, screenWidth, screenHeight, cornerRadius);
-    }
+    await drawMockupWithScreenshot(ctx, mockupX, mockupY, mockupWidth, mockupHeight, screenshot);
   } else if (screenshot) {
     // Draw screenshot without mockup (legacy mode)
     const img = await loadImage(screenshot);
@@ -338,7 +305,8 @@ export const generatePreviewCanvas = async (
 
   const availableHeight = dimensions.height - textAreaHeight - 80;
   const mockupHeight = Math.min(availableHeight, dimensions.height * 0.75);
-  const mockupWidth = mockupHeight * (dimensions.width / dimensions.height) * 0.85;
+  const phoneAspect = MOCKUP_CONFIG.phoneWidth / MOCKUP_CONFIG.phoneHeight;
+  const mockupWidth = mockupHeight * phoneAspect;
 
   const mockupX = (dimensions.width - mockupWidth) / 2;
   const mockupY = style.textPosition === 'top'
@@ -346,29 +314,16 @@ export const generatePreviewCanvas = async (
     : 40;
 
   if (style.showMockup) {
-    // Draw iPhone mockup
-    const { screenX, screenY, screenWidth, screenHeight } = drawIPhoneMockup(
-      ctx,
-      mockupX,
-      mockupY,
-      mockupWidth,
-      mockupHeight,
-      style,
-      deviceSize
-    );
-
-    // Draw screenshot inside mockup if provided
-    if (screenshot) {
-      try {
-        const img = await loadImage(screenshot);
-        const cornerRadius = DEVICE_SIZES[deviceSize].cornerRadius * (mockupWidth / dimensions.width) - 8;
-        drawScreenshotInMockup(ctx, img, screenX, screenY, screenWidth, screenHeight, cornerRadius);
-      } catch (e) {
-        // Screenshot not loaded yet
-      }
+    try {
+      await drawMockupWithScreenshot(ctx, mockupX, mockupY, mockupWidth, mockupHeight, screenshot);
+    } catch (e) {
+      // Mockup not loaded yet, draw fallback
+      ctx.fillStyle = '#1d1d1f';
+      ctx.beginPath();
+      ctx.roundRect(mockupX, mockupY, mockupWidth, mockupHeight, 60);
+      ctx.fill();
     }
   } else if (screenshot) {
-    // Draw screenshot without mockup
     try {
       const img = await loadImage(screenshot);
       const imgAspect = img.width / img.height;
