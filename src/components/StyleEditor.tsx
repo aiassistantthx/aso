@@ -19,6 +19,17 @@ const cssStyles: Record<string, React.CSSProperties> = {
     color: '#1d1d1f',
     marginBottom: '8px'
   },
+  sectionTitle: {
+    fontSize: '12px',
+    fontWeight: 600,
+    color: '#86868b',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    marginTop: '16px',
+    marginBottom: '12px',
+    paddingTop: '16px',
+    borderTop: '1px solid #e8e8ed'
+  },
   grid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(2, 1fr)',
@@ -94,6 +105,23 @@ const cssStyles: Record<string, React.CSSProperties> = {
     backgroundColor: '#0071e3',
     borderColor: '#0071e3',
     color: '#fff'
+  },
+  toggle: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    cursor: 'pointer'
+  },
+  checkbox: {
+    width: '18px',
+    height: '18px',
+    cursor: 'pointer'
+  },
+  gradientPreview: {
+    height: '40px',
+    borderRadius: '8px',
+    border: '1px solid #d2d2d7',
+    marginTop: '8px'
   }
 };
 
@@ -102,6 +130,15 @@ const FONT_OPTIONS = [
   { value: 'Helvetica Neue, Helvetica, Arial, sans-serif', label: 'Helvetica Neue' },
   { value: 'Georgia, serif', label: 'Georgia' },
   { value: 'Menlo, monospace', label: 'Menlo' }
+];
+
+const GRADIENT_PRESETS = [
+  { name: 'Purple Blue', color1: '#667eea', color2: '#764ba2' },
+  { name: 'Orange Red', color1: '#f093fb', color2: '#f5576c' },
+  { name: 'Green Teal', color1: '#4facfe', color2: '#00f2fe' },
+  { name: 'Pink Orange', color1: '#fa709a', color2: '#fee140' },
+  { name: 'Blue Purple', color1: '#a18cd1', color2: '#fbc2eb' },
+  { name: 'Dark', color1: '#0f0c29', color2: '#302b63' }
 ];
 
 export const StyleEditor: React.FC<Props> = ({
@@ -113,6 +150,17 @@ export const StyleEditor: React.FC<Props> = ({
   const updateStyle = <K extends keyof StyleConfig>(key: K, value: StyleConfig[K]) => {
     onStyleChange({ ...style, [key]: value });
   };
+
+  const updateGradient = (updates: Partial<StyleConfig['gradient']>) => {
+    onStyleChange({
+      ...style,
+      gradient: { ...style.gradient, ...updates }
+    });
+  };
+
+  const gradientBackground = style.gradient.enabled
+    ? `linear-gradient(${style.gradient.angle}deg, ${style.gradient.color1}, ${style.gradient.color2})`
+    : style.backgroundColor;
 
   return (
     <div style={cssStyles.container}>
@@ -150,8 +198,127 @@ export const StyleEditor: React.FC<Props> = ({
             ))}
           </select>
         </div>
+      </div>
 
-        {/* Background Color */}
+      {/* Mockup Section */}
+      <div style={cssStyles.sectionTitle as React.CSSProperties}>iPhone Mockup</div>
+      <div style={cssStyles.grid}>
+        <div style={cssStyles.field as React.CSSProperties}>
+          <label style={cssStyles.toggle}>
+            <input
+              type="checkbox"
+              checked={style.showMockup}
+              onChange={(e) => updateStyle('showMockup', e.target.checked)}
+              style={cssStyles.checkbox}
+            />
+            <span style={cssStyles.fieldLabel}>Show iPhone Frame</span>
+          </label>
+        </div>
+
+        {style.showMockup && (
+          <div style={cssStyles.field as React.CSSProperties}>
+            <span style={cssStyles.fieldLabel}>Frame Color</span>
+            <div style={cssStyles.buttonGroup}>
+              {(['black', 'white', 'natural'] as const).map((color) => (
+                <button
+                  key={color}
+                  style={{
+                    ...cssStyles.button,
+                    ...(style.mockupColor === color ? cssStyles.buttonActive : {})
+                  }}
+                  onClick={() => updateStyle('mockupColor', color)}
+                >
+                  {color.charAt(0).toUpperCase() + color.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Background Section */}
+      <div style={cssStyles.sectionTitle as React.CSSProperties}>Background</div>
+
+      <div style={{ marginBottom: '12px' }}>
+        <label style={cssStyles.toggle}>
+          <input
+            type="checkbox"
+            checked={style.gradient.enabled}
+            onChange={(e) => updateGradient({ enabled: e.target.checked })}
+            style={cssStyles.checkbox}
+          />
+          <span style={cssStyles.fieldLabel}>Use Gradient</span>
+        </label>
+      </div>
+
+      {style.gradient.enabled ? (
+        <>
+          <div style={cssStyles.grid}>
+            <div style={cssStyles.field as React.CSSProperties}>
+              <span style={cssStyles.fieldLabel}>Color 1</span>
+              <input
+                type="color"
+                value={style.gradient.color1}
+                onChange={(e) => updateGradient({ color1: e.target.value })}
+                style={cssStyles.colorInput}
+              />
+            </div>
+            <div style={cssStyles.field as React.CSSProperties}>
+              <span style={cssStyles.fieldLabel}>Color 2</span>
+              <input
+                type="color"
+                value={style.gradient.color2}
+                onChange={(e) => updateGradient({ color2: e.target.value })}
+                style={cssStyles.colorInput}
+              />
+            </div>
+          </div>
+
+          <div style={{ ...cssStyles.field as React.CSSProperties, marginTop: '12px' }}>
+            <span style={cssStyles.fieldLabel}>Angle</span>
+            <div style={cssStyles.rangeContainer}>
+              <input
+                type="range"
+                min="0"
+                max="360"
+                value={style.gradient.angle}
+                onChange={(e) => updateGradient({ angle: Number(e.target.value) })}
+                style={cssStyles.range}
+              />
+              <span style={cssStyles.rangeValue as React.CSSProperties}>{style.gradient.angle}°</span>
+            </div>
+          </div>
+
+          <div style={{ marginTop: '12px' }}>
+            <span style={cssStyles.fieldLabel}>Presets</span>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+              {GRADIENT_PRESETS.map((preset) => (
+                <button
+                  key={preset.name}
+                  onClick={() => updateGradient({ color1: preset.color1, color2: preset.color2 })}
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '6px',
+                    border: '2px solid #fff',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                    cursor: 'pointer',
+                    background: `linear-gradient(135deg, ${preset.color1}, ${preset.color2})`
+                  }}
+                  title={preset.name}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div
+            style={{
+              ...cssStyles.gradientPreview,
+              background: gradientBackground
+            }}
+          />
+        </>
+      ) : (
         <div style={cssStyles.field as React.CSSProperties}>
           <span style={cssStyles.fieldLabel}>Background Color</span>
           <input
@@ -161,8 +328,12 @@ export const StyleEditor: React.FC<Props> = ({
             style={cssStyles.colorInput}
           />
         </div>
+      )}
 
-        {/* Text Color */}
+      {/* Text Section */}
+      <div style={cssStyles.sectionTitle as React.CSSProperties}>Text</div>
+
+      <div style={cssStyles.grid}>
         <div style={cssStyles.field as React.CSSProperties}>
           <span style={cssStyles.fieldLabel}>Text Color</span>
           <input
@@ -173,8 +344,7 @@ export const StyleEditor: React.FC<Props> = ({
           />
         </div>
 
-        {/* Font Size */}
-        <div style={{ ...cssStyles.field as React.CSSProperties, gridColumn: '1 / -1' }}>
+        <div style={cssStyles.field as React.CSSProperties}>
           <span style={cssStyles.fieldLabel}>Font Size</span>
           <div style={cssStyles.rangeContainer}>
             <input
@@ -189,7 +359,6 @@ export const StyleEditor: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Text Position */}
         <div style={cssStyles.field as React.CSSProperties}>
           <span style={cssStyles.fieldLabel}>Text Position</span>
           <div style={cssStyles.buttonGroup}>
@@ -214,7 +383,6 @@ export const StyleEditor: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Text Align */}
         <div style={cssStyles.field as React.CSSProperties}>
           <span style={cssStyles.fieldLabel}>Text Alignment</span>
           <div style={cssStyles.buttonGroup}>
@@ -248,7 +416,6 @@ export const StyleEditor: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Padding Top */}
         <div style={cssStyles.field as React.CSSProperties}>
           <span style={cssStyles.fieldLabel}>Padding Top</span>
           <div style={cssStyles.rangeContainer}>
@@ -264,7 +431,6 @@ export const StyleEditor: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Padding Bottom */}
         <div style={cssStyles.field as React.CSSProperties}>
           <span style={cssStyles.fieldLabel}>Padding Bottom</span>
           <div style={cssStyles.rangeContainer}>

@@ -1,7 +1,7 @@
 import { StyleConfig, DeviceSize, DEVICE_SIZES } from '../types';
 
 export interface GenerateImageOptions {
-  screenshot: string;
+  screenshot: string | null;
   text: string;
   style: StyleConfig;
   deviceSize: DeviceSize;
@@ -45,6 +45,157 @@ const wrapText = (
   return lines;
 };
 
+const drawGradientBackground = (
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  style: StyleConfig
+): void => {
+  if (style.gradient.enabled) {
+    const angleRad = (style.gradient.angle * Math.PI) / 180;
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const gradientLength = Math.sqrt(width * width + height * height);
+
+    const x1 = centerX - Math.cos(angleRad) * gradientLength / 2;
+    const y1 = centerY - Math.sin(angleRad) * gradientLength / 2;
+    const x2 = centerX + Math.cos(angleRad) * gradientLength / 2;
+    const y2 = centerY + Math.sin(angleRad) * gradientLength / 2;
+
+    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+    gradient.addColorStop(0, style.gradient.color1);
+    gradient.addColorStop(1, style.gradient.color2);
+    ctx.fillStyle = gradient;
+  } else {
+    ctx.fillStyle = style.backgroundColor;
+  }
+  ctx.fillRect(0, 0, width, height);
+};
+
+const getMockupColors = (color: 'black' | 'white' | 'natural'): { frame: string; bezel: string; accent: string } => {
+  switch (color) {
+    case 'white':
+      return { frame: '#F5F5F7', bezel: '#E8E8ED', accent: '#D2D2D7' };
+    case 'natural':
+      return { frame: '#E3D5C8', bezel: '#D4C4B5', accent: '#C5B5A6' };
+    case 'black':
+    default:
+      return { frame: '#1D1D1F', bezel: '#2D2D2F', accent: '#3D3D3F' };
+  }
+};
+
+const drawIPhoneMockup = (
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  style: StyleConfig,
+  deviceSize: DeviceSize
+): { screenX: number; screenY: number; screenWidth: number; screenHeight: number } => {
+  const dimensions = DEVICE_SIZES[deviceSize];
+  const colors = getMockupColors(style.mockupColor);
+
+  const frameWidth = 16;
+  const cornerRadius = dimensions.cornerRadius * (width / dimensions.width);
+  const dynamicIslandWidth = dimensions.dynamicIslandWidth * (width / dimensions.width);
+  const dynamicIslandHeight = dimensions.dynamicIslandHeight * (width / dimensions.width);
+
+  // Draw outer frame (phone body)
+  ctx.save();
+
+  // Phone body shadow
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+  ctx.shadowBlur = 40;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 20;
+
+  // Draw phone frame
+  ctx.fillStyle = colors.frame;
+  ctx.beginPath();
+  ctx.roundRect(x, y, width, height, cornerRadius);
+  ctx.fill();
+
+  ctx.shadowColor = 'transparent';
+
+  // Draw bezel highlight (top edge)
+  ctx.strokeStyle = colors.accent;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(x + 0.5, y + 0.5, width - 1, height - 1, cornerRadius);
+  ctx.stroke();
+
+  // Screen area
+  const screenX = x + frameWidth;
+  const screenY = y + frameWidth;
+  const screenWidth = width - frameWidth * 2;
+  const screenHeight = height - frameWidth * 2;
+  const screenCornerRadius = cornerRadius - frameWidth / 2;
+
+  // Draw screen background (black for empty state)
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.roundRect(screenX, screenY, screenWidth, screenHeight, screenCornerRadius);
+  ctx.fill();
+
+  // Draw Dynamic Island
+  const islandX = x + (width - dynamicIslandWidth) / 2;
+  const islandY = y + frameWidth + 15;
+  const islandRadius = dynamicIslandHeight / 2;
+
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.roundRect(islandX, islandY, dynamicIslandWidth, dynamicIslandHeight, islandRadius);
+  ctx.fill();
+
+  ctx.restore();
+
+  return { screenX, screenY, screenWidth, screenHeight };
+};
+
+const drawScreenshotInMockup = (
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  screenX: number,
+  screenY: number,
+  screenWidth: number,
+  screenHeight: number,
+  cornerRadius: number
+): void => {
+  ctx.save();
+
+  // Clip to screen area
+  ctx.beginPath();
+  ctx.roundRect(screenX, screenY, screenWidth, screenHeight, cornerRadius);
+  ctx.clip();
+
+  // Calculate scaling to cover the screen area
+  const imgAspect = img.width / img.height;
+  const screenAspect = screenWidth / screenHeight;
+
+  let drawWidth: number;
+  let drawHeight: number;
+  let drawX: number;
+  let drawY: number;
+
+  if (imgAspect > screenAspect) {
+    // Image is wider - fit height, crop width
+    drawHeight = screenHeight;
+    drawWidth = drawHeight * imgAspect;
+    drawX = screenX - (drawWidth - screenWidth) / 2;
+    drawY = screenY;
+  } else {
+    // Image is taller - fit width, crop height
+    drawWidth = screenWidth;
+    drawHeight = drawWidth / imgAspect;
+    drawX = screenX;
+    drawY = screenY - (drawHeight - screenHeight) / 2;
+  }
+
+  ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+  ctx.restore();
+};
+
 export const generateScreenshotImage = async (
   options: GenerateImageOptions
 ): Promise<Blob> => {
@@ -56,72 +207,65 @@ export const generateScreenshotImage = async (
   canvas.height = dimensions.height;
   const ctx = canvas.getContext('2d')!;
 
-  // Fill background
-  ctx.fillStyle = style.backgroundColor;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // Draw gradient/solid background
+  drawGradientBackground(ctx, canvas.width, canvas.height, style);
 
-  // Load and draw screenshot
-  const img = await loadImage(screenshot);
+  // Calculate mockup dimensions
+  const textAreaHeight = style.textPosition === 'top'
+    ? style.paddingTop + style.fontSize * 2.5
+    : style.paddingBottom + style.fontSize * 2.5;
 
-  // Calculate screenshot placement (with mockup frame consideration)
-  const frameWidth = dimensions.width * 0.85;
-  const textAreaHeight = dimensions.height * 0.18;
-  const screenshotAreaHeight = dimensions.height - textAreaHeight - style.paddingBottom;
+  const availableHeight = canvas.height - textAreaHeight - 80;
+  const mockupHeight = Math.min(availableHeight, canvas.height * 0.75);
+  const mockupWidth = mockupHeight * (dimensions.width / dimensions.height) * 0.85;
 
-  // Calculate aspect ratio and fit
-  const imgAspect = img.width / img.height;
-  const frameAspect = frameWidth / screenshotAreaHeight;
+  const mockupX = (canvas.width - mockupWidth) / 2;
+  const mockupY = style.textPosition === 'top'
+    ? textAreaHeight + 40
+    : 40;
 
-  let drawWidth: number;
-  let drawHeight: number;
+  if (style.showMockup) {
+    // Draw iPhone mockup
+    const { screenX, screenY, screenWidth, screenHeight } = drawIPhoneMockup(
+      ctx,
+      mockupX,
+      mockupY,
+      mockupWidth,
+      mockupHeight,
+      style,
+      deviceSize
+    );
 
-  if (imgAspect > frameAspect) {
-    drawWidth = frameWidth;
-    drawHeight = frameWidth / imgAspect;
-  } else {
-    drawHeight = screenshotAreaHeight * 0.9;
-    drawWidth = drawHeight * imgAspect;
+    // Draw screenshot inside mockup if provided
+    if (screenshot) {
+      const img = await loadImage(screenshot);
+      const cornerRadius = DEVICE_SIZES[deviceSize].cornerRadius * (mockupWidth / dimensions.width) - 8;
+      drawScreenshotInMockup(ctx, img, screenX, screenY, screenWidth, screenHeight, cornerRadius);
+    }
+  } else if (screenshot) {
+    // Draw screenshot without mockup (legacy mode)
+    const img = await loadImage(screenshot);
+    const imgAspect = img.width / img.height;
+
+    let drawWidth = mockupWidth;
+    let drawHeight = drawWidth / imgAspect;
+
+    if (drawHeight > mockupHeight) {
+      drawHeight = mockupHeight;
+      drawWidth = drawHeight * imgAspect;
+    }
+
+    const imgX = (canvas.width - drawWidth) / 2;
+    const imgY = mockupY + (mockupHeight - drawHeight) / 2;
+
+    const cornerRadius = 40;
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(imgX, imgY, drawWidth, drawHeight, cornerRadius);
+    ctx.clip();
+    ctx.drawImage(img, imgX, imgY, drawWidth, drawHeight);
+    ctx.restore();
   }
-
-  const imgX = (canvas.width - drawWidth) / 2;
-  const imgY = style.textPosition === 'top'
-    ? textAreaHeight + style.paddingTop
-    : style.paddingTop + 20;
-
-  // Draw screenshot with rounded corners (mockup effect)
-  const cornerRadius = 40;
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(imgX + cornerRadius, imgY);
-  ctx.lineTo(imgX + drawWidth - cornerRadius, imgY);
-  ctx.quadraticCurveTo(imgX + drawWidth, imgY, imgX + drawWidth, imgY + cornerRadius);
-  ctx.lineTo(imgX + drawWidth, imgY + drawHeight - cornerRadius);
-  ctx.quadraticCurveTo(imgX + drawWidth, imgY + drawHeight, imgX + drawWidth - cornerRadius, imgY + drawHeight);
-  ctx.lineTo(imgX + cornerRadius, imgY + drawHeight);
-  ctx.quadraticCurveTo(imgX, imgY + drawHeight, imgX, imgY + drawHeight - cornerRadius);
-  ctx.lineTo(imgX, imgY + cornerRadius);
-  ctx.quadraticCurveTo(imgX, imgY, imgX + cornerRadius, imgY);
-  ctx.closePath();
-  ctx.clip();
-
-  ctx.drawImage(img, imgX, imgY, drawWidth, drawHeight);
-  ctx.restore();
-
-  // Draw phone frame outline
-  ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-  ctx.lineWidth = 8;
-  ctx.beginPath();
-  ctx.moveTo(imgX + cornerRadius, imgY);
-  ctx.lineTo(imgX + drawWidth - cornerRadius, imgY);
-  ctx.quadraticCurveTo(imgX + drawWidth, imgY, imgX + drawWidth, imgY + cornerRadius);
-  ctx.lineTo(imgX + drawWidth, imgY + drawHeight - cornerRadius);
-  ctx.quadraticCurveTo(imgX + drawWidth, imgY + drawHeight, imgX + drawWidth - cornerRadius, imgY + drawHeight);
-  ctx.lineTo(imgX + cornerRadius, imgY + drawHeight);
-  ctx.quadraticCurveTo(imgX, imgY + drawHeight, imgX, imgY + drawHeight - cornerRadius);
-  ctx.lineTo(imgX, imgY + cornerRadius);
-  ctx.quadraticCurveTo(imgX, imgY, imgX + cornerRadius, imgY);
-  ctx.closePath();
-  ctx.stroke();
 
   // Draw text
   if (text) {
@@ -184,73 +328,72 @@ export const generatePreviewCanvas = async (
 
   ctx.scale(scale, scale);
 
-  // Fill background
-  ctx.fillStyle = style.backgroundColor;
-  ctx.fillRect(0, 0, dimensions.width, dimensions.height);
+  // Draw gradient/solid background
+  drawGradientBackground(ctx, dimensions.width, dimensions.height, style);
 
-  // Load and draw screenshot
-  try {
-    const img = await loadImage(screenshot);
+  // Calculate mockup dimensions
+  const textAreaHeight = style.textPosition === 'top'
+    ? style.paddingTop + style.fontSize * 2.5
+    : style.paddingBottom + style.fontSize * 2.5;
 
-    const frameWidth = dimensions.width * 0.85;
-    const textAreaHeight = dimensions.height * 0.18;
-    const screenshotAreaHeight = dimensions.height - textAreaHeight - style.paddingBottom;
+  const availableHeight = dimensions.height - textAreaHeight - 80;
+  const mockupHeight = Math.min(availableHeight, dimensions.height * 0.75);
+  const mockupWidth = mockupHeight * (dimensions.width / dimensions.height) * 0.85;
 
-    const imgAspect = img.width / img.height;
-    const frameAspect = frameWidth / screenshotAreaHeight;
+  const mockupX = (dimensions.width - mockupWidth) / 2;
+  const mockupY = style.textPosition === 'top'
+    ? textAreaHeight + 40
+    : 40;
 
-    let drawWidth: number;
-    let drawHeight: number;
+  if (style.showMockup) {
+    // Draw iPhone mockup
+    const { screenX, screenY, screenWidth, screenHeight } = drawIPhoneMockup(
+      ctx,
+      mockupX,
+      mockupY,
+      mockupWidth,
+      mockupHeight,
+      style,
+      deviceSize
+    );
 
-    if (imgAspect > frameAspect) {
-      drawWidth = frameWidth;
-      drawHeight = frameWidth / imgAspect;
-    } else {
-      drawHeight = screenshotAreaHeight * 0.9;
-      drawWidth = drawHeight * imgAspect;
+    // Draw screenshot inside mockup if provided
+    if (screenshot) {
+      try {
+        const img = await loadImage(screenshot);
+        const cornerRadius = DEVICE_SIZES[deviceSize].cornerRadius * (mockupWidth / dimensions.width) - 8;
+        drawScreenshotInMockup(ctx, img, screenX, screenY, screenWidth, screenHeight, cornerRadius);
+      } catch (e) {
+        // Screenshot not loaded yet
+      }
     }
+  } else if (screenshot) {
+    // Draw screenshot without mockup
+    try {
+      const img = await loadImage(screenshot);
+      const imgAspect = img.width / img.height;
 
-    const imgX = (dimensions.width - drawWidth) / 2;
-    const imgY = style.textPosition === 'top'
-      ? textAreaHeight + style.paddingTop
-      : style.paddingTop + 20;
+      let drawWidth = mockupWidth;
+      let drawHeight = drawWidth / imgAspect;
 
-    // Draw screenshot with rounded corners
-    const cornerRadius = 40;
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(imgX + cornerRadius, imgY);
-    ctx.lineTo(imgX + drawWidth - cornerRadius, imgY);
-    ctx.quadraticCurveTo(imgX + drawWidth, imgY, imgX + drawWidth, imgY + cornerRadius);
-    ctx.lineTo(imgX + drawWidth, imgY + drawHeight - cornerRadius);
-    ctx.quadraticCurveTo(imgX + drawWidth, imgY + drawHeight, imgX + drawWidth - cornerRadius, imgY + drawHeight);
-    ctx.lineTo(imgX + cornerRadius, imgY + drawHeight);
-    ctx.quadraticCurveTo(imgX, imgY + drawHeight, imgX, imgY + drawHeight - cornerRadius);
-    ctx.lineTo(imgX, imgY + cornerRadius);
-    ctx.quadraticCurveTo(imgX, imgY, imgX + cornerRadius, imgY);
-    ctx.closePath();
-    ctx.clip();
+      if (drawHeight > mockupHeight) {
+        drawHeight = mockupHeight;
+        drawWidth = drawHeight * imgAspect;
+      }
 
-    ctx.drawImage(img, imgX, imgY, drawWidth, drawHeight);
-    ctx.restore();
+      const imgX = (dimensions.width - drawWidth) / 2;
+      const imgY = mockupY + (mockupHeight - drawHeight) / 2;
 
-    // Draw frame outline
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-    ctx.lineWidth = 8;
-    ctx.beginPath();
-    ctx.moveTo(imgX + cornerRadius, imgY);
-    ctx.lineTo(imgX + drawWidth - cornerRadius, imgY);
-    ctx.quadraticCurveTo(imgX + drawWidth, imgY, imgX + drawWidth, imgY + cornerRadius);
-    ctx.lineTo(imgX + drawWidth, imgY + drawHeight - cornerRadius);
-    ctx.quadraticCurveTo(imgX + drawWidth, imgY + drawHeight, imgX + drawWidth - cornerRadius, imgY + drawHeight);
-    ctx.lineTo(imgX + cornerRadius, imgY + drawHeight);
-    ctx.quadraticCurveTo(imgX, imgY + drawHeight, imgX, imgY + drawHeight - cornerRadius);
-    ctx.lineTo(imgX, imgY + cornerRadius);
-    ctx.quadraticCurveTo(imgX, imgY, imgX + cornerRadius, imgY);
-    ctx.closePath();
-    ctx.stroke();
-  } catch (e) {
-    // Screenshot not loaded yet
+      const cornerRadius = 40;
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(imgX, imgY, drawWidth, drawHeight, cornerRadius);
+      ctx.clip();
+      ctx.drawImage(img, imgX, imgY, drawWidth, drawHeight);
+      ctx.restore();
+    } catch (e) {
+      // Screenshot not loaded
+    }
   }
 
   // Draw text

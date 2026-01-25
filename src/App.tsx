@@ -9,13 +9,21 @@ import { ExportButton } from './components/ExportButton';
 
 const defaultStyle: StyleConfig = {
   backgroundColor: '#667eea',
+  gradient: {
+    enabled: true,
+    color1: '#667eea',
+    color2: '#764ba2',
+    angle: 135
+  },
   textColor: '#ffffff',
   fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif',
   fontSize: 72,
   textPosition: 'top',
   textAlign: 'center',
   paddingTop: 80,
-  paddingBottom: 60
+  paddingBottom: 60,
+  showMockup: true,
+  mockupColor: 'black'
 };
 
 const styles: Record<string, React.CSSProperties> = {

@@ -34,18 +34,6 @@ const cssStyles: Record<string, React.CSSProperties> = {
     borderRadius: '8px',
     boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
   },
-  emptyState: {
-    textAlign: 'center',
-    color: '#86868b'
-  },
-  emptyIcon: {
-    fontSize: '48px',
-    marginBottom: '12px',
-    opacity: 0.5
-  },
-  emptyText: {
-    fontSize: '14px'
-  },
   thumbnailStrip: {
     display: 'flex',
     gap: '8px',
@@ -64,6 +52,12 @@ const cssStyles: Record<string, React.CSSProperties> = {
   },
   thumbnailActive: {
     borderColor: '#0071e3'
+  },
+  hint: {
+    textAlign: 'center',
+    fontSize: '12px',
+    color: '#86868b',
+    marginTop: '8px'
   }
 };
 
@@ -78,31 +72,15 @@ export const Preview: React.FC<Props> = ({
   const selectedScreenshot = screenshots[selectedIndex];
 
   useEffect(() => {
-    if (canvasRef.current && selectedScreenshot) {
+    if (canvasRef.current) {
       generatePreviewCanvas(canvasRef.current, {
-        screenshot: selectedScreenshot.preview,
-        text: selectedScreenshot.text,
+        screenshot: selectedScreenshot?.preview || null,
+        text: selectedScreenshot?.text || 'Your headline here',
         style,
         deviceSize
       });
     }
   }, [selectedScreenshot, style, deviceSize]);
-
-  if (screenshots.length === 0) {
-    return (
-      <div style={cssStyles.container as React.CSSProperties}>
-        <label style={cssStyles.label}>Preview</label>
-        <div style={cssStyles.previewWrapper}>
-          <div style={cssStyles.emptyState as React.CSSProperties}>
-            <div style={cssStyles.emptyIcon}>📱</div>
-            <p style={cssStyles.emptyText}>
-              Upload screenshots to see preview
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div style={cssStyles.container as React.CSSProperties}>
@@ -111,6 +89,12 @@ export const Preview: React.FC<Props> = ({
       <div style={cssStyles.previewWrapper}>
         <canvas ref={canvasRef} style={cssStyles.canvas} />
       </div>
+
+      {screenshots.length === 0 && (
+        <p style={cssStyles.hint as React.CSSProperties}>
+          Upload a screenshot to see it in the mockup
+        </p>
+      )}
 
       {screenshots.length > 1 && (
         <div style={cssStyles.thumbnailStrip}>
