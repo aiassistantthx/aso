@@ -139,9 +139,9 @@ const createDefaultLaurel = (deviceSize: DeviceSize): LaurelDecoration => {
     color: '#E91E8B',
     position: { x: dimensions.width / 2, y: dimensions.height * 0.5 },
     textBlocks: [
-      { text: 'You need only', size: 60 },
-      { text: '1', size: 200 },
-      { text: 'App to create|Viral Video', size: 50 }
+      { text: 'You need only', size: 60, bold: false },
+      { text: '1', size: 200, bold: true },
+      { text: 'App to create|Viral Video', size: 50, bold: false }
     ],
     textColor: '#000000'
   };
@@ -401,22 +401,38 @@ export const DecorationsEditor: React.FC<Props> = ({
                         placeholder="Text..."
                         style={{ ...styles.input, width: '100%', marginBottom: '4px' }}
                       />
-                      <div style={styles.rangeContainer}>
-                        <span style={{ ...styles.fieldLabel, minWidth: '30px' }}>Size:</span>
-                        <input
-                          type="range"
-                          min="20"
-                          max="400"
-                          value={block.size}
-                          onChange={(e) => {
-                            const newBlocks = decoration.textBlocks.map((b: LaurelTextBlock, i: number) =>
-                              i === blockIndex ? { ...b, size: Number(e.target.value) } : b
-                            );
-                            updateDecoration(index, { textBlocks: newBlocks });
-                          }}
-                          style={styles.range}
-                        />
-                        <span style={styles.rangeValue as React.CSSProperties}>{block.size}px</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ ...styles.rangeContainer, flex: 1 }}>
+                          <span style={{ ...styles.fieldLabel, minWidth: '30px' }}>Size:</span>
+                          <input
+                            type="range"
+                            min="20"
+                            max="400"
+                            value={block.size}
+                            onChange={(e) => {
+                              const newBlocks = decoration.textBlocks.map((b: LaurelTextBlock, i: number) =>
+                                i === blockIndex ? { ...b, size: Number(e.target.value) } : b
+                              );
+                              updateDecoration(index, { textBlocks: newBlocks });
+                            }}
+                            style={styles.range}
+                          />
+                          <span style={styles.rangeValue as React.CSSProperties}>{block.size}px</span>
+                        </div>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={block.bold || false}
+                            onChange={(e) => {
+                              const newBlocks = decoration.textBlocks.map((b: LaurelTextBlock, i: number) =>
+                                i === blockIndex ? { ...b, bold: e.target.checked } : b
+                              );
+                              updateDecoration(index, { textBlocks: newBlocks });
+                            }}
+                            style={{ width: '14px', height: '14px' }}
+                          />
+                          <span style={{ ...styles.fieldLabel, fontWeight: 600 }}>B</span>
+                        </label>
                       </div>
                     </div>
                     {decoration.textBlocks.length > 1 && (

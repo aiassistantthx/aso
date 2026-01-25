@@ -334,8 +334,9 @@ const drawLaurelWreath = async (
 
     // Draw each block centered
     let currentY = position.y - totalHeight / 2;
-    blockData.forEach((block) => {
-      ctx.font = `bold ${block.size}px SF Pro Display, -apple-system, sans-serif`;
+    blockData.forEach((block, blockIndex) => {
+      const fontWeight = textBlocks[blockIndex].bold ? 'bold ' : '';
+      ctx.font = `${fontWeight}${block.size}px SF Pro Display, -apple-system, sans-serif`;
 
       block.lines.forEach((line) => {
         currentY += block.lineHeight / 2;

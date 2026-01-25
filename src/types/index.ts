@@ -15,6 +15,7 @@ export interface StarRatingDecoration {
 export interface LaurelTextBlock {
   text: string;
   size: number;
+  bold?: boolean;
 }
 
 export interface LaurelDecoration {
