@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleConfig, DeviceSize, DEVICE_SIZES, MockupPosition } from '../types';
+import { StyleConfig, DeviceSize, DEVICE_SIZES, MockupVisibility, MockupAlignment } from '../types';
 
 interface Props {
   style: StyleConfig;
@@ -236,25 +236,47 @@ export const StyleEditor: React.FC<Props> = ({
         )}
 
         {style.showMockup && (
-          <div style={{ ...cssStyles.field as React.CSSProperties, gridColumn: '1 / -1' }}>
-            <span style={cssStyles.fieldLabel}>Mockup Position</span>
-            <div style={{ ...cssStyles.buttonGroup, flexWrap: 'wrap' }}>
+          <div style={cssStyles.field as React.CSSProperties}>
+            <span style={cssStyles.fieldLabel}>Visibility</span>
+            <div style={cssStyles.buttonGroup}>
               {([
                 { value: 'full', label: 'Full' },
-                { value: 'top-3/4', label: '3/4 Top' },
-                { value: 'top-1/2', label: '1/2 Top' },
-                { value: 'bottom-3/4', label: '3/4 Bottom' },
-                { value: 'bottom-1/2', label: '1/2 Bottom' }
-              ] as { value: MockupPosition; label: string }[]).map((pos) => (
+                { value: '2/3', label: '2/3' },
+                { value: '1/2', label: '1/2' }
+              ] as { value: MockupVisibility; label: string }[]).map((v) => (
                 <button
-                  key={pos.value}
+                  key={v.value}
                   style={{
                     ...cssStyles.button,
-                    ...(style.mockupPosition === pos.value ? cssStyles.buttonActive : {})
+                    ...(style.mockupVisibility === v.value ? cssStyles.buttonActive : {})
                   }}
-                  onClick={() => updateStyle('mockupPosition', pos.value)}
+                  onClick={() => updateStyle('mockupVisibility', v.value)}
                 >
-                  {pos.label}
+                  {v.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {style.showMockup && (
+          <div style={cssStyles.field as React.CSSProperties}>
+            <span style={cssStyles.fieldLabel}>Alignment</span>
+            <div style={cssStyles.buttonGroup}>
+              {([
+                { value: 'top', label: 'Top' },
+                { value: 'center', label: 'Center' },
+                { value: 'bottom', label: 'Bottom' }
+              ] as { value: MockupAlignment; label: string }[]).map((a) => (
+                <button
+                  key={a.value}
+                  style={{
+                    ...cssStyles.button,
+                    ...(style.mockupAlignment === a.value ? cssStyles.buttonActive : {})
+                  }}
+                  onClick={() => updateStyle('mockupAlignment', a.value)}
+                >
+                  {a.label}
                 </button>
               ))}
             </div>

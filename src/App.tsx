@@ -24,7 +24,8 @@ const defaultStyle: StyleConfig = {
   paddingBottom: 60,
   showMockup: true,
   mockupColor: 'black',
-  mockupPosition: 'full'
+  mockupVisibility: 'full',
+  mockupAlignment: 'center'
 };
 
 const styles: Record<string, React.CSSProperties> = {

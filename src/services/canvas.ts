@@ -1,4 +1,4 @@
-import { StyleConfig, DeviceSize, DEVICE_SIZES, MockupPosition } from '../types';
+import { StyleConfig, DeviceSize, DEVICE_SIZES } from '../types';
 
 export interface GenerateImageOptions {
   screenshot: string | null;
@@ -118,13 +118,11 @@ const MOCKUP_CONFIG = {
   }
 };
 
-const getPositionMultiplier = (position: MockupPosition): { visible: number; fromTop: boolean } => {
-  switch (position) {
-    case 'top-3/4': return { visible: 0.75, fromTop: true };
-    case 'top-1/2': return { visible: 0.5, fromTop: true };
-    case 'bottom-3/4': return { visible: 0.75, fromTop: false };
-    case 'bottom-1/2': return { visible: 0.5, fromTop: false };
-    default: return { visible: 1, fromTop: true };
+const getVisibilityRatio = (visibility: StyleConfig['mockupVisibility']): number => {
+  switch (visibility) {
+    case '2/3': return 2 / 3;
+    case '1/2': return 0.5;
+    default: return 1;
   }
 };
 
@@ -177,7 +175,7 @@ const drawMockupWithScreenshot = async (
   style: StyleConfig
 ): Promise<void> => {
   const mockupImg = await loadMockupImage();
-  const { visible, fromTop } = getPositionMultiplier(style.mockupPosition);
+  const visibilityRatio = getVisibilityRatio(style.mockupVisibility);
 
   // Calculate scale factor
   const scale = mockupWidth / MOCKUP_CONFIG.phoneWidth;
@@ -186,16 +184,30 @@ const drawMockupWithScreenshot = async (
   const scaledImgWidth = MOCKUP_CONFIG.imageWidth * scale;
   const scaledImgHeight = MOCKUP_CONFIG.imageHeight * scale;
 
-  // Adjust Y position based on mockup position setting
+  // Calculate how much of the phone is hidden
+  const fullPhoneHeight = mockupHeight;
+  const visibleHeight = fullPhoneHeight * visibilityRatio;
+  const hiddenHeight = fullPhoneHeight - visibleHeight;
+
+  // Adjust Y position based on alignment
   let adjustedMockupY = mockupY;
-  if (visible < 1) {
-    const hiddenPortion = mockupHeight * (1 - visible);
-    if (fromTop) {
-      // Show top portion, phone extends below canvas
-      adjustedMockupY = mockupY;
-    } else {
-      // Show bottom portion, phone extends above
-      adjustedMockupY = mockupY - hiddenPortion;
+  if (visibilityRatio < 1) {
+    switch (style.mockupAlignment) {
+      case 'top':
+        // Phone at top, bottom part hidden (extends below visible area)
+        // Upper part of phone is cropped - phone starts above the visible area
+        adjustedMockupY = mockupY - hiddenHeight;
+        break;
+      case 'bottom':
+        // Phone at bottom, top part hidden (extends above visible area)
+        // Lower part of phone is cropped - phone starts at mockupY and extends down
+        adjustedMockupY = mockupY;
+        break;
+      case 'center':
+      default:
+        // Centered - equal parts hidden top and bottom
+        adjustedMockupY = mockupY - hiddenHeight / 2;
+        break;
     }
   }
 

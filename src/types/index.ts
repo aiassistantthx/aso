@@ -12,7 +12,8 @@ export interface GradientConfig {
   angle: number;
 }
 
-export type MockupPosition = 'full' | 'top-3/4' | 'top-1/2' | 'bottom-3/4' | 'bottom-1/2';
+export type MockupVisibility = 'full' | '2/3' | '1/2';
+export type MockupAlignment = 'top' | 'center' | 'bottom';
 
 export interface StyleConfig {
   backgroundColor: string;
@@ -26,7 +27,8 @@ export interface StyleConfig {
   paddingBottom: number;
   showMockup: boolean;
   mockupColor: 'black' | 'white' | 'natural';
-  mockupPosition: MockupPosition;
+  mockupVisibility: MockupVisibility;
+  mockupAlignment: MockupAlignment;
 }
 
 export interface Language {
