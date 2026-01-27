@@ -1,6 +1,8 @@
 import React from 'react';
 import { StyleConfig, DeviceSize, DEVICE_SIZES, MockupVisibility, MockupAlignment, Screenshot, ScreenshotStyleOverride, TranslationData, PerLanguageScreenshotStyle } from '../types';
 import { APP_STORE_LANGUAGES } from '../constants/languages';
+import { Toggle, Slider, ColorPicker, SegmentedControl } from './ui';
+import { colors } from '../styles/common';
 
 interface Props {
   style: StyleConfig;
@@ -22,101 +24,131 @@ const getLanguageName = (code: string): string => {
 
 const cssStyles: Record<string, React.CSSProperties> = {
   container: {
-    marginBottom: '24px'
+    marginBottom: '0'
   },
   label: {
-    display: 'block',
-    fontSize: '14px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    fontSize: '16px',
     fontWeight: 600,
-    color: '#1d1d1f',
-    marginBottom: '8px'
+    color: colors.text,
+    marginBottom: '16px'
+  },
+  labelIcon: {
+    width: '36px',
+    height: '36px',
+    borderRadius: '10px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '18px'
   },
   sectionTitle: {
-    fontSize: '12px',
+    fontSize: '13px',
     fontWeight: 600,
-    color: '#86868b',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
-    marginTop: '16px',
+    marginTop: '20px',
     marginBottom: '12px',
     paddingTop: '16px',
-    borderTop: '1px solid #e8e8ed'
+    borderTop: `1px solid ${colors.borderLight}`,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px'
   },
   grid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '16px'
+    gap: '12px'
   },
   field: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '4px'
+    gap: '6px'
   },
   fieldLabel: {
     fontSize: '12px',
-    color: '#86868b'
+    fontWeight: 500,
+    color: colors.textSecondary
   },
   input: {
-    padding: '8px 12px',
+    padding: '10px 12px',
     fontSize: '14px',
-    border: '1px solid #d2d2d7',
-    borderRadius: '8px',
-    outline: 'none'
+    border: `1px solid ${colors.borderLight}`,
+    borderRadius: '10px',
+    outline: 'none',
+    transition: 'border-color 0.2s'
   },
   select: {
-    padding: '8px 12px',
+    padding: '10px 12px',
     fontSize: '14px',
-    border: '1px solid #d2d2d7',
-    borderRadius: '8px',
+    border: `1px solid ${colors.borderLight}`,
+    borderRadius: '10px',
     outline: 'none',
-    backgroundColor: '#fff',
-    cursor: 'pointer'
+    backgroundColor: colors.white,
+    cursor: 'pointer',
+    appearance: 'none',
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2386868b' d='M6 8L2 4h8z'/%3E%3C/svg%3E")`,
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'right 12px center',
+    paddingRight: '36px'
   },
   colorInput: {
     width: '100%',
     height: '40px',
     padding: '4px',
-    border: '1px solid #d2d2d7',
-    borderRadius: '8px',
+    border: `1px solid ${colors.borderLight}`,
+    borderRadius: '10px',
     cursor: 'pointer'
   },
   rangeContainer: {
     display: 'flex',
     alignItems: 'center',
-    gap: '8px'
+    gap: '10px'
   },
   range: {
     flex: 1,
     height: '6px',
     borderRadius: '3px',
     appearance: 'none',
-    backgroundColor: '#d2d2d7',
+    backgroundColor: colors.borderLight,
     cursor: 'pointer'
   },
   rangeValue: {
-    fontSize: '12px',
-    color: '#86868b',
-    minWidth: '40px',
-    textAlign: 'right'
+    fontSize: '13px',
+    fontWeight: 500,
+    color: colors.text,
+    minWidth: '50px',
+    textAlign: 'center',
+    backgroundColor: colors.background,
+    padding: '4px 8px',
+    borderRadius: '6px'
   },
   buttonGroup: {
     display: 'flex',
-    gap: '4px'
+    gap: '4px',
+    backgroundColor: colors.background,
+    borderRadius: '10px',
+    padding: '4px'
   },
   button: {
     flex: 1,
-    padding: '8px 12px',
+    padding: '8px 10px',
     fontSize: '12px',
-    border: '1px solid #d2d2d7',
-    borderRadius: '6px',
-    backgroundColor: '#fff',
+    fontWeight: 500,
+    border: 'none',
+    borderRadius: '8px',
+    backgroundColor: 'transparent',
+    color: colors.textSecondary,
     cursor: 'pointer',
     transition: 'all 0.2s'
   },
   buttonActive: {
-    backgroundColor: '#0071e3',
-    borderColor: '#0071e3',
-    color: '#fff'
+    backgroundColor: colors.white,
+    color: colors.text,
+    boxShadow: '0 1px 4px rgba(0, 0, 0, 0.1)'
   },
   toggle: {
     display: 'flex',
@@ -130,10 +162,11 @@ const cssStyles: Record<string, React.CSSProperties> = {
     cursor: 'pointer'
   },
   gradientPreview: {
-    height: '40px',
-    borderRadius: '8px',
-    border: '1px solid #d2d2d7',
-    marginTop: '8px'
+    height: '48px',
+    borderRadius: '12px',
+    border: `1px solid ${colors.borderLight}`,
+    marginTop: '12px',
+    boxShadow: 'inset 0 2px 6px rgba(0, 0, 0, 0.08)'
   }
 };
 
@@ -315,7 +348,10 @@ export const StyleEditor: React.FC<Props> = ({
 
   return (
     <div style={cssStyles.container}>
-      <label style={cssStyles.label}>Style Settings</label>
+      <label style={cssStyles.label}>
+        <div style={{ ...cssStyles.labelIcon, backgroundColor: '#f0e6ff' } as React.CSSProperties}>🎨</div>
+        Style Settings
+      </label>
 
       <div style={cssStyles.grid}>
         {/* Device Size */}
@@ -352,126 +388,82 @@ export const StyleEditor: React.FC<Props> = ({
       </div>
 
       {/* Mockup Section */}
-      <div style={cssStyles.sectionTitle as React.CSSProperties}>iPhone Mockup</div>
-      <div style={cssStyles.grid}>
-        <div style={cssStyles.field as React.CSSProperties}>
-          <label style={cssStyles.toggle}>
-            <input
-              type="checkbox"
-              checked={style.showMockup}
-              onChange={(e) => updateStyle('showMockup', e.target.checked)}
-              style={cssStyles.checkbox}
-            />
-            <span style={cssStyles.fieldLabel}>Show iPhone Frame</span>
-          </label>
-        </div>
+      <div style={cssStyles.sectionTitle as React.CSSProperties}>
+        <span>📱</span> iPhone Mockup
+      </div>
+
+      <Toggle
+        label="Show iPhone Frame"
+        checked={style.showMockup}
+        onChange={(checked) => updateStyle('showMockup', checked)}
+      />
+
+      <div style={{ ...cssStyles.grid, marginTop: '12px' }}>
 
         {style.showMockup && (
-          <div style={cssStyles.field as React.CSSProperties}>
-            <span style={cssStyles.fieldLabel}>Frame Color</span>
-            <div style={cssStyles.buttonGroup}>
-              {(['black', 'white', 'natural'] as const).map((color) => (
-                <button
-                  key={color}
-                  style={{
-                    ...cssStyles.button,
-                    ...(style.mockupColor === color ? cssStyles.buttonActive : {})
-                  }}
-                  onClick={() => updateStyle('mockupColor', color)}
-                >
-                  {color.charAt(0).toUpperCase() + color.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
+          <SegmentedControl
+            label="Frame Color"
+            options={[
+              { value: 'black', label: 'Black' },
+              { value: 'white', label: 'White' },
+              { value: 'natural', label: 'Natural' }
+            ]}
+            value={style.mockupColor}
+            onChange={(value) => updateStyle('mockupColor', value as 'black' | 'white' | 'natural')}
+          />
         )}
 
         {style.showMockup && (
-          <div style={cssStyles.field as React.CSSProperties}>
-            <span style={cssStyles.fieldLabel}>Visibility</span>
-            <div style={cssStyles.buttonGroup}>
-              {([
-                { value: 'full', label: 'Full' },
-                { value: '2/3', label: '2/3' },
-                { value: '1/2', label: '1/2' }
-              ] as { value: MockupVisibility; label: string }[]).map((v) => (
-                <button
-                  key={v.value}
-                  style={{
-                    ...cssStyles.button,
-                    ...(style.mockupVisibility === v.value ? cssStyles.buttonActive : {})
-                  }}
-                  onClick={() => updateStyle('mockupVisibility', v.value)}
-                >
-                  {v.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          <SegmentedControl
+            label="Visibility"
+            options={[
+              { value: 'full', label: 'Full' },
+              { value: '2/3', label: '2/3' },
+              { value: '1/2', label: '1/2' }
+            ]}
+            value={style.mockupVisibility}
+            onChange={(value) => updateStyle('mockupVisibility', value as MockupVisibility)}
+          />
         )}
 
         {style.showMockup && (
-          <div style={cssStyles.field as React.CSSProperties}>
-            <span style={cssStyles.fieldLabel}>Alignment</span>
-            <div style={cssStyles.buttonGroup}>
-              {([
-                { value: 'top', label: 'Top' },
-                { value: 'center', label: 'Center' },
-                { value: 'bottom', label: 'Bottom' }
-              ] as { value: MockupAlignment; label: string }[]).map((a) => (
-                <button
-                  key={a.value}
-                  style={{
-                    ...cssStyles.button,
-                    ...(style.mockupAlignment === a.value ? cssStyles.buttonActive : {})
-                  }}
-                  onClick={() => updateStyle('mockupAlignment', a.value)}
-                >
-                  {a.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          <SegmentedControl
+            label="Alignment"
+            options={[
+              { value: 'top', label: 'Top' },
+              { value: 'center', label: 'Center' },
+              { value: 'bottom', label: 'Bottom' }
+            ]}
+            value={style.mockupAlignment}
+            onChange={(value) => updateStyle('mockupAlignment', value as MockupAlignment)}
+          />
         )}
 
         {style.showMockup && (
-          <div style={cssStyles.field as React.CSSProperties}>
-            <span style={cssStyles.fieldLabel}>
-              Scale
-              {isEditingTranslation && getPerLangStyle().mockupScale !== undefined && (
-                <span style={{ color: '#0071e3', marginLeft: '4px' }}>(custom)</span>
-              )}
-            </span>
-            <div style={cssStyles.rangeContainer}>
-              <input
-                type="range"
-                min="30"
-                max="200"
-                value={Math.round((isEditingTranslation ? (getPerLangStyle().mockupScale ?? style.mockupScale ?? 1.0) : (style.mockupScale ?? 1.0)) * 100)}
-                onChange={(e) => {
-                  const newScale = Number(e.target.value) / 100;
-                  if (isEditingTranslation) {
-                    updatePerLangStyle({ mockupScale: newScale });
-                  } else {
-                    updateStyle('mockupScale', newScale);
-                  }
-                }}
-                style={cssStyles.range}
-              />
-              <span style={cssStyles.rangeValue as React.CSSProperties}>
-                {Math.round((isEditingTranslation ? (getPerLangStyle().mockupScale ?? style.mockupScale ?? 1.0) : (style.mockupScale ?? 1.0)) * 100)}%
-              </span>
-            </div>
-          </div>
+          <Slider
+            label={`Scale${isEditingTranslation && getPerLangStyle().mockupScale !== undefined ? ' (custom)' : ''}`}
+            min={30}
+            max={200}
+            value={Math.round((isEditingTranslation ? (getPerLangStyle().mockupScale ?? style.mockupScale ?? 1.0) : (style.mockupScale ?? 1.0)) * 100)}
+            onChange={(value) => {
+              const newScale = value / 100;
+              if (isEditingTranslation) {
+                updatePerLangStyle({ mockupScale: newScale });
+              } else {
+                updateStyle('mockupScale', newScale);
+              }
+            }}
+            unit="%"
+          />
         )}
       </div>
 
       {/* Background Section */}
       <div style={cssStyles.sectionTitle as React.CSSProperties}>
-        Background
+        <span>🎨</span> Background
         {selectedIndex > 0 && (
-          <span style={{ fontWeight: 400, marginLeft: '8px' }}>
-            (Screen {selectedIndex + 1})
+          <span style={{ fontWeight: 400, fontSize: '11px', color: colors.primary }}>
+            Screen {selectedIndex + 1}
           </span>
         )}
       </div>
@@ -480,72 +472,57 @@ export const StyleEditor: React.FC<Props> = ({
         <button
           onClick={resetToGlobal}
           style={{
-            padding: '6px 12px',
-            fontSize: '11px',
-            border: '1px solid #ff9500',
-            borderRadius: '6px',
+            padding: '8px 12px',
+            fontSize: '12px',
+            fontWeight: 500,
+            border: `1px solid ${colors.warning}`,
+            borderRadius: '10px',
             backgroundColor: '#fff8e6',
             color: '#996300',
             cursor: 'pointer',
             marginBottom: '12px',
-            width: '100%'
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px'
           }}
         >
-          Reset to global style
+          <span>↩️</span> Reset to global style
         </button>
       )}
 
-      <div style={{ marginBottom: '12px' }}>
-        <label style={cssStyles.toggle}>
-          <input
-            type="checkbox"
-            checked={effectiveGradient.enabled}
-            onChange={(e) => updateScreenshotGradient({ enabled: e.target.checked })}
-            style={cssStyles.checkbox}
-          />
-          <span style={cssStyles.fieldLabel}>Use Gradient</span>
-        </label>
-      </div>
+      <Toggle
+        label="Use Gradient"
+        checked={effectiveGradient.enabled}
+        onChange={(checked) => updateScreenshotGradient({ enabled: checked })}
+      />
 
       {effectiveGradient.enabled ? (
         <>
-          <div style={cssStyles.grid}>
-            <div style={cssStyles.field as React.CSSProperties}>
-              <span style={cssStyles.fieldLabel}>Color 1</span>
-              <input
-                type="color"
-                value={effectiveGradient.color1}
-                onChange={(e) => updateScreenshotGradient({ color1: e.target.value })}
-                style={cssStyles.colorInput}
-              />
-            </div>
-            <div style={cssStyles.field as React.CSSProperties}>
-              <span style={cssStyles.fieldLabel}>Color 2</span>
-              <input
-                type="color"
-                value={effectiveGradient.color2}
-                onChange={(e) => updateScreenshotGradient({ color2: e.target.value })}
-                style={cssStyles.colorInput}
-              />
-            </div>
+          <div style={{ ...cssStyles.grid, marginTop: '12px' }}>
+            <ColorPicker
+              label="Color 1"
+              value={effectiveGradient.color1}
+              onChange={(color) => updateScreenshotGradient({ color1: color })}
+            />
+            <ColorPicker
+              label="Color 2"
+              value={effectiveGradient.color2}
+              onChange={(color) => updateScreenshotGradient({ color2: color })}
+            />
           </div>
 
-          <div style={{ ...cssStyles.field as React.CSSProperties, marginTop: '12px' }}>
-            <span style={cssStyles.fieldLabel}>Angle</span>
-            <div style={cssStyles.rangeContainer}>
-              <input
-                type="range"
-                min="0"
-                max="360"
-                value={effectiveGradient.angle}
-                onChange={(e) => updateScreenshotGradient({ angle: Number(e.target.value) })}
-                style={cssStyles.range}
-              />
-              <span style={cssStyles.rangeValue as React.CSSProperties}>{effectiveGradient.angle}°</span>
-            </div>
-          </div>
+          <Slider
+            label="Angle"
+            min={0}
+            max={360}
+            value={effectiveGradient.angle}
+            onChange={(value) => updateScreenshotGradient({ angle: value })}
+            unit="°"
+          />
 
-          <div style={{ marginTop: '12px' }}>
+          <div style={{ marginTop: '8px' }}>
             <span style={cssStyles.fieldLabel}>Presets</span>
             <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
               {GRADIENT_PRESETS.map((preset) => (
@@ -553,15 +530,18 @@ export const StyleEditor: React.FC<Props> = ({
                   key={preset.name}
                   onClick={() => updateScreenshotGradient({ color1: preset.color1, color2: preset.color2 })}
                   style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '6px',
-                    border: '2px solid #fff',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    border: '3px solid #fff',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                     cursor: 'pointer',
-                    background: `linear-gradient(135deg, ${preset.color1}, ${preset.color2})`
+                    background: `linear-gradient(135deg, ${preset.color1}, ${preset.color2})`,
+                    transition: 'transform 0.2s'
                   }}
                   title={preset.name}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                 />
               ))}
             </div>
@@ -575,23 +555,21 @@ export const StyleEditor: React.FC<Props> = ({
           />
         </>
       ) : (
-        <div style={cssStyles.field as React.CSSProperties}>
-          <span style={cssStyles.fieldLabel}>Background Color</span>
-          <input
-            type="color"
+        <div style={{ marginTop: '12px' }}>
+          <ColorPicker
+            label="Background Color"
             value={effectiveBackgroundColor}
-            onChange={(e) => updateScreenshotStyle({ backgroundColor: e.target.value })}
-            style={cssStyles.colorInput}
+            onChange={(color) => updateScreenshotStyle({ backgroundColor: color })}
           />
         </div>
       )}
 
       {/* Text Section */}
       <div style={cssStyles.sectionTitle as React.CSSProperties}>
-        Text
+        <span>✏️</span> Text
         {isEditingTranslation && (
-          <span style={{ fontWeight: 400, fontSize: '11px', color: '#0071e3', marginLeft: '8px' }}>
-            ({getLanguageName(selectedLanguage)})
+          <span style={{ fontWeight: 400, fontSize: '11px', color: colors.primary }}>
+            {getLanguageName(selectedLanguage)}
           </span>
         )}
       </div>
@@ -600,117 +578,104 @@ export const StyleEditor: React.FC<Props> = ({
         <button
           onClick={resetPerLangStyle}
           style={{
-            padding: '6px 12px',
-            fontSize: '11px',
-            border: '1px solid #0071e3',
-            borderRadius: '6px',
-            backgroundColor: '#f0f7ff',
-            color: '#0071e3',
+            padding: '8px 12px',
+            fontSize: '12px',
+            fontWeight: 500,
+            border: `1px solid ${colors.primary}`,
+            borderRadius: '10px',
+            backgroundColor: colors.primaryLight,
+            color: colors.primary,
             cursor: 'pointer',
             marginBottom: '12px',
-            width: '100%'
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px'
           }}
         >
-          Reset to global style
+          <span>↩️</span> Reset to global style
         </button>
       )}
 
       <div style={cssStyles.grid}>
-        <div style={cssStyles.field as React.CSSProperties}>
-          <span style={cssStyles.fieldLabel}>Text Color</span>
-          <input
-            type="color"
-            value={effectiveTextColor}
-            onChange={(e) => updateScreenshotStyle({ textColor: e.target.value })}
-            style={cssStyles.colorInput}
-          />
-        </div>
+        <ColorPicker
+          label="Text Color"
+          value={effectiveTextColor}
+          onChange={(color) => updateScreenshotStyle({ textColor: color })}
+        />
 
-        <div style={cssStyles.field as React.CSSProperties}>
-          <span style={cssStyles.fieldLabel}>Highlight Color</span>
-          <input
-            type="color"
-            value={style.highlightColor || '#FFE135'}
-            onChange={(e) => updateStyle('highlightColor', e.target.value)}
-            style={cssStyles.colorInput}
-          />
-        </div>
+        <ColorPicker
+          label="Highlight Color"
+          value={style.highlightColor || '#FFE135'}
+          onChange={(color) => updateStyle('highlightColor', color)}
+        />
+      </div>
 
-        <div style={cssStyles.field as React.CSSProperties}>
-          <span style={cssStyles.fieldLabel}>
-            Font Size
-            {isEditingTranslation && getPerLangStyle().fontSize !== undefined && (
-              <span style={{ color: '#0071e3', marginLeft: '4px' }}>(custom)</span>
-            )}
-          </span>
-          <div style={cssStyles.rangeContainer}>
-            <input
-              type="range"
-              min="40"
-              max="400"
-              value={getEffectiveFontSize()}
-              onChange={(e) => {
-                const newSize = Number(e.target.value);
-                if (isEditingTranslation) {
-                  updatePerLangStyle({ fontSize: newSize });
-                } else {
-                  updateStyle('fontSize', newSize);
-                }
-              }}
-              style={cssStyles.range}
-            />
-            <span style={cssStyles.rangeValue as React.CSSProperties}>{getEffectiveFontSize()}px</span>
-          </div>
-        </div>
+      <Slider
+        label={`Font Size${isEditingTranslation && getPerLangStyle().fontSize !== undefined ? ' (custom)' : ''}`}
+        min={40}
+        max={400}
+        value={getEffectiveFontSize()}
+        onChange={(value) => {
+          if (isEditingTranslation) {
+            updatePerLangStyle({ fontSize: value });
+          } else {
+            updateStyle('fontSize', value);
+          }
+        }}
+        unit="px"
+      />
 
-        <div style={cssStyles.field as React.CSSProperties}>
-          <span style={cssStyles.fieldLabel}>Position</span>
-          <button
-            onClick={() => {
-              if (isEditingTranslation) {
-                updatePerLangStyle({ textOffset: { x: 0, y: getPerLangStyle().textOffset?.y ?? style.textOffset.y } });
-              } else {
-                updateStyle('textOffset', { ...style.textOffset, x: 0 });
-              }
-            }}
-            style={{
-              ...cssStyles.button,
-              width: '100%'
-            }}
-          >
-            Center Horizontally
-          </button>
-        </div>
+      <button
+        onClick={() => {
+          if (isEditingTranslation) {
+            updatePerLangStyle({ textOffset: { x: 0, y: getPerLangStyle().textOffset?.y ?? style.textOffset.y } });
+          } else {
+            updateStyle('textOffset', { ...style.textOffset, x: 0 });
+          }
+        }}
+        style={{
+          width: '100%',
+          padding: '10px 16px',
+          fontSize: '13px',
+          fontWeight: 500,
+          border: `1px solid ${colors.borderLight}`,
+          borderRadius: '10px',
+          backgroundColor: colors.white,
+          color: colors.text,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '6px',
+          marginBottom: '12px',
+          transition: 'all 0.2s'
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.background}
+        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.white}
+      >
+        <span>↔️</span> Center Horizontally
+      </button>
 
-        <div style={cssStyles.field as React.CSSProperties}>
-          <span style={cssStyles.fieldLabel}>Padding Top</span>
-          <div style={cssStyles.rangeContainer}>
-            <input
-              type="range"
-              min="20"
-              max="200"
-              value={style.paddingTop}
-              onChange={(e) => updateStyle('paddingTop', Number(e.target.value))}
-              style={cssStyles.range}
-            />
-            <span style={cssStyles.rangeValue as React.CSSProperties}>{style.paddingTop}px</span>
-          </div>
-        </div>
+      <div style={cssStyles.grid}>
+        <Slider
+          label="Padding Top"
+          min={20}
+          max={200}
+          value={style.paddingTop}
+          onChange={(value) => updateStyle('paddingTop', value)}
+          unit="px"
+        />
 
-        <div style={cssStyles.field as React.CSSProperties}>
-          <span style={cssStyles.fieldLabel}>Padding Bottom</span>
-          <div style={cssStyles.rangeContainer}>
-            <input
-              type="range"
-              min="20"
-              max="200"
-              value={style.paddingBottom}
-              onChange={(e) => updateStyle('paddingBottom', Number(e.target.value))}
-              style={cssStyles.range}
-            />
-            <span style={cssStyles.rangeValue as React.CSSProperties}>{style.paddingBottom}px</span>
-          </div>
-        </div>
+        <Slider
+          label="Padding Bottom"
+          min={20}
+          max={200}
+          value={style.paddingBottom}
+          onChange={(value) => updateStyle('paddingBottom', value)}
+          unit="px"
+        />
       </div>
     </div>
   );

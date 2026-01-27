@@ -17,112 +17,148 @@ interface Props {
 
 const cssStyles: Record<string, React.CSSProperties> = {
   container: {
-    marginTop: '24px',
-    padding: '20px',
+    marginTop: '0',
+    padding: '22px',
     backgroundColor: '#fff',
+    borderRadius: '18px',
+    border: '1px solid rgba(0, 0, 0, 0.06)',
+    boxShadow: '0 2px 12px rgba(0, 0, 0, 0.04)'
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    marginBottom: '18px'
+  },
+  headerIcon: {
+    width: '40px',
+    height: '40px',
     borderRadius: '12px',
-    border: '1px solid #d2d2d7'
+    background: 'linear-gradient(135deg, #34c759 0%, #30d158 100%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '20px',
+    boxShadow: '0 4px 12px rgba(52, 199, 89, 0.3)'
+  },
+  headerTitle: {
+    fontSize: '16px',
+    fontWeight: 600,
+    color: '#1d1d1f'
   },
   label: {
     display: 'block',
-    fontSize: '14px',
+    fontSize: '13px',
     fontWeight: 600,
     color: '#1d1d1f',
     marginBottom: '8px'
   },
   apiKeySection: {
-    marginBottom: '16px'
+    marginBottom: '18px'
   },
   input: {
     width: '100%',
-    padding: '10px 12px',
+    padding: '12px 14px',
     fontSize: '14px',
-    border: '1px solid #d2d2d7',
-    borderRadius: '8px',
+    border: '1px solid #e0e0e5',
+    borderRadius: '10px',
     outline: 'none',
-    fontFamily: 'monospace'
+    fontFamily: 'SF Mono, Monaco, Consolas, monospace',
+    transition: 'border-color 0.2s ease, box-shadow 0.2s ease'
   },
   hint: {
     fontSize: '12px',
     color: '#86868b',
-    marginTop: '4px'
+    marginTop: '6px'
   },
   buttonGroup: {
     display: 'flex',
-    gap: '8px'
+    gap: '10px'
   },
   exportButton: {
     flex: 1,
     padding: '14px 24px',
-    fontSize: '16px',
+    fontSize: '15px',
     fontWeight: 600,
     border: 'none',
-    borderRadius: '10px',
+    borderRadius: '12px',
     cursor: 'pointer',
-    transition: 'all 0.2s'
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
   },
   exportButtonEnabled: {
-    backgroundColor: '#0071e3',
-    color: '#fff'
+    background: 'linear-gradient(135deg, #0071e3 0%, #0077ed 100%)',
+    color: '#fff',
+    boxShadow: '0 4px 14px rgba(0, 113, 227, 0.35)'
   },
   exportButtonDisabled: {
-    backgroundColor: '#d2d2d7',
-    color: '#86868b',
+    backgroundColor: '#e8e8ed',
+    color: '#a1a1a6',
     cursor: 'not-allowed'
   },
   secondaryButton: {
     flex: 1,
     padding: '14px 24px',
-    fontSize: '16px',
+    fontSize: '15px',
     fontWeight: 600,
-    border: '1px solid #0071e3',
-    borderRadius: '10px',
+    border: '1.5px solid #0071e3',
+    borderRadius: '12px',
     backgroundColor: '#fff',
     color: '#0071e3',
     cursor: 'pointer',
-    transition: 'all 0.2s'
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
   },
   progressContainer: {
-    marginTop: '16px'
+    marginTop: '18px'
   },
   progressBar: {
     width: '100%',
-    height: '8px',
+    height: '6px',
     backgroundColor: '#e8e8ed',
-    borderRadius: '4px',
+    borderRadius: '3px',
     overflow: 'hidden'
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#0071e3',
-    transition: 'width 0.3s ease'
+    background: 'linear-gradient(90deg, #0071e3 0%, #4a9eff 100%)',
+    transition: 'width 0.3s ease',
+    borderRadius: '3px'
   },
   progressText: {
-    fontSize: '12px',
-    color: '#86868b',
-    marginTop: '8px',
-    textAlign: 'center'
+    fontSize: '13px',
+    color: '#6b6b70',
+    marginTop: '10px',
+    textAlign: 'center',
+    fontWeight: 500
   },
   error: {
     color: '#ff3b30',
-    fontSize: '12px',
-    marginTop: '8px'
+    fontSize: '13px',
+    marginTop: '12px',
+    padding: '10px 14px',
+    backgroundColor: '#fff5f5',
+    borderRadius: '8px',
+    border: '1px solid #ffebeb'
   },
   requirements: {
-    fontSize: '12px',
-    color: '#86868b',
-    marginBottom: '12px',
-    padding: '8px',
-    backgroundColor: '#f5f5f7',
-    borderRadius: '6px'
+    fontSize: '13px',
+    color: '#6b6b70',
+    marginBottom: '14px',
+    padding: '12px 14px',
+    backgroundColor: '#f8f8fa',
+    borderRadius: '10px',
+    border: '1px solid rgba(0, 0, 0, 0.04)'
   },
   translationReady: {
-    fontSize: '12px',
-    color: '#34c759',
-    marginBottom: '12px',
-    padding: '8px',
+    fontSize: '13px',
+    color: '#248a3d',
+    marginBottom: '14px',
+    padding: '12px 14px',
     backgroundColor: '#e8f9ed',
-    borderRadius: '6px'
+    borderRadius: '10px',
+    border: '1px solid rgba(52, 199, 89, 0.2)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px'
   }
 };
 
@@ -284,6 +320,12 @@ export const ExportButton: React.FC<Props> = ({
 
   return (
     <div style={cssStyles.container}>
+      {/* Header */}
+      <div style={cssStyles.header as React.CSSProperties}>
+        <div style={cssStyles.headerIcon as React.CSSProperties}>🚀</div>
+        <span style={cssStyles.headerTitle}>Export Screenshots</span>
+      </div>
+
       {/* API Key Input */}
       <div style={cssStyles.apiKeySection}>
         <label style={cssStyles.label}>OpenAI API Key</label>
@@ -293,6 +335,14 @@ export const ExportButton: React.FC<Props> = ({
           onChange={(e) => onApiKeyChange(e.target.value)}
           placeholder="sk-..."
           style={cssStyles.input}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = '#0071e3';
+            e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0, 113, 227, 0.12)';
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = '#e0e0e5';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
         />
         <p style={cssStyles.hint}>
           Required for translation. Your key is not stored.
@@ -313,9 +363,12 @@ export const ExportButton: React.FC<Props> = ({
 
       {/* Translation ready indicator */}
       {translationData && !isWorking && (
-        <div style={cssStyles.translationReady}>
-          Translations ready for {Object.keys(translationData.headlines).length} languages.
-          Use the sidebar to edit individual languages.
+        <div style={cssStyles.translationReady as React.CSSProperties}>
+          <span style={{ fontSize: '16px' }}>✓</span>
+          <span>
+            Translations ready for <strong>{Object.keys(translationData.headlines).length}</strong> languages.
+            Use the sidebar to edit.
+          </span>
         </div>
       )}
 
@@ -328,6 +381,14 @@ export const ExportButton: React.FC<Props> = ({
             ...cssStyles.secondaryButton,
             ...((!canTranslate || isWorking) ? { opacity: 0.5, cursor: 'not-allowed' } : {})
           }}
+          onMouseEnter={(e) => {
+            if (canTranslate && !isWorking) {
+              e.currentTarget.style.backgroundColor = '#f0f7ff';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#fff';
+          }}
         >
           {isTranslating ? 'Translating...' : translationData ? 'Re-translate' : 'Translate'}
         </button>
@@ -339,6 +400,18 @@ export const ExportButton: React.FC<Props> = ({
             ...(canTranslate && !isWorking
               ? cssStyles.exportButtonEnabled
               : cssStyles.exportButtonDisabled)
+          }}
+          onMouseEnter={(e) => {
+            if (canTranslate && !isWorking) {
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 113, 227, 0.45)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            if (canTranslate && !isWorking) {
+              e.currentTarget.style.boxShadow = '0 4px 14px rgba(0, 113, 227, 0.35)';
+            }
           }}
         >
           {isExporting ? 'Exporting...' : translationData ? 'Export ZIP' : 'Translate & Export'}

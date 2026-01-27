@@ -9,36 +9,54 @@ interface Props {
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    marginBottom: '24px'
+    marginBottom: '0'
   },
   label: {
-    display: 'block',
-    fontSize: '14px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    fontSize: '16px',
     fontWeight: 600,
     color: '#1d1d1f',
-    marginBottom: '8px'
+    marginBottom: '16px'
+  },
+  labelIcon: {
+    width: '36px',
+    height: '36px',
+    borderRadius: '10px',
+    backgroundColor: '#e8f5e9',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '18px'
   },
   dropzone: {
     border: '2px dashed #d2d2d7',
-    borderRadius: '12px',
-    padding: '32px',
+    borderRadius: '16px',
+    padding: '36px 24px',
     textAlign: 'center',
     cursor: 'pointer',
-    transition: 'all 0.2s',
-    backgroundColor: '#fff'
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    backgroundColor: '#fafafa',
+    backgroundImage: 'radial-gradient(circle at center, #f0f0f5 0%, transparent 70%)',
+    position: 'relative',
+    overflow: 'hidden'
   },
   dropzoneActive: {
     borderColor: '#0071e3',
-    backgroundColor: '#f0f7ff'
+    backgroundColor: '#f0f7ff',
+    transform: 'scale(1.02)',
+    boxShadow: '0 0 0 4px rgba(0, 113, 227, 0.1)'
   },
   dropzoneText: {
-    color: '#86868b',
-    fontSize: '14px',
+    color: '#1d1d1f',
+    fontSize: '15px',
+    fontWeight: 600,
     margin: 0
   },
   dropzoneHint: {
     color: '#86868b',
-    fontSize: '12px',
+    fontSize: '13px',
     marginTop: '8px'
   },
   buttonRow: {
@@ -48,42 +66,50 @@ const styles: Record<string, React.CSSProperties> = {
   },
   addTextButton: {
     flex: 1,
-    padding: '10px 16px',
+    padding: '12px 16px',
     fontSize: '13px',
+    fontWeight: 600,
     border: '1px solid #0071e3',
-    borderRadius: '8px',
+    borderRadius: '10px',
     backgroundColor: '#fff',
     color: '#0071e3',
     cursor: 'pointer',
-    transition: 'all 0.2s'
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '6px'
   },
   previewGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
-    gap: '12px',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(85px, 1fr))',
+    gap: '10px',
     marginTop: '16px'
   },
   previewItem: {
     position: 'relative',
     aspectRatio: '9/16',
-    borderRadius: '8px',
+    borderRadius: '12px',
     overflow: 'hidden',
     backgroundColor: '#f5f5f7',
     cursor: 'grab',
-    transition: 'transform 0.2s, box-shadow 0.2s'
+    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)'
   },
   previewItemDragging: {
-    opacity: 0.5,
-    transform: 'scale(0.95)'
+    opacity: 0.6,
+    transform: 'scale(0.92) rotate(-2deg)',
+    boxShadow: '0 12px 32px rgba(0,0,0,0.2)'
   },
   previewItemDragOver: {
     transform: 'scale(1.05)',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+    boxShadow: '0 12px 32px rgba(0, 113, 227, 0.25), 0 0 0 2px #0071e3'
   },
   previewImage: {
     width: '100%',
     height: '100%',
-    objectFit: 'cover'
+    objectFit: 'cover',
+    transition: 'transform 0.3s ease'
   },
   emptyPreview: {
     width: '100%',
@@ -91,37 +117,46 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'linear-gradient(135deg, #667eea, #764ba2)',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     color: '#fff',
     fontSize: '10px',
+    fontWeight: 600,
     textAlign: 'center',
     padding: '8px'
   },
   removeButton: {
     position: 'absolute',
-    top: '4px',
-    right: '4px',
+    top: '6px',
+    right: '6px',
     width: '24px',
     height: '24px',
     borderRadius: '50%',
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    backdropFilter: 'blur(8px)',
+    WebkitBackdropFilter: 'blur(8px)',
     color: '#fff',
     border: 'none',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '14px'
+    fontSize: '16px',
+    fontWeight: 300,
+    transition: 'all 0.2s ease',
+    opacity: 0.8
   },
   indexBadge: {
     position: 'absolute',
-    bottom: '4px',
-    left: '4px',
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    bottom: '6px',
+    left: '6px',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    backdropFilter: 'blur(8px)',
+    WebkitBackdropFilter: 'blur(8px)',
     color: '#fff',
-    fontSize: '10px',
-    padding: '2px 6px',
-    borderRadius: '4px'
+    fontSize: '11px',
+    fontWeight: 700,
+    padding: '3px 8px',
+    borderRadius: '6px'
   },
   dragHandle: {
     position: 'absolute',
@@ -135,10 +170,17 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'grab'
   },
   hint: {
-    fontSize: '11px',
+    fontSize: '12px',
     color: '#86868b',
-    marginTop: '8px',
-    textAlign: 'center'
+    marginTop: '12px',
+    textAlign: 'center',
+    padding: '10px 12px',
+    backgroundColor: '#f5f5f7',
+    borderRadius: '10px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '6px'
   }
 };
 
@@ -259,7 +301,18 @@ export const ScreenshotUploader: React.FC<Props> = ({
   return (
     <div style={styles.container}>
       <label style={styles.label}>
-        Screenshots ({screenshots.length}/{maxScreenshots})
+        <div style={styles.labelIcon as React.CSSProperties}>📸</div>
+        <span style={{ flex: 1 }}>Screenshots</span>
+        <span style={{
+          fontSize: '13px',
+          fontWeight: 500,
+          color: '#86868b',
+          backgroundColor: '#f5f5f7',
+          padding: '4px 10px',
+          borderRadius: '6px'
+        }}>
+          {screenshots.length}/{maxScreenshots}
+        </span>
       </label>
 
       <div
@@ -271,6 +324,18 @@ export const ScreenshotUploader: React.FC<Props> = ({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onClick={handleClick}
+        onMouseEnter={(e) => {
+          if (!isDragging) {
+            e.currentTarget.style.borderColor = '#a1a1a6';
+            e.currentTarget.style.backgroundColor = '#f5f5f7';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isDragging) {
+            e.currentTarget.style.borderColor = '#d2d2d7';
+            e.currentTarget.style.backgroundColor = '#fafafa';
+          }
+        }}
       >
         <input
           ref={inputRef}
@@ -280,11 +345,52 @@ export const ScreenshotUploader: React.FC<Props> = ({
           style={{ display: 'none' }}
           onChange={(e) => handleFiles(e.target.files)}
         />
-        <p style={styles.dropzoneText}>
-          Drop screenshots here or click to upload
+        <div style={{
+          width: '56px',
+          height: '56px',
+          borderRadius: '16px',
+          backgroundColor: isDragging ? '#e3f0ff' : '#f0f0f5',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 16px auto',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          transform: isDragging ? 'scale(1.1)' : 'scale(1)'
+        }}>
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            style={{
+              transition: 'transform 0.3s ease',
+              transform: isDragging ? 'translateY(-4px)' : 'translateY(0)'
+            }}
+          >
+            <path
+              d="M12 16V4M12 4L8 8M12 4L16 8"
+              stroke={isDragging ? '#0071e3' : '#86868b'}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M4 17V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V17"
+              stroke={isDragging ? '#0071e3' : '#86868b'}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+        <p style={{
+          ...styles.dropzoneText,
+          color: isDragging ? '#0071e3' : '#1d1d1f'
+        }}>
+          {isDragging ? 'Drop to upload' : 'Drop screenshots here or click to upload'}
         </p>
         <p style={styles.dropzoneHint}>
-          PNG or JPG, max {maxScreenshots} files
+          PNG or JPG • Max {maxScreenshots} files
         </p>
       </div>
 
@@ -297,8 +403,16 @@ export const ScreenshotUploader: React.FC<Props> = ({
           }}
           onClick={handleAddTextOnly}
           disabled={screenshots.length >= maxScreenshots}
+          onMouseEnter={(e) => {
+            if (screenshots.length < maxScreenshots) {
+              e.currentTarget.style.backgroundColor = '#f0f7ff';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#fff';
+          }}
         >
-          + Add Text-Only Slide
+          <span>📝</span> Add Text-Only Slide
         </button>
       </div>
 
@@ -329,7 +443,7 @@ export const ScreenshotUploader: React.FC<Props> = ({
                   />
                 ) : (
                   <div style={styles.emptyPreview as React.CSSProperties}>
-                    Text Only
+                    📝 Text
                   </div>
                 )}
                 <button
@@ -338,6 +452,8 @@ export const ScreenshotUploader: React.FC<Props> = ({
                     e.stopPropagation();
                     handleRemove(screenshot.id);
                   }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,59,48,0.9)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.6)'}
                 >
                   ×
                 </button>
@@ -348,7 +464,7 @@ export const ScreenshotUploader: React.FC<Props> = ({
             ))}
           </div>
           <p style={styles.hint as React.CSSProperties}>
-            Drag to reorder screenshots
+            💡 Drag screenshots to reorder
           </p>
         </>
       )}

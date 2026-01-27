@@ -12,91 +12,116 @@ interface Props {
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    marginBottom: '24px'
+    marginBottom: '0'
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    marginBottom: '16px'
+  },
+  headerIcon: {
+    width: '36px',
+    height: '36px',
+    borderRadius: '10px',
+    backgroundColor: '#fff3e0',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '18px'
   },
   label: {
     display: 'block',
-    fontSize: '14px',
+    fontSize: '16px',
     fontWeight: 600,
-    color: '#1d1d1f',
-    marginBottom: '8px'
+    color: '#1d1d1f'
   },
   hint: {
-    fontSize: '12px',
+    fontSize: '13px',
     color: '#86868b',
-    marginBottom: '12px'
+    marginBottom: '14px'
   },
   formatHint: {
-    fontSize: '11px',
-    color: '#86868b',
+    fontSize: '12px',
+    color: '#6b6b70',
     marginTop: '8px',
-    padding: '8px 12px',
-    backgroundColor: '#f5f5f7',
-    borderRadius: '6px',
-    lineHeight: '1.5'
+    padding: '12px 14px',
+    backgroundColor: '#f8f8fa',
+    borderRadius: '10px',
+    lineHeight: '1.6',
+    border: '1px solid rgba(0, 0, 0, 0.04)'
   },
   formatExample: {
-    fontFamily: 'monospace',
+    fontFamily: 'SF Mono, Monaco, Consolas, monospace',
     backgroundColor: '#e8e8ed',
-    padding: '2px 6px',
-    borderRadius: '4px',
+    padding: '2px 7px',
+    borderRadius: '5px',
     fontSize: '11px'
   },
   textItem: {
     display: 'flex',
-    gap: '12px',
+    gap: '14px',
     marginBottom: '16px',
-    alignItems: 'flex-start'
+    alignItems: 'flex-start',
+    padding: '14px',
+    backgroundColor: '#f9f9fb',
+    borderRadius: '12px',
+    border: '1px solid rgba(0, 0, 0, 0.04)'
   },
   thumbnail: {
-    width: '48px',
-    height: '80px',
-    borderRadius: '6px',
+    width: '50px',
+    height: '86px',
+    borderRadius: '8px',
     objectFit: 'cover',
     flexShrink: 0,
-    backgroundColor: '#f5f5f7'
+    backgroundColor: '#f5f5f7',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
   },
   textOnlyThumbnail: {
-    width: '48px',
-    height: '80px',
-    borderRadius: '6px',
+    width: '50px',
+    height: '86px',
+    borderRadius: '8px',
     flexShrink: 0,
-    background: 'linear-gradient(135deg, #667eea, #764ba2)',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     color: '#fff',
-    fontSize: '8px',
-    fontWeight: 600
+    fontSize: '9px',
+    fontWeight: 600,
+    boxShadow: '0 2px 8px rgba(102, 126, 234, 0.25)'
   },
   inputWrapper: {
     flex: 1
   },
   indexLabel: {
     fontSize: '12px',
+    fontWeight: 600,
     color: '#86868b',
-    marginBottom: '4px'
+    marginBottom: '6px'
   },
   textarea: {
     width: '100%',
-    padding: '10px 12px',
+    padding: '12px 14px',
     fontSize: '14px',
-    border: '1px solid #d2d2d7',
-    borderRadius: '8px',
+    border: '1px solid #e0e0e5',
+    borderRadius: '10px',
     outline: 'none',
-    transition: 'border-color 0.2s',
+    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
     resize: 'vertical',
-    minHeight: '60px',
+    minHeight: '68px',
     fontFamily: 'inherit',
-    lineHeight: '1.4'
+    lineHeight: '1.5',
+    backgroundColor: '#fff'
   },
   emptyState: {
     textAlign: 'center',
-    padding: '24px',
+    padding: '32px 24px',
     color: '#86868b',
-    backgroundColor: '#f5f5f7',
-    borderRadius: '8px',
-    fontSize: '14px'
+    backgroundColor: '#f8f8fa',
+    borderRadius: '12px',
+    fontSize: '14px',
+    border: '1px dashed #d0d0d5'
   }
 };
 
@@ -190,18 +215,29 @@ export const TextEditor: React.FC<Props> = ({
 
   return (
     <div style={styles.container}>
-      <label style={styles.label}>
-        Headline Texts
-        {isEditingTranslation && (
-          <span style={{ fontWeight: 400, fontSize: '12px', color: '#0071e3', marginLeft: '8px' }}>
-            ({getLanguageName(selectedLanguage)})
-          </span>
-        )}
-      </label>
+      <div style={styles.header}>
+        <div style={styles.headerIcon as React.CSSProperties}>✏️</div>
+        <label style={styles.label}>
+          Headline Texts
+          {isEditingTranslation && (
+            <span style={{
+              fontWeight: 500,
+              fontSize: '12px',
+              color: '#0071e3',
+              marginLeft: '8px',
+              backgroundColor: '#f0f7ff',
+              padding: '3px 8px',
+              borderRadius: '6px'
+            }}>
+              {getLanguageName(selectedLanguage)}
+            </span>
+          )}
+        </label>
+      </div>
       <p style={styles.hint}>
         {isEditingTranslation
           ? `Edit translated texts for ${getLanguageName(selectedLanguage)}`
-          : 'Enter the text that will appear on each screenshot (source language)'
+          : 'Enter the text that will appear on each screenshot'
         }
       </p>
 
@@ -246,9 +282,11 @@ export const TextEditor: React.FC<Props> = ({
                 style={styles.textarea as React.CSSProperties}
                 onFocus={(e) => {
                   e.target.style.borderColor = '#0071e3';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(0, 113, 227, 0.12)';
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#d2d2d7';
+                  e.target.style.borderColor = '#e0e0e5';
+                  e.target.style.boxShadow = 'none';
                 }}
                 rows={3}
               />

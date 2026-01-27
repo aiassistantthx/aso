@@ -52,25 +52,50 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: '#f5f5f7'
   },
   header: {
-    backgroundColor: '#fff',
-    borderBottom: '1px solid #d2d2d7',
-    padding: '16px 24px'
+    background: 'rgba(255, 255, 255, 0.72)',
+    borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
+    padding: '0',
+    position: 'sticky',
+    top: 0,
+    zIndex: 100,
+    backdropFilter: 'saturate(180%) blur(20px)',
+    WebkitBackdropFilter: 'saturate(180%) blur(20px)'
   },
   headerContent: {
-    maxWidth: '1400px',
+    maxWidth: '1600px',
     margin: '0 auto',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
+    padding: '14px 24px'
+  },
+  logoContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '14px'
+  },
+  logoIcon: {
+    width: '42px',
+    height: '42px',
+    borderRadius: '12px',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '20px',
+    color: '#fff',
+    boxShadow: '0 4px 14px rgba(102, 126, 234, 0.35)'
   },
   logo: {
-    fontSize: '20px',
+    fontSize: '18px',
     fontWeight: 700,
-    color: '#1d1d1f'
+    color: '#1d1d1f',
+    letterSpacing: '-0.4px'
   },
   subtitle: {
-    fontSize: '14px',
-    color: '#86868b'
+    fontSize: '12px',
+    color: '#86868b',
+    marginTop: '3px'
   },
   main: {
     maxWidth: '1600px',
@@ -82,43 +107,53 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1,
     padding: '24px',
     display: 'grid',
-    gridTemplateColumns: '1fr 400px',
+    gridTemplateColumns: '1fr 420px',
     gap: '24px',
     minWidth: 0
   },
   leftPanel: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '24px'
+    gap: '16px'
   },
   rightPanel: {
     position: 'sticky',
-    top: '24px',
-    alignSelf: 'start'
+    top: '90px',
+    alignSelf: 'start',
+    maxHeight: 'calc(100vh - 110px)',
+    overflowY: 'auto'
   },
   card: {
     backgroundColor: '#fff',
-    borderRadius: '12px',
-    padding: '20px',
-    border: '1px solid #d2d2d7'
+    borderRadius: '18px',
+    padding: '22px',
+    border: '1px solid rgba(0, 0, 0, 0.06)',
+    boxShadow: '0 2px 12px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.02)',
+    transition: 'box-shadow 0.3s ease, transform 0.2s ease'
   },
   headerButtons: {
     display: 'flex',
-    gap: '8px'
+    gap: '10px'
   },
   headerButton: {
-    padding: '8px 16px',
+    padding: '9px 18px',
     fontSize: '13px',
-    border: '1px solid #d2d2d7',
-    borderRadius: '8px',
+    fontWeight: 600,
+    border: '1px solid #e0e0e5',
+    borderRadius: '10px',
     backgroundColor: '#fff',
     cursor: 'pointer',
-    transition: 'all 0.2s'
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '7px',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)'
   },
   headerButtonPrimary: {
-    backgroundColor: '#0071e3',
-    borderColor: '#0071e3',
-    color: '#fff'
+    background: 'linear-gradient(135deg, #0071e3 0%, #0077ed 100%)',
+    borderColor: 'transparent',
+    color: '#fff',
+    boxShadow: '0 2px 10px rgba(0, 113, 227, 0.35)'
   },
   modal: {
     position: 'fixed',
@@ -126,75 +161,86 @@ const styles: Record<string, React.CSSProperties> = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    backdropFilter: 'blur(8px)',
+    WebkitBackdropFilter: 'blur(8px)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1000
+    zIndex: 1000,
+    animation: 'fadeIn 0.2s ease-out'
   },
   modalContent: {
     backgroundColor: '#fff',
-    borderRadius: '16px',
-    padding: '24px',
-    maxWidth: '500px',
+    borderRadius: '20px',
+    padding: '28px',
+    maxWidth: '480px',
     width: '90%',
     maxHeight: '80vh',
-    overflow: 'auto'
+    overflow: 'auto',
+    boxShadow: '0 24px 80px rgba(0, 0, 0, 0.25), 0 8px 24px rgba(0, 0, 0, 0.15)',
+    animation: 'fadeIn 0.25s ease-out'
   },
   modalTitle: {
-    fontSize: '18px',
-    fontWeight: 600,
-    marginBottom: '16px',
-    color: '#1d1d1f'
+    fontSize: '20px',
+    fontWeight: 700,
+    marginBottom: '20px',
+    color: '#1d1d1f',
+    letterSpacing: '-0.3px'
   },
   modalInput: {
     width: '100%',
-    padding: '10px 12px',
-    fontSize: '14px',
-    border: '1px solid #d2d2d7',
-    borderRadius: '8px',
-    marginBottom: '16px',
-    outline: 'none'
+    padding: '14px 16px',
+    fontSize: '15px',
+    border: '1px solid #e0e0e5',
+    borderRadius: '12px',
+    marginBottom: '20px',
+    outline: 'none',
+    transition: 'border-color 0.2s ease, box-shadow 0.2s ease'
   },
   modalButtons: {
     display: 'flex',
-    gap: '8px',
+    gap: '10px',
     justifyContent: 'flex-end'
   },
   projectList: {
-    marginBottom: '16px'
+    marginBottom: '20px'
   },
   projectItem: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '12px',
-    borderRadius: '8px',
+    padding: '14px 16px',
+    borderRadius: '12px',
     border: '1px solid #e8e8ed',
-    marginBottom: '8px',
+    marginBottom: '10px',
     cursor: 'pointer',
-    transition: 'all 0.2s'
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
   },
   projectInfo: {
     flex: 1
   },
   projectName: {
     fontSize: '14px',
-    fontWeight: 500,
+    fontWeight: 600,
     color: '#1d1d1f'
   },
   projectDate: {
     fontSize: '12px',
-    color: '#86868b'
+    color: '#86868b',
+    marginTop: '4px'
   },
   deleteButton: {
-    padding: '4px 8px',
+    padding: '6px 12px',
     fontSize: '12px',
+    fontWeight: 500,
     border: 'none',
-    borderRadius: '4px',
+    borderRadius: '8px',
     backgroundColor: '#ff3b30',
     color: '#fff',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    opacity: 0.9
   },
   currentProject: {
     fontSize: '13px',
@@ -356,31 +402,57 @@ function App() {
       {/* Header */}
       <header style={styles.header}>
         <div style={styles.headerContent}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={styles.logoContainer as React.CSSProperties}>
+            <div style={styles.logoIcon as React.CSSProperties}>📱</div>
             <div>
-              <h1 style={styles.logo}>App Store Screenshot Generator</h1>
+              <h1 style={styles.logo}>Screenshot Studio</h1>
               <p style={styles.subtitle}>
-                Create localized screenshots for App Store in 40+ languages
+                {currentProjectName ? `Project: ${currentProjectName}` : 'Create App Store screenshots in 40+ languages'}
               </p>
             </div>
-            {currentProjectName && (
-              <span style={styles.currentProject as React.CSSProperties}>
-                Project: {currentProjectName}
-              </span>
-            )}
           </div>
           <div style={styles.headerButtons as React.CSSProperties}>
-            <button style={styles.headerButton} onClick={handleNewProject}>
-              New
+            <button
+              style={styles.headerButton}
+              onClick={handleNewProject}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#f5f5f7';
+                e.currentTarget.style.borderColor = '#d0d0d5';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#fff';
+                e.currentTarget.style.borderColor = '#e0e0e5';
+              }}
+            >
+              <span>✨</span> New
             </button>
-            <button style={styles.headerButton} onClick={openLoadModal}>
-              Open
+            <button
+              style={styles.headerButton}
+              onClick={openLoadModal}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#f5f5f7';
+                e.currentTarget.style.borderColor = '#d0d0d5';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#fff';
+                e.currentTarget.style.borderColor = '#e0e0e5';
+              }}
+            >
+              <span>📂</span> Open
             </button>
             <button
               style={{ ...styles.headerButton, ...styles.headerButtonPrimary }}
               onClick={openSaveModal}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 14px rgba(0, 113, 227, 0.45)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 10px rgba(0, 113, 227, 0.35)';
+              }}
             >
-              Save
+              <span>💾</span> Save
             </button>
           </div>
         </div>
@@ -399,6 +471,14 @@ function App() {
               style={styles.modalInput}
               autoFocus
               onKeyDown={(e) => e.key === 'Enter' && handleSaveProject()}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = '#0071e3';
+                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0, 113, 227, 0.15)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = '#e0e0e5';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
             />
             <div style={styles.modalButtons as React.CSSProperties}>
               <button style={styles.headerButton} onClick={() => setShowSaveModal(false)}>
@@ -434,6 +514,22 @@ function App() {
                       ...(project.id === currentProjectId ? { borderColor: '#0071e3', backgroundColor: '#f0f7ff' } : {})
                     }}
                     onClick={() => handleLoadProject(project.id)}
+                    onMouseEnter={(e) => {
+                      if (project.id !== currentProjectId) {
+                        e.currentTarget.style.backgroundColor = '#f9f9fb';
+                        e.currentTarget.style.borderColor = '#d0d0d5';
+                        e.currentTarget.style.transform = 'translateY(-1px)';
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (project.id !== currentProjectId) {
+                        e.currentTarget.style.backgroundColor = '#fff';
+                        e.currentTarget.style.borderColor = '#e8e8ed';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }
+                    }}
                   >
                     <div style={styles.projectInfo}>
                       <div style={styles.projectName}>{project.name}</div>
@@ -444,6 +540,14 @@ function App() {
                     <button
                       style={styles.deleteButton}
                       onClick={(e) => handleDeleteProject(project.id, e)}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.opacity = '1';
+                        e.currentTarget.style.transform = 'scale(1.05)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.opacity = '0.9';
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
                     >
                       Delete
                     </button>

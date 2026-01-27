@@ -25,51 +25,71 @@ const cssStyles: Record<string, React.CSSProperties> = {
     gap: '16px'
   },
   label: {
-    fontSize: '14px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    fontSize: '16px',
     fontWeight: 600,
     color: '#1d1d1f'
+  },
+  labelIcon: {
+    width: '36px',
+    height: '36px',
+    borderRadius: '10px',
+    backgroundColor: '#e6f4ff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '18px'
   },
   previewWrapper: {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#e8e8ed',
-    borderRadius: '12px',
-    padding: '24px',
-    minHeight: '400px',
-    position: 'relative'
+    background: 'linear-gradient(145deg, #f5f5fa 0%, #eaeaef 100%)',
+    borderRadius: '20px',
+    padding: '28px',
+    minHeight: '420px',
+    position: 'relative',
+    boxShadow: 'inset 0 2px 12px rgba(0, 0, 0, 0.04)',
+    border: '1px solid rgba(0, 0, 0, 0.04)'
   },
   canvas: {
-    borderRadius: '8px',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-    cursor: 'move'
+    borderRadius: '16px',
+    boxShadow: '0 12px 40px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.08)',
+    cursor: 'move',
+    transition: 'box-shadow 0.3s ease, transform 0.2s ease'
   },
   thumbnailStrip: {
     display: 'flex',
-    gap: '8px',
+    gap: '10px',
     overflowX: 'auto',
-    padding: '4px 0'
+    padding: '8px 4px',
+    marginTop: '8px'
   },
   thumbnail: {
-    width: '60px',
-    height: '100px',
-    borderRadius: '6px',
+    width: '52px',
+    height: '90px',
+    borderRadius: '10px',
     objectFit: 'cover',
     cursor: 'pointer',
     border: '2px solid transparent',
-    transition: 'all 0.2s',
-    flexShrink: 0
+    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+    flexShrink: 0,
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
   },
   thumbnailActive: {
-    borderColor: '#0071e3'
+    borderColor: '#0071e3',
+    boxShadow: '0 4px 16px rgba(0, 113, 227, 0.35)',
+    transform: 'scale(1.05)'
   },
   textOnlyThumbnail: {
-    background: 'linear-gradient(135deg, #667eea, #764ba2)',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     color: '#fff',
-    fontSize: '8px',
+    fontSize: '9px',
     fontWeight: 600,
     textAlign: 'center'
   },
@@ -80,19 +100,33 @@ const cssStyles: Record<string, React.CSSProperties> = {
     marginTop: '8px'
   },
   resetButton: {
-    padding: '6px 12px',
-    fontSize: '12px',
-    border: '1px solid #d2d2d7',
-    borderRadius: '6px',
+    padding: '11px 16px',
+    fontSize: '13px',
+    fontWeight: 600,
+    border: '1px solid #e8e8ed',
+    borderRadius: '10px',
     backgroundColor: '#fff',
     cursor: 'pointer',
-    marginTop: '8px'
+    marginTop: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    transition: 'all 0.2s ease',
+    width: '100%'
   },
   dragHint: {
     textAlign: 'center',
-    fontSize: '11px',
+    fontSize: '12px',
     color: '#86868b',
-    marginTop: '4px'
+    marginTop: '8px',
+    padding: '10px 14px',
+    backgroundColor: '#f5f5f7',
+    borderRadius: '10px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '4px'
   }
 };
 
@@ -453,10 +487,18 @@ export const Preview: React.FC<Props> = ({
   return (
     <div style={cssStyles.container as React.CSSProperties}>
       <label style={cssStyles.label}>
-        Preview
+        <div style={cssStyles.labelIcon as React.CSSProperties}>👁️</div>
+        <span style={{ flex: 1 }}>Preview</span>
         {isEditingTranslation && (
-          <span style={{ fontWeight: 400, fontSize: '12px', color: '#0071e3', marginLeft: '8px' }}>
-            ({getLanguageName(selectedLanguage)})
+          <span style={{
+            fontSize: '12px',
+            fontWeight: 500,
+            color: '#0071e3',
+            backgroundColor: '#f0f7ff',
+            padding: '4px 10px',
+            borderRadius: '6px'
+          }}>
+            {getLanguageName(selectedLanguage)}
           </span>
         )}
       </label>
@@ -482,12 +524,17 @@ export const Preview: React.FC<Props> = ({
       </div>
 
       <p style={cssStyles.dragHint as React.CSSProperties}>
-        Drag to move/resize elements. Drag corner to resize mockup.
+        💡 Drag elements to reposition • Drag corner to resize mockup
       </p>
 
       {hasCustomPosition && (
-        <button style={cssStyles.resetButton} onClick={resetPositions}>
-          Reset Positions
+        <button
+          style={cssStyles.resetButton}
+          onClick={resetPositions}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f7'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+        >
+          <span>↩️</span> Reset Positions
         </button>
       )}
 
@@ -510,6 +557,18 @@ export const Preview: React.FC<Props> = ({
                   ...(index === selectedIndex ? cssStyles.thumbnailActive : {})
                 }}
                 onClick={() => onSelectIndex(index)}
+                onMouseEnter={(e) => {
+                  if (index !== selectedIndex) {
+                    e.currentTarget.style.transform = 'scale(1.03)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (index !== selectedIndex) {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.08)';
+                  }
+                }}
               />
             ) : (
               <div
@@ -520,6 +579,18 @@ export const Preview: React.FC<Props> = ({
                   ...(index === selectedIndex ? cssStyles.thumbnailActive : {})
                 }}
                 onClick={() => onSelectIndex(index)}
+                onMouseEnter={(e) => {
+                  if (index !== selectedIndex) {
+                    e.currentTarget.style.transform = 'scale(1.03)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.3)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (index !== selectedIndex) {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.08)';
+                  }
+                }}
               >
                 Text Only
               </div>
