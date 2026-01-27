@@ -1,8 +1,9 @@
 import React from 'react';
-import { StyleConfig, DeviceSize, DEVICE_SIZES, MockupVisibility, MockupAlignment, Screenshot, ScreenshotStyleOverride, TranslationData, PerLanguageScreenshotStyle } from '../types';
+import { StyleConfig, DeviceSize, DEVICE_SIZES, MockupVisibility, MockupAlignment, MockupStyle, Screenshot, ScreenshotStyleOverride, TranslationData, PerLanguageScreenshotStyle, MockupContinuation, Template } from '../types';
 import { APP_STORE_LANGUAGES } from '../constants/languages';
 import { Toggle, Slider, ColorPicker, SegmentedControl } from './ui';
 import { colors } from '../styles/common';
+import { TEMPLATES } from '../constants/templates';
 
 interface Props {
   style: StyleConfig;
@@ -195,14 +196,6 @@ const FONT_OPTIONS = [
   { value: 'Menlo, monospace', label: 'Menlo' }
 ];
 
-const GRADIENT_PRESETS = [
-  { name: 'Purple Blue', color1: '#667eea', color2: '#764ba2' },
-  { name: 'Orange Red', color1: '#f093fb', color2: '#f5576c' },
-  { name: 'Green Teal', color1: '#4facfe', color2: '#00f2fe' },
-  { name: 'Pink Orange', color1: '#fa709a', color2: '#fee140' },
-  { name: 'Blue Purple', color1: '#a18cd1', color2: '#fbc2eb' },
-  { name: 'Dark', color1: '#0f0c29', color2: '#302b63' }
-];
 
 export const StyleEditor: React.FC<Props> = ({
   style,
@@ -282,6 +275,32 @@ export const StyleEditor: React.FC<Props> = ({
 
   const updateStyle = <K extends keyof StyleConfig>(key: K, value: StyleConfig[K]) => {
     onStyleChange({ ...style, [key]: value });
+  };
+
+  const applyTemplate = (template: Template) => {
+    // Update global style with template settings
+    onStyleChange({
+      ...style,
+      backgroundColor: template.backgroundColor,
+      gradient: template.gradient,
+      textColor: template.textColor,
+      fontFamily: template.fontFamily,
+      fontSize: template.fontSize,
+      textAlign: template.textAlign,
+      paddingTop: template.paddingTop,
+      paddingBottom: template.paddingBottom,
+      mockupColor: template.mockupColor,
+      mockupScale: template.mockupScale,
+      highlightColor: template.highlightColor,
+      pattern: template.pattern
+    });
+
+    // Clear all per-screenshot style overrides so template applies uniformly
+    const newScreenshots = screenshots.map(s => {
+      const { styleOverride: _, ...rest } = s;
+      return rest;
+    });
+    onScreenshotsChange(newScreenshots);
   };
 
   const updateGradient = (updates: Partial<StyleConfig['gradient']>) => {
@@ -415,6 +434,20 @@ export const StyleEditor: React.FC<Props> = ({
 
         {style.showMockup && (
           <SegmentedControl
+            label="Style"
+            options={[
+              { value: 'realistic', label: 'Realistic' },
+              { value: 'flat', label: 'Flat' },
+              { value: 'minimal', label: 'Minimal' },
+              { value: 'outline', label: 'Outline' }
+            ]}
+            value={style.mockupStyle || 'realistic'}
+            onChange={(value) => updateStyle('mockupStyle', value as MockupStyle)}
+          />
+        )}
+
+        {style.showMockup && (
+          <SegmentedControl
             label="Visibility"
             options={[
               { value: 'full', label: 'Full' },
@@ -457,6 +490,153 @@ export const StyleEditor: React.FC<Props> = ({
           />
         )}
       </div>
+
+      {/* Rotation Control */}
+      {style.showMockup && (
+        <div style={{ marginTop: '12px' }}>
+          <Slider
+            label="Rotation"
+            min={-45}
+            max={45}
+            value={style.mockupRotation ?? 0}
+            onChange={(value) => updateStyle('mockupRotation', value)}
+            unit="°"
+          />
+          {style.mockupRotation !== 0 && (
+            <button
+              onClick={() => updateStyle('mockupRotation', 0)}
+              style={{
+                padding: '6px 12px',
+                fontSize: '11px',
+                fontWeight: 500,
+                border: `1px solid ${colors.borderLight}`,
+                borderRadius: '8px',
+                backgroundColor: colors.background,
+                color: colors.textSecondary,
+                cursor: 'pointer',
+                marginTop: '8px'
+              }}
+            >
+              Reset Rotation
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Mockup Continuation - Split across screens */}
+      {style.showMockup && screenshots.length > 1 && (
+        <div style={{ marginTop: '16px' }}>
+          <span style={{ ...cssStyles.fieldLabel, display: 'block', marginBottom: '8px' }}>
+            Mockup Position
+          </span>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            {[
+              { value: 'none', label: 'Center', icon: '⬜' },
+              { value: 'left-start', label: 'Right →', icon: '▶' },
+              { value: 'right-start', label: '← Left', icon: '◀' }
+            ].map((opt) => {
+              const currentContinuation = selectedScreenshot?.mockupContinuation ?? style.mockupContinuation ?? 'none';
+              const isActive = currentContinuation === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => {
+                    // Update per-screenshot mockupContinuation
+                    if (selectedScreenshot) {
+                      const newScreenshots = screenshots.map((s, i) =>
+                        i === selectedIndex
+                          ? { ...s, mockupContinuation: opt.value as MockupContinuation }
+                          : s
+                      );
+                      onScreenshotsChange(newScreenshots);
+                    }
+                  }}
+                  style={{
+                    padding: '8px 14px',
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    border: `2px solid ${isActive ? colors.primary : colors.borderLight}`,
+                    borderRadius: '8px',
+                    backgroundColor: isActive ? colors.primaryLight : colors.white,
+                    color: isActive ? colors.primary : colors.textSecondary,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <span>{opt.icon}</span> {opt.label}
+                </button>
+              );
+            })}
+          </div>
+          <p style={{ fontSize: '11px', color: colors.textSecondary, marginTop: '6px' }}>
+            Position mockup for screen {selectedIndex + 1}
+          </p>
+
+          {/* Linked Screenshot for continuation */}
+          {selectedScreenshot && (
+            <div style={{ marginTop: '12px' }}>
+              <span style={{ ...cssStyles.fieldLabel, display: 'block', marginBottom: '8px' }}>
+                Screenshot in Mockup
+              </span>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {screenshots.map((s, idx) => (
+                  <button
+                    key={s.id}
+                    onClick={() => {
+                      const newScreenshots = screenshots.map((ss, i) =>
+                        i === selectedIndex
+                          ? { ...ss, linkedMockupIndex: idx === selectedIndex ? undefined : idx }
+                          : ss
+                      );
+                      onScreenshotsChange(newScreenshots);
+                    }}
+                    style={{
+                      width: '36px',
+                      height: '60px',
+                      borderRadius: '6px',
+                      border: `2px solid ${(selectedScreenshot.linkedMockupIndex === idx || (selectedScreenshot.linkedMockupIndex === undefined && idx === selectedIndex)) ? colors.primary : colors.borderLight}`,
+                      padding: '2px',
+                      cursor: 'pointer',
+                      overflow: 'hidden',
+                      backgroundColor: colors.white,
+                      transition: 'all 0.2s'
+                    }}
+                    title={`Use screenshot ${idx + 1} in mockup`}
+                  >
+                    {s.preview ? (
+                      <img
+                        src={s.preview}
+                        alt={`Screen ${idx + 1}`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: '100%',
+                        height: '100%',
+                        backgroundColor: colors.background,
+                        borderRadius: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '10px',
+                        color: colors.textSecondary
+                      }}>
+                        {idx + 1}
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+              <p style={{ fontSize: '11px', color: colors.textSecondary, marginTop: '6px' }}>
+                Select which screenshot to show inside the mockup
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Background Section */}
       <div style={cssStyles.sectionTitle as React.CSSProperties}>
@@ -522,31 +702,6 @@ export const StyleEditor: React.FC<Props> = ({
             unit="°"
           />
 
-          <div style={{ marginTop: '8px' }}>
-            <span style={cssStyles.fieldLabel}>Presets</span>
-            <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
-              {GRADIENT_PRESETS.map((preset) => (
-                <button
-                  key={preset.name}
-                  onClick={() => updateScreenshotGradient({ color1: preset.color1, color2: preset.color2 })}
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '10px',
-                    border: '3px solid #fff',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                    cursor: 'pointer',
-                    background: `linear-gradient(135deg, ${preset.color1}, ${preset.color2})`,
-                    transition: 'transform 0.2s'
-                  }}
-                  title={preset.name}
-                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                />
-              ))}
-            </div>
-          </div>
-
           <div
             style={{
               ...cssStyles.gradientPreview,
@@ -563,6 +718,37 @@ export const StyleEditor: React.FC<Props> = ({
           />
         </div>
       )}
+
+      {/* Templates Section */}
+      <div style={{ marginTop: '16px' }}>
+        <span style={cssStyles.fieldLabel}>Templates</span>
+        <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+          {TEMPLATES.map((template) => {
+            const background = template.gradient.enabled
+              ? `linear-gradient(${template.gradient.angle}deg, ${template.gradient.color1}, ${template.gradient.color2})`
+              : template.backgroundColor;
+            return (
+              <button
+                key={template.id}
+                onClick={() => applyTemplate(template)}
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  border: '2px solid rgba(0,0,0,0.08)',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.12), inset 0 0 0 2px #fff',
+                  cursor: 'pointer',
+                  background,
+                  transition: 'transform 0.2s'
+                }}
+                title={template.name}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              />
+            );
+          })}
+        </div>
+      </div>
 
       {/* Text Section */}
       <div style={cssStyles.sectionTitle as React.CSSProperties}>

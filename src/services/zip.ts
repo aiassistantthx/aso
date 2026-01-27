@@ -106,13 +106,21 @@ export const generateZipArchive = async (options: ExportOptions): Promise<void> 
         }
 
         try {
+          // Get the mockup screenshot (may be linked to another screen)
+          const mockupScreenshot = screenshot.linkedMockupIndex !== undefined
+            ? screenshots[screenshot.linkedMockupIndex]?.preview || null
+            : screenshot.preview;
+
           const blob = await generateScreenshotImage({
             screenshot: screenshot.preview,
             text,
             style: mergedStyle,
             deviceSize,
             decorations: translatedDecorations,
-            styleOverride: screenshot.styleOverride
+            styleOverride: screenshot.styleOverride,
+            mockupScreenshot,
+            mockupContinuation: screenshot.mockupContinuation,
+            mockupSettings: screenshot.mockupSettings
           });
 
           const fileName = `screenshot_${String(i + 1).padStart(2, '0')}.png`;

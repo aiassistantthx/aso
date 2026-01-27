@@ -4,7 +4,7 @@ import { ScreenshotUploader } from './components/ScreenshotUploader';
 import { TextEditor } from './components/TextEditor';
 import { StyleEditor } from './components/StyleEditor';
 import { DecorationsEditor } from './components/DecorationsEditor';
-import { Preview } from './components/Preview';
+import { ScreensFlowEditor } from './components/ScreensFlowEditor';
 import { LanguageSelector } from './components/LanguageSelector';
 import { ExportButton } from './components/ExportButton';
 import { LanguageSidebar } from './components/LanguageSidebar';
@@ -36,11 +36,14 @@ const defaultStyle: StyleConfig = {
   paddingBottom: 60,
   showMockup: true,
   mockupColor: 'black',
+  mockupStyle: 'realistic',
   mockupVisibility: 'full',
   mockupAlignment: 'center',
   mockupOffset: { x: 0, y: 0 },
   textOffset: { x: 0, y: 0 },
   mockupScale: 1.0,
+  mockupRotation: 0,
+  mockupContinuation: 'none',
   highlightColor: '#FFE135',
   highlightPadding: 12,
   highlightBorderRadius: 8
@@ -106,22 +109,16 @@ const styles: Record<string, React.CSSProperties> = {
   mainContent: {
     flex: 1,
     padding: '24px',
-    display: 'grid',
-    gridTemplateColumns: '1fr 420px',
+    display: 'flex',
+    flexDirection: 'column',
     gap: '24px',
-    minWidth: 0
+    minWidth: 0,
+    maxWidth: '800px'
   },
   leftPanel: {
     display: 'flex',
     flexDirection: 'column',
     gap: '16px'
-  },
-  rightPanel: {
-    position: 'sticky',
-    top: '90px',
-    alignSelf: 'start',
-    maxHeight: 'calc(100vh - 110px)',
-    overflowY: 'auto'
   },
   card: {
     backgroundColor: '#fff',
@@ -397,6 +394,7 @@ function App() {
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+
   return (
     <div style={styles.app}>
       {/* Header */}
@@ -564,6 +562,22 @@ function App() {
         </div>
       )}
 
+      {/* Screens Flow Editor */}
+      {screenshots.length > 0 && (
+        <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
+          <ScreensFlowEditor
+            screenshots={screenshots}
+            selectedIndex={selectedPreviewIndex}
+            onSelectIndex={setSelectedPreviewIndex}
+            onScreenshotsChange={setScreenshots}
+            style={styleConfig}
+            deviceSize={deviceSize}
+            translationData={translationData}
+            selectedLanguage={selectedLanguage}
+          />
+        </div>
+      )}
+
       {/* Main Content */}
       <main style={styles.main}>
         {/* Language Sidebar - shown when translations exist */}
@@ -641,23 +655,6 @@ function App() {
             />
           </div>
 
-          {/* Right Panel - Preview */}
-          <div style={styles.rightPanel as React.CSSProperties}>
-            <div style={styles.card}>
-              <Preview
-                screenshots={screenshots}
-                selectedIndex={selectedPreviewIndex}
-                onSelectIndex={setSelectedPreviewIndex}
-                onScreenshotsChange={setScreenshots}
-                style={styleConfig}
-                deviceSize={deviceSize}
-                onStyleChange={setStyleConfig}
-                translationData={translationData}
-                selectedLanguage={selectedLanguage}
-                onTranslationChange={setTranslationData}
-              />
-            </div>
-          </div>
         </div>
       </main>
     </div>

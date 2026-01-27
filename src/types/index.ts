@@ -43,6 +43,18 @@ export interface ScreenshotStyleOverride {
   };
 }
 
+// Per-screenshot mockup settings for flexible positioning
+export interface ScreenshotMockupSettings {
+  // Position offset as percentage of canvas width (-100 to +100)
+  // 0 = centered, -50 = half off left edge, +50 = half off right edge
+  offsetX: number;
+  offsetY: number;
+  rotation: number;  // degrees
+  scale: number;     // 1.0 = default
+  // Link to next screen (for smooth transitions)
+  linkedToNext?: boolean;
+}
+
 export interface Screenshot {
   id: string;
   file: File | null;  // null for text-only slides
@@ -50,6 +62,13 @@ export interface Screenshot {
   text: string;
   decorations?: Decoration[];
   styleOverride?: ScreenshotStyleOverride;  // per-screenshot color overrides
+  // For mockup continuation: which screenshot index to show in the mockup
+  // If undefined, uses this screen's own screenshot
+  linkedMockupIndex?: number;
+  // Per-screenshot mockup position/continuation (legacy)
+  mockupContinuation?: MockupContinuation;
+  // New flexible mockup settings
+  mockupSettings?: ScreenshotMockupSettings;
 }
 
 export interface GradientConfig {
@@ -61,6 +80,10 @@ export interface GradientConfig {
 
 export type MockupVisibility = 'full' | '2/3' | '1/2';
 export type MockupAlignment = 'top' | 'center' | 'bottom';
+export type MockupStyle = 'realistic' | 'flat' | 'minimal' | 'outline';
+
+// Mockup continuation mode for split mockups across screens
+export type MockupContinuation = 'none' | 'left-start' | 'left-end' | 'right-start' | 'right-end';
 
 export interface StyleConfig {
   backgroundColor: string;
@@ -74,6 +97,7 @@ export interface StyleConfig {
   paddingBottom: number;
   showMockup: boolean;
   mockupColor: 'black' | 'white' | 'natural';
+  mockupStyle: MockupStyle;
   mockupVisibility: MockupVisibility;
   mockupAlignment: MockupAlignment;
   // Custom position offsets (relative to default position)
@@ -81,10 +105,16 @@ export interface StyleConfig {
   textOffset: Position;
   // Mockup scale factor (1.0 = default size)
   mockupScale: number;
+  // Mockup rotation in degrees
+  mockupRotation: number;
+  // Mockup continuation for split screens
+  mockupContinuation: MockupContinuation;
   // Highlight settings for [text] syntax
   highlightColor: string;
   highlightPadding: number;
   highlightBorderRadius: number;
+  // Background pattern
+  pattern?: BackgroundPattern;
 }
 
 export interface Language {
@@ -163,3 +193,104 @@ export const DEVICE_SIZES: Record<DeviceSize, DeviceDimensions> = {
     dynamicIslandHeight: 90
   }
 };
+
+// ============== TEMPLATE SYSTEM ==============
+
+// Background pattern types
+export type BackgroundPatternType = 'none' | 'dots' | 'grid' | 'diagonal-lines' | 'circles' | 'squares';
+
+export interface BackgroundPattern {
+  type: BackgroundPatternType;
+  color: string;        // Pattern color
+  opacity: number;      // 0-1
+  size: number;         // Pattern element size
+  spacing: number;      // Gap between elements
+}
+
+// Layout types for mockup positioning
+export type LayoutType =
+  | 'classic-top'        // Text top, mockup bottom center
+  | 'classic-bottom'     // Text bottom, mockup top center
+  | 'side-left'          // Text left, mockup right
+  | 'side-right'         // Text right, mockup left
+  | 'floating'           // Mockup floating with shadow, text overlay
+  | 'tilted-left'        // Mockup tilted left
+  | 'tilted-right'       // Mockup tilted right
+  | 'dual-mockup'        // Two mockups side by side
+  | 'text-only'          // No mockup, just text and decorations
+  | 'full-bleed';        // Mockup fills most of screen
+
+// Badge/tag decoration
+export interface BadgeDecoration {
+  type: 'badge';
+  enabled: boolean;
+  text: string;
+  backgroundColor: string;
+  textColor: string;
+  position: Position;
+  borderRadius: number;
+  fontSize: number;
+}
+
+// Extended decoration types
+export type ExtendedDecoration = Decoration | BadgeDecoration;
+
+// Template definition
+export interface Template {
+  id: string;
+  name: string;
+  category: TemplateCategory;
+  thumbnail?: string;  // Preview image URL
+
+  // Layout
+  layout: LayoutType;
+  mockupRotation?: number;  // Degrees of rotation for tilted layouts
+
+  // Colors
+  backgroundColor: string;
+  gradient: GradientConfig;
+  textColor: string;
+
+  // Background pattern
+  pattern: BackgroundPattern;
+
+  // Text styling
+  fontFamily: string;
+  fontSize: number;
+  textAlign: 'left' | 'center' | 'right';
+  subtitleEnabled: boolean;
+  subtitleFontSize?: number;
+  subtitleColor?: string;
+
+  // Highlight style
+  highlightColor: string;
+  highlightStyle: 'background' | 'underline' | 'none';
+
+  // Mockup settings
+  mockupColor: 'black' | 'white' | 'natural';
+  mockupScale: number;
+  mockupShadow: boolean;
+
+  // Padding
+  paddingTop: number;
+  paddingBottom: number;
+  paddingSide: number;
+}
+
+export type TemplateCategory =
+  | 'minimal'
+  | 'bold'
+  | 'gradient'
+  | 'pattern'
+  | 'dark'
+  | 'light'
+  | 'colorful';
+
+// Template preset - simplified template for quick selection
+export interface TemplatePreset {
+  id: string;
+  name: string;
+  category: TemplateCategory;
+  description: string;
+  template: Partial<Template>;
+}

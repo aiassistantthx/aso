@@ -184,6 +184,10 @@ export const ExportButton: React.FC<Props> = ({
     targetLanguages.length > 0 &&
     apiKey.trim();
 
+  // Can export without translation if we have screenshots (API key not required)
+  const canExportSourceOnly = screenshots.length > 0 &&
+    screenshots.some(s => s.text || s.preview);
+
   const handleTranslate = async () => {
     if (!canTranslate || isTranslating) return;
 
@@ -306,6 +310,57 @@ export const ExportButton: React.FC<Props> = ({
     }
   };
 
+  // Export only source language without translation
+  const handleExportSourceOnly = async () => {
+    if (!canExportSourceOnly || isWorking) return;
+
+    setIsExporting(true);
+    setProgress(0);
+    setStatus('Generating images...');
+    setError('');
+
+    try {
+      // Create simple translation data with only source language
+      const texts = screenshots.map(s => s.text || '');
+      const laurelTexts = screenshots.map(s => {
+        const laurelDec = s.decorations?.find(d => d.type === 'laurel');
+        if (laurelDec && 'textBlocks' in laurelDec) {
+          return laurelDec.textBlocks.map(b => b.text);
+        }
+        return [];
+      });
+
+      const sourceOnlyData: TranslationData = {
+        headlines: {
+          [sourceLanguage]: texts
+        },
+        laurelTexts: {
+          [sourceLanguage]: laurelTexts
+        },
+        perLanguageStyles: translationData?.perLanguageStyles || {}
+      };
+
+      await generateZipArchive({
+        screenshots,
+        translationData: sourceOnlyData,
+        style,
+        deviceSize,
+        onProgress: (p, s) => {
+          setProgress(p);
+          setStatus(s);
+        }
+      });
+
+      setProgress(100);
+      setStatus('Export complete!');
+    } catch (err) {
+      console.error('Export error:', err);
+      setError(err instanceof Error ? err.message : 'Export failed');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const getMissingRequirements = (): string[] => {
     const missing: string[] = [];
     if (screenshots.length === 0) missing.push('Upload at least one screenshot');
@@ -417,6 +472,36 @@ export const ExportButton: React.FC<Props> = ({
           {isExporting ? 'Exporting...' : translationData ? 'Export ZIP' : 'Translate & Export'}
         </button>
       </div>
+
+      {/* Export Source Language Only */}
+      <button
+        onClick={handleExportSourceOnly}
+        disabled={!canExportSourceOnly || isWorking}
+        style={{
+          width: '100%',
+          marginTop: '10px',
+          padding: '12px 24px',
+          fontSize: '14px',
+          fontWeight: 500,
+          border: '1px solid #d2d2d7',
+          borderRadius: '10px',
+          backgroundColor: '#f5f5f7',
+          color: '#1d1d1f',
+          cursor: canExportSourceOnly && !isWorking ? 'pointer' : 'not-allowed',
+          opacity: canExportSourceOnly && !isWorking ? 1 : 0.5,
+          transition: 'all 0.2s ease'
+        }}
+        onMouseEnter={(e) => {
+          if (canExportSourceOnly && !isWorking) {
+            e.currentTarget.style.backgroundColor = '#e8e8ed';
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = '#f5f5f7';
+        }}
+      >
+        Export {sourceLanguage.toUpperCase()} Only (No Translation)
+      </button>
 
       {/* Progress */}
       {isWorking && (

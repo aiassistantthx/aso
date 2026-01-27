@@ -1,4 +1,4 @@
-import { StyleConfig, DeviceSize, DEVICE_SIZES, Decoration, StarRatingDecoration, LaurelDecoration, ScreenshotStyleOverride } from '../types';
+import { StyleConfig, DeviceSize, DEVICE_SIZES, Decoration, StarRatingDecoration, LaurelDecoration, ScreenshotStyleOverride, BackgroundPattern, MockupContinuation, ScreenshotMockupSettings } from '../types';
 
 export interface ElementBounds {
   mockup: { x: number; y: number; width: number; height: number };
@@ -12,6 +12,12 @@ export interface GenerateImageOptions {
   deviceSize: DeviceSize;
   decorations?: Decoration[];
   styleOverride?: ScreenshotStyleOverride;  // per-screenshot color overrides
+  // For mockup continuation: override which screenshot to show in mockup
+  mockupScreenshot?: string | null;
+  // Per-screenshot mockup continuation (overrides style.mockupContinuation)
+  mockupContinuation?: MockupContinuation;
+  // Per-screenshot mockup positioning (from ScreensFlowEditor)
+  mockupSettings?: ScreenshotMockupSettings;
 }
 
 // Merge global style with per-screenshot overrides
@@ -508,6 +514,95 @@ const drawGradientBackground = (
   ctx.fillRect(0, 0, width, height);
 };
 
+// Draw background pattern overlay
+const drawBackgroundPattern = (
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  pattern: BackgroundPattern
+): void => {
+  if (!pattern || pattern.type === 'none') return;
+
+  const { type, color, opacity, size, spacing } = pattern;
+
+  ctx.save();
+  ctx.globalAlpha = opacity;
+
+  switch (type) {
+    case 'dots':
+      ctx.fillStyle = color;
+      for (let x = spacing / 2; x < width; x += spacing) {
+        for (let y = spacing / 2; y < height; y += spacing) {
+          ctx.beginPath();
+          ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      break;
+
+    case 'grid':
+      ctx.strokeStyle = color;
+      ctx.lineWidth = size;
+      // Vertical lines
+      for (let x = 0; x <= width; x += spacing) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+      // Horizontal lines
+      for (let y = 0; y <= height; y += spacing) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+      break;
+
+    case 'diagonal-lines':
+      ctx.strokeStyle = color;
+      ctx.lineWidth = size;
+      // Draw diagonal lines from top-left to bottom-right
+      for (let i = -height; i < width + height; i += spacing) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i + height, height);
+        ctx.stroke();
+      }
+      break;
+
+    case 'circles':
+      ctx.strokeStyle = color;
+      ctx.lineWidth = size;
+      for (let x = spacing; x < width; x += spacing * 2) {
+        for (let y = spacing; y < height; y += spacing * 2) {
+          ctx.beginPath();
+          ctx.arc(x, y, spacing / 2, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+      break;
+
+    case 'squares':
+      ctx.strokeStyle = color;
+      ctx.lineWidth = size;
+      const squareSize = spacing * 0.6;
+      for (let x = spacing / 2; x < width; x += spacing) {
+        for (let y = spacing / 2; y < height; y += spacing) {
+          ctx.strokeRect(
+            x - squareSize / 2,
+            y - squareSize / 2,
+            squareSize,
+            squareSize
+          );
+        }
+      }
+      break;
+  }
+
+  ctx.restore();
+};
+
 // Screen area coordinates within the mockup image (2000x2000)
 // Blue iPhone 15 mockup with transparent background
 const MOCKUP_CONFIG = {
@@ -675,6 +770,349 @@ const getFrameColor = (color: 'black' | 'white' | 'natural'): string => {
   }
 };
 
+// Draw side buttons for programmatic mockups
+const drawProgrammaticSideButtons = (
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  frameColor: string
+): void => {
+  // Button color - slightly darker than frame
+  const buttonColor = frameColor === '#F5F5F7' ? '#D1D1D6' :
+                      frameColor === '#E3D5C8' ? '#C4B5A8' : '#0D0D0D';
+
+  const buttonWidth = width * 0.012;
+  const buttonRadius = buttonWidth / 2;
+
+  ctx.fillStyle = buttonColor;
+
+  // Left side - Action button (small, top)
+  const actionBtnHeight = height * 0.035;
+  const actionBtnY = y + height * 0.15;
+  ctx.beginPath();
+  ctx.roundRect(x - buttonWidth, actionBtnY, buttonWidth, actionBtnHeight, buttonRadius);
+  ctx.fill();
+
+  // Left side - Volume Up
+  const volUpHeight = height * 0.065;
+  const volUpY = y + height * 0.22;
+  ctx.beginPath();
+  ctx.roundRect(x - buttonWidth, volUpY, buttonWidth, volUpHeight, buttonRadius);
+  ctx.fill();
+
+  // Left side - Volume Down
+  const volDownY = volUpY + volUpHeight + height * 0.015;
+  ctx.beginPath();
+  ctx.roundRect(x - buttonWidth, volDownY, buttonWidth, volUpHeight, buttonRadius);
+  ctx.fill();
+
+  // Right side - Power button
+  const powerHeight = height * 0.08;
+  const powerY = y + height * 0.24;
+  ctx.beginPath();
+  ctx.roundRect(x + width, powerY, buttonWidth, powerHeight, buttonRadius);
+  ctx.fill();
+};
+
+// Draw flat style mockup (solid colored frame like real iPhone)
+const drawFlatMockup = (
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  frameColor: string,
+  screenshot: HTMLImageElement | null
+): void => {
+  // iPhone proportions - frame is about 3% of width on sides
+  const frameThickness = width * 0.035;
+  const cornerRadius = width * 0.12;
+  const screenCornerRadius = cornerRadius - frameThickness * 0.8;
+
+  // Dynamic Island dimensions (relative to screen)
+  const screenWidth = width - frameThickness * 2;
+  const dynamicIslandWidth = screenWidth * 0.32;
+  const dynamicIslandHeight = height * 0.022;
+  const dynamicIslandY = y + frameThickness + height * 0.008;
+
+  // Draw shadow first
+  ctx.save();
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+  ctx.shadowBlur = 50;
+  ctx.shadowOffsetX = 10;
+  ctx.shadowOffsetY = 20;
+
+  // Draw solid phone body
+  ctx.fillStyle = frameColor;
+  ctx.beginPath();
+  ctx.roundRect(x, y, width, height, cornerRadius);
+  ctx.fill();
+  ctx.restore();
+
+  // Draw side buttons
+  drawProgrammaticSideButtons(ctx, x, y, width, height, frameColor);
+
+  // Screen area
+  const screenX = x + frameThickness;
+  const screenY = y + frameThickness;
+  const screenHeight = height - frameThickness * 2;
+
+  // Draw black screen background first (prevents any bleed-through)
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.roundRect(screenX, screenY, screenWidth, screenHeight, screenCornerRadius);
+  ctx.fill();
+
+  // Draw screenshot clipped to screen
+  if (screenshot) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(screenX, screenY, screenWidth, screenHeight, screenCornerRadius);
+    ctx.clip();
+
+    const imgAspect = screenshot.width / screenshot.height;
+    const screenAspect = screenWidth / screenHeight;
+    let drawW, drawH, drawX, drawY;
+
+    if (imgAspect > screenAspect) {
+      drawH = screenHeight;
+      drawW = drawH * imgAspect;
+      drawX = screenX - (drawW - screenWidth) / 2;
+      drawY = screenY;
+    } else {
+      drawW = screenWidth;
+      drawH = drawW / imgAspect;
+      drawX = screenX;
+      drawY = screenY - (drawH - screenHeight) / 2;
+    }
+    ctx.drawImage(screenshot, drawX, drawY, drawW, drawH);
+    ctx.restore();
+  }
+
+  // Draw Dynamic Island on top
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.roundRect(
+    x + (width - dynamicIslandWidth) / 2,
+    dynamicIslandY,
+    dynamicIslandWidth,
+    dynamicIslandHeight,
+    dynamicIslandHeight / 2
+  );
+  ctx.fill();
+};
+
+// Draw minimal style mockup (thin border, clean look)
+const drawMinimalMockup = (
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  frameColor: string,
+  screenshot: HTMLImageElement | null
+): void => {
+  const borderWidth = width * 0.02;
+  const cornerRadius = width * 0.1;
+  const innerRadius = cornerRadius - borderWidth;
+
+  // Dynamic Island
+  const dynamicIslandWidth = width * 0.28;
+  const dynamicIslandHeight = height * 0.018;
+  const dynamicIslandY = y + borderWidth + height * 0.01;
+
+  // Draw shadow
+  ctx.save();
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
+  ctx.shadowBlur = 35;
+  ctx.shadowOffsetY = 12;
+
+  // Draw border frame
+  ctx.fillStyle = frameColor;
+  ctx.beginPath();
+  ctx.roundRect(x, y, width, height, cornerRadius);
+  ctx.fill();
+  ctx.restore();
+
+  // Draw side buttons
+  drawProgrammaticSideButtons(ctx, x, y, width, height, frameColor);
+
+  // Screen area (inside border)
+  const screenX = x + borderWidth;
+  const screenY = y + borderWidth;
+  const screenWidth = width - borderWidth * 2;
+  const screenHeight = height - borderWidth * 2;
+
+  // Draw black screen background
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.roundRect(screenX, screenY, screenWidth, screenHeight, innerRadius);
+  ctx.fill();
+
+  // Draw screenshot
+  if (screenshot) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(screenX, screenY, screenWidth, screenHeight, innerRadius);
+    ctx.clip();
+
+    const imgAspect = screenshot.width / screenshot.height;
+    const screenAspect = screenWidth / screenHeight;
+    let drawW, drawH, drawX, drawY;
+
+    if (imgAspect > screenAspect) {
+      drawH = screenHeight;
+      drawW = drawH * imgAspect;
+      drawX = screenX - (drawW - screenWidth) / 2;
+      drawY = screenY;
+    } else {
+      drawW = screenWidth;
+      drawH = drawW / imgAspect;
+      drawX = screenX;
+      drawY = screenY - (drawH - screenHeight) / 2;
+    }
+    ctx.drawImage(screenshot, drawX, drawY, drawW, drawH);
+    ctx.restore();
+  }
+
+  // Draw Dynamic Island
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.roundRect(
+    x + (width - dynamicIslandWidth) / 2,
+    dynamicIslandY,
+    dynamicIslandWidth,
+    dynamicIslandHeight,
+    dynamicIslandHeight / 2
+  );
+  ctx.fill();
+};
+
+// Draw outline style side buttons
+const drawOutlineSideButtons = (
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  frameColor: string,
+  lineWidth: number
+): void => {
+  ctx.strokeStyle = frameColor;
+  ctx.lineWidth = lineWidth;
+
+  const buttonWidth = width * 0.012;
+
+  // Left side - Action button (small, top)
+  const actionBtnHeight = height * 0.035;
+  const actionBtnY = y + height * 0.15;
+  ctx.beginPath();
+  ctx.roundRect(x - buttonWidth - lineWidth / 2, actionBtnY, buttonWidth, actionBtnHeight, 2);
+  ctx.stroke();
+
+  // Left side - Volume Up
+  const volUpHeight = height * 0.065;
+  const volUpY = y + height * 0.22;
+  ctx.beginPath();
+  ctx.roundRect(x - buttonWidth - lineWidth / 2, volUpY, buttonWidth, volUpHeight, 2);
+  ctx.stroke();
+
+  // Left side - Volume Down
+  const volDownY = volUpY + volUpHeight + height * 0.015;
+  ctx.beginPath();
+  ctx.roundRect(x - buttonWidth - lineWidth / 2, volDownY, buttonWidth, volUpHeight, 2);
+  ctx.stroke();
+
+  // Right side - Power button
+  const powerHeight = height * 0.08;
+  const powerY = y + height * 0.24;
+  ctx.beginPath();
+  ctx.roundRect(x + width + lineWidth / 2, powerY, buttonWidth, powerHeight, 2);
+  ctx.stroke();
+};
+
+// Draw outline style mockup (just an outline frame)
+const drawOutlineMockup = (
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  frameColor: string,
+  screenshot: HTMLImageElement | null
+): void => {
+  const borderWidth = width * 0.025;
+  const cornerRadius = width * 0.11;
+  const innerRadius = cornerRadius - borderWidth / 2;
+
+  // Dynamic Island
+  const dynamicIslandWidth = width * 0.28;
+  const dynamicIslandHeight = height * 0.018;
+  const dynamicIslandY = y + borderWidth + height * 0.012;
+
+  // Screen area
+  const screenX = x + borderWidth;
+  const screenY = y + borderWidth;
+  const screenWidth = width - borderWidth * 2;
+  const screenHeight = height - borderWidth * 2;
+
+  // Draw black screen background first
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.roundRect(screenX, screenY, screenWidth, screenHeight, innerRadius);
+  ctx.fill();
+
+  // Draw screenshot
+  if (screenshot) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(screenX, screenY, screenWidth, screenHeight, innerRadius);
+    ctx.clip();
+
+    const imgAspect = screenshot.width / screenshot.height;
+    const screenAspect = screenWidth / screenHeight;
+    let drawW, drawH, drawX, drawY;
+
+    if (imgAspect > screenAspect) {
+      drawH = screenHeight;
+      drawW = drawH * imgAspect;
+      drawX = screenX - (drawW - screenWidth) / 2;
+      drawY = screenY;
+    } else {
+      drawW = screenWidth;
+      drawH = drawW / imgAspect;
+      drawX = screenX;
+      drawY = screenY - (drawH - screenHeight) / 2;
+    }
+    ctx.drawImage(screenshot, drawX, drawY, drawW, drawH);
+    ctx.restore();
+  }
+
+  // Draw outline frame (on top of screenshot)
+  ctx.strokeStyle = frameColor;
+  ctx.lineWidth = borderWidth;
+  ctx.beginPath();
+  ctx.roundRect(x + borderWidth / 2, y + borderWidth / 2, width - borderWidth, height - borderWidth, cornerRadius);
+  ctx.stroke();
+
+  // Draw side buttons (outline style)
+  drawOutlineSideButtons(ctx, x, y, width, height, frameColor, borderWidth * 0.6);
+
+  // Draw Dynamic Island
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.roundRect(
+    x + (width - dynamicIslandWidth) / 2,
+    dynamicIslandY,
+    dynamicIslandWidth,
+    dynamicIslandHeight,
+    dynamicIslandHeight / 2
+  );
+  ctx.fill();
+};
+
 const drawMockupWithScreenshot = async (
   ctx: CanvasRenderingContext2D,
   _mockupX: number,
@@ -684,10 +1122,16 @@ const drawMockupWithScreenshot = async (
   canvasWidth: number,
   canvasHeight: number,
   screenshot: string | null,
-  style: StyleConfig
+  style: StyleConfig,
+  mockupContinuationOverride?: MockupContinuation,
+  mockupSettings?: ScreenshotMockupSettings
 ): Promise<void> => {
-  const mockupImg = await loadMockupImage();
+  const mockupStyle = style.mockupStyle || 'realistic';
+  const mockupImg = mockupStyle === 'realistic' ? await loadMockupImage() : null;
   const visibilityRatio = getVisibilityRatio(style.mockupVisibility);
+  // Per-screenshot settings override global style settings
+  const rotation = mockupSettings?.rotation ?? style.mockupRotation ?? 0;
+  const continuation = mockupContinuationOverride ?? style.mockupContinuation ?? 'none';
 
   // Phone size is FIXED - never changes with visibility
   const fullPhoneHeight = mockupHeight;
@@ -730,11 +1174,50 @@ const drawMockupWithScreenshot = async (
       break;
   }
 
+  // Apply continuation offset for split mockups
+  if (continuation !== 'none') {
+    const splitOffset = canvasWidth * 0.4; // How much to offset for the split
+    switch (continuation) {
+      case 'left-start':
+        // Mockup starts on this screen, exits to the right
+        adjustedMockupX += splitOffset;
+        break;
+      case 'left-end':
+        // Mockup continues from previous screen, entering from left
+        adjustedMockupX -= splitOffset;
+        break;
+      case 'right-start':
+        // Mockup starts on this screen, exits to the left
+        adjustedMockupX -= splitOffset;
+        break;
+      case 'right-end':
+        // Mockup continues from previous screen, entering from right
+        adjustedMockupX += splitOffset;
+        break;
+    }
+  }
+
   // Apply custom offset from drag & drop
-  adjustedMockupX += style.mockupOffset?.x || 0;
-  adjustedMockupY += style.mockupOffset?.y || 0;
+  // Use per-screenshot mockupSettings (percentage-based) if available, otherwise fallback to style.mockupOffset (pixel-based)
+  if (mockupSettings) {
+    // Convert percentage to pixels: offsetX/offsetY are -100 to +100, representing % of canvas width/height
+    adjustedMockupX += (mockupSettings.offsetX / 100) * canvasWidth;
+    adjustedMockupY += (mockupSettings.offsetY / 100) * canvasHeight;
+  } else {
+    adjustedMockupX += style.mockupOffset?.x || 0;
+    adjustedMockupY += style.mockupOffset?.y || 0;
+  }
 
   ctx.save();
+
+  // Apply rotation around the center of the mockup
+  if (rotation !== 0) {
+    const centerX = adjustedMockupX + fullPhoneWidth / 2;
+    const centerY = adjustedMockupY + fullPhoneHeight / 2;
+    ctx.translate(centerX, centerY);
+    ctx.rotate((rotation * Math.PI) / 180);
+    ctx.translate(-centerX, -centerY);
+  }
 
   // Calculate offset to position the phone correctly
   const imgX = adjustedMockupX - (MOCKUP_CONFIG.phoneX * scale);
@@ -756,72 +1239,92 @@ const drawMockupWithScreenshot = async (
 
   const frameColor = getFrameColor(style.mockupColor);
 
-  // 1. Draw screenshot clipped to screen area
-  if (screenshot) {
-    const screenshotImg = await loadImage(screenshot);
+  // Load screenshot image if available
+  const screenshotImg = screenshot ? await loadImage(screenshot) : null;
 
-    ctx.save();
+  // Choose drawing method based on mockup style
+  if (mockupStyle !== 'realistic') {
+    // Use programmatic mockup drawing for non-realistic styles
+    switch (mockupStyle) {
+      case 'flat':
+        drawFlatMockup(ctx, adjustedMockupX, adjustedMockupY, fullPhoneWidth, fullPhoneHeight, frameColor, screenshotImg);
+        break;
+      case 'minimal':
+        drawMinimalMockup(ctx, adjustedMockupX, adjustedMockupY, fullPhoneWidth, fullPhoneHeight, frameColor, screenshotImg);
+        break;
+      case 'outline':
+        drawOutlineMockup(ctx, adjustedMockupX, adjustedMockupY, fullPhoneWidth, fullPhoneHeight, frameColor, screenshotImg);
+        break;
+    }
+  } else {
+    // Realistic style - use PNG mockup image
+    // 1. Draw screenshot clipped to screen area
+    if (screenshotImg) {
+      ctx.save();
 
-    // Clip to screen area with rounded corners
-    ctx.beginPath();
-    ctx.roundRect(screenX, screenY, screenWidth, screenHeight, cornerRadius);
-    ctx.clip();
+      // Clip to screen area with rounded corners
+      ctx.beginPath();
+      ctx.roundRect(screenX, screenY, screenWidth, screenHeight, cornerRadius);
+      ctx.clip();
 
-    // Calculate scaling to cover the screen area
-    const imgAspect = screenshotImg.width / screenshotImg.height;
-    const screenAspect = screenWidth / screenHeight;
+      // Calculate scaling to cover the screen area
+      const imgAspect = screenshotImg.width / screenshotImg.height;
+      const screenAspect = screenWidth / screenHeight;
 
-    let drawWidth: number;
-    let drawHeight: number;
-    let drawX: number;
-    let drawY: number;
+      let drawWidth: number;
+      let drawHeight: number;
+      let drawX: number;
+      let drawY: number;
 
-    if (imgAspect > screenAspect) {
-      drawHeight = screenHeight;
-      drawWidth = drawHeight * imgAspect;
-      drawX = screenX - (drawWidth - screenWidth) / 2;
-      drawY = screenY;
+      if (imgAspect > screenAspect) {
+        drawHeight = screenHeight;
+        drawWidth = drawHeight * imgAspect;
+        drawX = screenX - (drawWidth - screenWidth) / 2;
+        drawY = screenY;
+      } else {
+        drawWidth = screenWidth;
+        drawHeight = drawWidth / imgAspect;
+        drawX = screenX;
+        drawY = screenY - (drawHeight - screenHeight) / 2;
+      }
+
+      ctx.drawImage(screenshotImg, drawX, drawY, drawWidth, drawHeight);
+      ctx.restore();
+
+      // 2. Draw Dynamic Island on top of screenshot (cutout effect)
+      ctx.fillStyle = '#000000';
+      ctx.beginPath();
+      ctx.roundRect(diX, diY, diWidth, diHeight, diRadius);
+      ctx.fill();
     } else {
-      drawWidth = screenWidth;
-      drawHeight = drawWidth / imgAspect;
-      drawX = screenX;
-      drawY = screenY - (drawHeight - screenHeight) / 2;
+      // Draw black screen if no screenshot
+      ctx.fillStyle = '#000000';
+      ctx.beginPath();
+      ctx.roundRect(screenX, screenY, screenWidth, screenHeight, cornerRadius);
+      ctx.fill();
     }
 
-    ctx.drawImage(screenshotImg, drawX, drawY, drawWidth, drawHeight);
-    ctx.restore();
+    // 3. Draw mockup frame BEHIND screenshot (destination-over)
+    if (mockupImg) {
+      ctx.globalCompositeOperation = 'destination-over';
+      ctx.drawImage(mockupImg, imgX, imgY, scaledImgWidth, scaledImgHeight);
 
-    // 2. Draw Dynamic Island on top of screenshot (cutout effect)
-    ctx.fillStyle = '#000000';
-    ctx.beginPath();
-    ctx.roundRect(diX, diY, diWidth, diHeight, diRadius);
-    ctx.fill();
-  } else {
-    // Draw black screen if no screenshot
-    ctx.fillStyle = '#000000';
-    ctx.beginPath();
-    ctx.roundRect(screenX, screenY, screenWidth, screenHeight, cornerRadius);
-    ctx.fill();
+      // 4. Draw side buttons BEHIND mockup frame
+      drawSideButtons(ctx, adjustedMockupX, adjustedMockupY, scale, frameColor);
+
+      // 5. Draw shadow BEHIND everything
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+      ctx.shadowBlur = 60 * scale;
+      ctx.shadowOffsetX = 15 * scale;
+      ctx.shadowOffsetY = 25 * scale;
+      ctx.fillStyle = frameColor;
+      ctx.beginPath();
+      ctx.roundRect(adjustedMockupX, adjustedMockupY, fullPhoneWidth, fullPhoneHeight, cornerRadius);
+      ctx.fill();
+
+      ctx.globalCompositeOperation = 'source-over'; // Reset
+    }
   }
-
-  // 3. Draw mockup frame BEHIND screenshot (destination-over)
-  ctx.globalCompositeOperation = 'destination-over';
-  ctx.drawImage(mockupImg, imgX, imgY, scaledImgWidth, scaledImgHeight);
-
-  // 4. Draw side buttons BEHIND mockup frame
-  drawSideButtons(ctx, adjustedMockupX, adjustedMockupY, scale, frameColor);
-
-  // 5. Draw shadow BEHIND everything
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-  ctx.shadowBlur = 60 * scale;
-  ctx.shadowOffsetX = 15 * scale;
-  ctx.shadowOffsetY = 25 * scale;
-  ctx.fillStyle = frameColor;
-  ctx.beginPath();
-  ctx.roundRect(adjustedMockupX, adjustedMockupY, fullPhoneWidth, fullPhoneHeight, cornerRadius);
-  ctx.fill();
-
-  ctx.globalCompositeOperation = 'source-over'; // Reset
 
   // Restore context
   ctx.restore();
@@ -830,8 +1333,10 @@ const drawMockupWithScreenshot = async (
 export const generateScreenshotImage = async (
   options: GenerateImageOptions
 ): Promise<Blob> => {
-  const { screenshot, text, style: baseStyle, deviceSize, styleOverride } = options;
+  const { screenshot, text, style: baseStyle, deviceSize, styleOverride, mockupScreenshot, mockupContinuation, mockupSettings } = options;
   const style = getEffectiveStyle(baseStyle, styleOverride);
+  // Use mockupScreenshot if provided (for continuation), otherwise use screenshot
+  const screenshotForMockup = mockupScreenshot !== undefined ? mockupScreenshot : screenshot;
   const dimensions = DEVICE_SIZES[deviceSize];
 
   const canvas = document.createElement('canvas');
@@ -842,8 +1347,13 @@ export const generateScreenshotImage = async (
   // Draw gradient/solid background
   drawGradientBackground(ctx, canvas.width, canvas.height, style);
 
-  // Calculate mockup dimensions
-  const mockupScale = style.mockupScale ?? 1.0;
+  // Draw background pattern if present
+  if (style.pattern) {
+    drawBackgroundPattern(ctx, canvas.width, canvas.height, style.pattern);
+  }
+
+  // Calculate mockup dimensions - per-screenshot scale overrides global style
+  const mockupScale = mockupSettings?.scale ?? style.mockupScale ?? 1.0;
   const textAreaHeight = style.textPosition === 'top'
     ? style.paddingTop + style.fontSize * 2.5
     : style.paddingBottom + style.fontSize * 2.5;
@@ -863,11 +1373,11 @@ export const generateScreenshotImage = async (
     : 40;
 
   // Only show mockup if there's a screenshot AND showMockup is enabled
-  if (style.showMockup && screenshot) {
-    await drawMockupWithScreenshot(ctx, mockupX, mockupY, mockupWidth, mockupHeight, canvas.width, canvas.height, screenshot, style);
-  } else if (screenshot && !style.showMockup) {
+  if (style.showMockup && screenshotForMockup) {
+    await drawMockupWithScreenshot(ctx, mockupX, mockupY, mockupWidth, mockupHeight, canvas.width, canvas.height, screenshotForMockup, style, mockupContinuation, mockupSettings);
+  } else if (screenshotForMockup && !style.showMockup) {
     // Draw screenshot without mockup (legacy mode)
-    const img = await loadImage(screenshot);
+    const img = await loadImage(screenshotForMockup);
     const imgAspect = img.width / img.height;
 
     let drawWidth = mockupWidth;
@@ -955,9 +1465,11 @@ export const generatePreviewCanvas = async (
   canvas: HTMLCanvasElement,
   options: GenerateImageOptions
 ): Promise<void> => {
-  const { screenshot, text, style: baseStyle, deviceSize, styleOverride } = options;
+  const { screenshot, text, style: baseStyle, deviceSize, styleOverride, mockupScreenshot, mockupContinuation, mockupSettings } = options;
   const style = getEffectiveStyle(baseStyle, styleOverride);
   const dimensions = DEVICE_SIZES[deviceSize];
+  // Use mockupScreenshot if provided (for continuation), otherwise use screenshot
+  const screenshotForMockup = mockupScreenshot !== undefined ? mockupScreenshot : screenshot;
 
   // Scale down for preview
   const scale = Math.min(400 / dimensions.width, 600 / dimensions.height);
@@ -973,8 +1485,13 @@ export const generatePreviewCanvas = async (
   // Draw gradient/solid background
   drawGradientBackground(ctx, dimensions.width, dimensions.height, style);
 
-  // Calculate mockup dimensions
-  const mockupScalePreview = style.mockupScale ?? 1.0;
+  // Draw background pattern if present
+  if (style.pattern) {
+    drawBackgroundPattern(ctx, dimensions.width, dimensions.height, style.pattern);
+  }
+
+  // Calculate mockup dimensions - per-screenshot scale overrides global style
+  const mockupScalePreview = mockupSettings?.scale ?? style.mockupScale ?? 1.0;
   const textAreaHeight = style.textPosition === 'top'
     ? style.paddingTop + style.fontSize * 2.5
     : style.paddingBottom + style.fontSize * 2.5;
@@ -993,9 +1510,9 @@ export const generatePreviewCanvas = async (
     : 40;
 
   // Only show mockup if there's a screenshot AND showMockup is enabled
-  if (style.showMockup && screenshot) {
+  if (style.showMockup && screenshotForMockup) {
     try {
-      await drawMockupWithScreenshot(ctx, mockupX, mockupY, mockupWidth, mockupHeight, dimensions.width, dimensions.height, screenshot, style);
+      await drawMockupWithScreenshot(ctx, mockupX, mockupY, mockupWidth, mockupHeight, dimensions.width, dimensions.height, screenshotForMockup, style, mockupContinuation, mockupSettings);
     } catch (e) {
       // Mockup not loaded yet, draw fallback
       ctx.fillStyle = '#1d1d1f';
@@ -1003,9 +1520,9 @@ export const generatePreviewCanvas = async (
       ctx.roundRect(mockupX, mockupY, mockupWidth, mockupHeight, 60);
       ctx.fill();
     }
-  } else if (screenshot && !style.showMockup) {
+  } else if (screenshotForMockup && !style.showMockup) {
     try {
-      const img = await loadImage(screenshot);
+      const img = await loadImage(screenshotForMockup);
       const imgAspect = img.width / img.height;
 
       let drawWidth = mockupWidth;
