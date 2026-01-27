@@ -1,4 +1,4 @@
-import { StyleConfig, DeviceSize, DEVICE_SIZES, Decoration, StarRatingDecoration, LaurelDecoration } from '../types';
+import { StyleConfig, DeviceSize, DEVICE_SIZES, Decoration, StarRatingDecoration, LaurelDecoration, ScreenshotStyleOverride } from '../types';
 
 export interface ElementBounds {
   mockup: { x: number; y: number; width: number; height: number };
@@ -11,7 +11,19 @@ export interface GenerateImageOptions {
   style: StyleConfig;
   deviceSize: DeviceSize;
   decorations?: Decoration[];
+  styleOverride?: ScreenshotStyleOverride;  // per-screenshot color overrides
 }
+
+// Merge global style with per-screenshot overrides
+const getEffectiveStyle = (style: StyleConfig, override?: ScreenshotStyleOverride): StyleConfig => {
+  if (!override) return style;
+  return {
+    ...style,
+    textColor: override.textColor ?? style.textColor,
+    backgroundColor: override.backgroundColor ?? style.backgroundColor,
+    gradient: override.gradient ?? style.gradient
+  };
+};
 
 // Mockup image cache
 let mockupImageCache: HTMLImageElement | null = null;
@@ -194,6 +206,47 @@ const drawFormattedText = (
   });
 };
 
+// Calculate adaptive font size to fit text within bounds
+const calculateAdaptiveFontSize = (
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  baseFontSize: number,
+  maxWidth: number,
+  maxHeight: number,
+  fontFamily: string
+): number => {
+  const minFontSize = Math.max(30, baseFontSize * 0.4); // Don't go below 40% of original or 30px
+  let fontSize = baseFontSize;
+
+  while (fontSize >= minFontSize) {
+    ctx.font = `bold ${fontSize}px ${fontFamily}`;
+    const lines = wrapFormattedText(ctx, text, maxWidth);
+    const lineHeight = fontSize * 1.4;
+    const totalHeight = lines.length * lineHeight;
+
+    // Check if text fits
+    if (totalHeight <= maxHeight) {
+      // Also check that no single line is too wide (for very long words)
+      let allLinesFit = true;
+      for (const line of lines) {
+        const lineWidth = measureLineWidth(ctx, line);
+        if (lineWidth > maxWidth * 1.05) { // Allow 5% overflow
+          allLinesFit = false;
+          break;
+        }
+      }
+      if (allLinesFit) {
+        return fontSize;
+      }
+    }
+
+    // Reduce font size and try again
+    fontSize -= 4;
+  }
+
+  return minFontSize;
+};
+
 // Draw a 5-pointed star
 const drawStar = (
   ctx: CanvasRenderingContext2D,
@@ -283,6 +336,58 @@ const tintImage = (
   return canvas;
 };
 
+// Calculate adaptive font sizes for laurel text to fit within wreath
+const calculateAdaptiveLaurelSizes = (
+  ctx: CanvasRenderingContext2D,
+  textBlocks: LaurelDecoration['textBlocks'],
+  maxWidth: number,
+  maxHeight: number,
+  fontFamily: string
+): { sizes: number[]; totalHeight: number } => {
+  // Start with original sizes and scale down if needed
+  let scaleFactor = 1.0;
+  const minScale = 0.3;
+
+  while (scaleFactor >= minScale) {
+    const sizes = textBlocks.map(b => Math.round(b.size * scaleFactor));
+    let totalHeight = 0;
+    let allFit = true;
+
+    for (let i = 0; i < textBlocks.length; i++) {
+      const block = textBlocks[i];
+      const fontSize = sizes[i];
+      const fontWeight = block.bold ? 'bold ' : '';
+      ctx.font = `${fontWeight}${fontSize}px ${fontFamily}`;
+
+      const lines = block.text.split(/\||\n/).map(l => l.trim());
+      const lineHeight = fontSize * 1.1;
+      totalHeight += lines.length * lineHeight;
+
+      // Check if any line is too wide
+      for (const line of lines) {
+        const lineWidth = ctx.measureText(line).width;
+        if (lineWidth > maxWidth) {
+          allFit = false;
+          break;
+        }
+      }
+      if (!allFit) break;
+    }
+
+    if (allFit && totalHeight <= maxHeight) {
+      return { sizes, totalHeight };
+    }
+
+    scaleFactor -= 0.05;
+  }
+
+  // Return minimum sizes if nothing fits
+  return {
+    sizes: textBlocks.map(b => Math.round(b.size * minScale)),
+    totalHeight: textBlocks.reduce((sum, b) => sum + Math.round(b.size * minScale) * 1.1, 0)
+  };
+};
+
 // Draw laurel wreath decoration using image
 const drawLaurelWreath = async (
   ctx: CanvasRenderingContext2D,
@@ -292,13 +397,13 @@ const drawLaurelWreath = async (
 
   const { size, color, position, textBlocks, textColor, fontFamily } = decoration;
 
+  // Calculate dimensions based on size multiplier
+  const baseWidth = 500 * size;
+  let baseHeight = baseWidth;
+
   try {
     const laurelImg = await loadLaurelImage();
-
-    // Calculate dimensions based on size multiplier
-    // Original image is roughly square, we'll scale it
-    const baseWidth = 500 * size;
-    const baseHeight = baseWidth * (laurelImg.height / laurelImg.width);
+    baseHeight = baseWidth * (laurelImg.height / laurelImg.width);
 
     // Tint the image with the selected color
     const tintedCanvas = tintImage(laurelImg, color, baseWidth, baseHeight);
@@ -312,28 +417,38 @@ const drawLaurelWreath = async (
     console.error('Failed to load laurel image:', e);
   }
 
-  // Draw text blocks with individual sizes
+  // Draw text blocks with adaptive sizes
   if (textBlocks && textBlocks.length > 0) {
     ctx.save();
     ctx.fillStyle = textColor;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Calculate total height of all blocks (including line breaks within blocks)
-    let totalHeight = 0;
-    const blockData: { lines: string[]; size: number; lineHeight: number }[] = [];
+    const font = fontFamily || 'SF Pro Display, -apple-system, sans-serif';
 
-    textBlocks.forEach((block) => {
-      // Split by | or newline for line breaks within each block
+    // Calculate inner area of wreath (roughly 60% of width, 70% of height)
+    const innerWidth = baseWidth * 0.55;
+    const innerHeight = baseHeight * 0.65;
+
+    // Calculate adaptive sizes
+    const { sizes, totalHeight } = calculateAdaptiveLaurelSizes(
+      ctx,
+      textBlocks,
+      innerWidth,
+      innerHeight,
+      font
+    );
+
+    // Build block data with adaptive sizes
+    const blockData: { lines: string[]; size: number; lineHeight: number }[] = [];
+    textBlocks.forEach((block, idx) => {
       const lines = block.text.split(/\||\n/).map(l => l.trim());
-      const lineHeight = block.size * 1.1;
-      const blockHeight = lines.length * lineHeight;
-      blockData.push({ lines, size: block.size, lineHeight });
-      totalHeight += blockHeight;
+      const fontSize = sizes[idx];
+      const lineHeight = fontSize * 1.1;
+      blockData.push({ lines, size: fontSize, lineHeight });
     });
 
     // Draw each block centered
-    const font = fontFamily || 'SF Pro Display, -apple-system, sans-serif';
     let currentY = position.y - totalHeight / 2;
     blockData.forEach((block, blockIndex) => {
       const fontWeight = textBlocks[blockIndex].bold ? 'bold ' : '';
@@ -440,6 +555,7 @@ const getVisibilityRatio = (visibility: StyleConfig['mockupVisibility']): number
 export const getElementBounds = (style: StyleConfig, deviceSize: DeviceSize): ElementBounds => {
   const dimensions = DEVICE_SIZES[deviceSize];
   const visibilityRatio = getVisibilityRatio(style.mockupVisibility);
+  const mockupScale = style.mockupScale ?? 1.0;
 
   // Calculate mockup dimensions
   const textAreaHeight = style.textPosition === 'top'
@@ -447,7 +563,8 @@ export const getElementBounds = (style: StyleConfig, deviceSize: DeviceSize): El
     : style.paddingBottom + style.fontSize * 2.5;
 
   const availableHeight = dimensions.height - textAreaHeight - 80;
-  const mockupHeight = Math.min(availableHeight, dimensions.height * 0.75);
+  const baseMockupHeight = Math.min(availableHeight, dimensions.height * 0.75);
+  const mockupHeight = baseMockupHeight * mockupScale;
   const phoneAspect = MOCKUP_CONFIG.phoneWidth / MOCKUP_CONFIG.phoneHeight;
   const mockupWidth = mockupHeight * phoneAspect;
 
@@ -639,22 +756,7 @@ const drawMockupWithScreenshot = async (
 
   const frameColor = getFrameColor(style.mockupColor);
 
-  // 0. Draw shadow for 3D depth effect
-  ctx.save();
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-  ctx.shadowBlur = 60 * scale;
-  ctx.shadowOffsetX = 15 * scale;
-  ctx.shadowOffsetY = 25 * scale;
-  ctx.fillStyle = frameColor;
-  ctx.beginPath();
-  ctx.roundRect(adjustedMockupX, adjustedMockupY, fullPhoneWidth, fullPhoneHeight, cornerRadius);
-  ctx.fill();
-  ctx.restore();
-
-  // 1. Draw side buttons
-  drawSideButtons(ctx, adjustedMockupX, adjustedMockupY, scale, frameColor);
-
-  // 2. Draw screenshot clipped to screen area
+  // 1. Draw screenshot clipped to screen area
   if (screenshot) {
     const screenshotImg = await loadImage(screenshot);
 
@@ -689,7 +791,7 @@ const drawMockupWithScreenshot = async (
     ctx.drawImage(screenshotImg, drawX, drawY, drawWidth, drawHeight);
     ctx.restore();
 
-    // 3. Draw Dynamic Island on top of screenshot (cutout effect)
+    // 2. Draw Dynamic Island on top of screenshot (cutout effect)
     ctx.fillStyle = '#000000';
     ctx.beginPath();
     ctx.roundRect(diX, diY, diWidth, diHeight, diRadius);
@@ -702,19 +804,34 @@ const drawMockupWithScreenshot = async (
     ctx.fill();
   }
 
-  // 4. Draw mockup frame BEHIND everything (destination-over)
+  // 3. Draw mockup frame BEHIND screenshot (destination-over)
   ctx.globalCompositeOperation = 'destination-over';
   ctx.drawImage(mockupImg, imgX, imgY, scaledImgWidth, scaledImgHeight);
+
+  // 4. Draw side buttons BEHIND mockup frame
+  drawSideButtons(ctx, adjustedMockupX, adjustedMockupY, scale, frameColor);
+
+  // 5. Draw shadow BEHIND everything
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+  ctx.shadowBlur = 60 * scale;
+  ctx.shadowOffsetX = 15 * scale;
+  ctx.shadowOffsetY = 25 * scale;
+  ctx.fillStyle = frameColor;
+  ctx.beginPath();
+  ctx.roundRect(adjustedMockupX, adjustedMockupY, fullPhoneWidth, fullPhoneHeight, cornerRadius);
+  ctx.fill();
+
   ctx.globalCompositeOperation = 'source-over'; // Reset
 
-  // Restore clipping context
+  // Restore context
   ctx.restore();
 };
 
 export const generateScreenshotImage = async (
   options: GenerateImageOptions
 ): Promise<Blob> => {
-  const { screenshot, text, style, deviceSize } = options;
+  const { screenshot, text, style: baseStyle, deviceSize, styleOverride } = options;
+  const style = getEffectiveStyle(baseStyle, styleOverride);
   const dimensions = DEVICE_SIZES[deviceSize];
 
   const canvas = document.createElement('canvas');
@@ -726,12 +843,16 @@ export const generateScreenshotImage = async (
   drawGradientBackground(ctx, canvas.width, canvas.height, style);
 
   // Calculate mockup dimensions
+  const mockupScale = style.mockupScale ?? 1.0;
   const textAreaHeight = style.textPosition === 'top'
     ? style.paddingTop + style.fontSize * 2.5
     : style.paddingBottom + style.fontSize * 2.5;
 
   const availableHeight = canvas.height - textAreaHeight - 80;
-  const mockupHeight = Math.min(availableHeight, canvas.height * 0.75);
+  const baseMockupHeight = Math.min(availableHeight, canvas.height * 0.75);
+  // Apply mockupScale but clamp to reasonable values
+  const clampedScale = Math.max(0.3, Math.min(2.0, mockupScale));
+  const mockupHeight = baseMockupHeight * clampedScale;
   // Maintain phone aspect ratio
   const phoneAspect = MOCKUP_CONFIG.phoneWidth / MOCKUP_CONFIG.phoneHeight;
   const mockupWidth = mockupHeight * phoneAspect;
@@ -769,22 +890,41 @@ export const generateScreenshotImage = async (
     ctx.restore();
   }
 
-  // Draw text with formatting support
+  // Draw text with formatting support and adaptive sizing
   if (text) {
+    const maxTextWidth = canvas.width * 0.85;
+
+    // Calculate max available height for text
+    const maxTextHeight = style.textPosition === 'top'
+      ? textAreaHeight - style.paddingTop - 40
+      : textAreaHeight - style.paddingBottom - 40;
+
+    // Calculate adaptive font size
+    const adaptiveFontSize = calculateAdaptiveFontSize(
+      ctx,
+      text,
+      style.fontSize,
+      maxTextWidth,
+      maxTextHeight,
+      style.fontFamily
+    );
+
+    // Create modified style with adaptive font size
+    const adaptiveStyle = { ...style, fontSize: adaptiveFontSize };
+
     ctx.fillStyle = style.textColor;
-    ctx.font = `bold ${style.fontSize}px ${style.fontFamily}`;
+    ctx.font = `bold ${adaptiveFontSize}px ${style.fontFamily}`;
     ctx.textAlign = 'left'; // We handle alignment manually for highlights
 
-    const maxTextWidth = canvas.width * 0.85;
     const lines = wrapFormattedText(ctx, text, maxTextWidth);
-    const lineHeight = style.fontSize * 1.4;
+    const lineHeight = adaptiveFontSize * 1.4;
 
     // Calculate text area left edge
     const textAreaX = (canvas.width - maxTextWidth) / 2;
 
     let textY: number;
     if (style.textPosition === 'top') {
-      textY = style.paddingTop + style.fontSize;
+      textY = style.paddingTop + adaptiveFontSize;
     } else {
       textY = canvas.height - style.paddingBottom - (lines.length - 1) * lineHeight;
     }
@@ -793,7 +933,7 @@ export const generateScreenshotImage = async (
     const finalX = textAreaX + (style.textOffset?.x || 0);
     const finalY = textY + (style.textOffset?.y || 0);
 
-    drawFormattedText(ctx, lines, finalX, finalY, lineHeight, style, maxTextWidth);
+    drawFormattedText(ctx, lines, finalX, finalY, lineHeight, adaptiveStyle, maxTextWidth);
   }
 
   // Draw decorations (stars, laurels, etc.)
@@ -815,7 +955,8 @@ export const generatePreviewCanvas = async (
   canvas: HTMLCanvasElement,
   options: GenerateImageOptions
 ): Promise<void> => {
-  const { screenshot, text, style, deviceSize } = options;
+  const { screenshot, text, style: baseStyle, deviceSize, styleOverride } = options;
+  const style = getEffectiveStyle(baseStyle, styleOverride);
   const dimensions = DEVICE_SIZES[deviceSize];
 
   // Scale down for preview
@@ -824,18 +965,25 @@ export const generatePreviewCanvas = async (
   canvas.height = dimensions.height * scale;
   const ctx = canvas.getContext('2d')!;
 
+  // Clear canvas completely before drawing
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
   ctx.scale(scale, scale);
 
   // Draw gradient/solid background
   drawGradientBackground(ctx, dimensions.width, dimensions.height, style);
 
   // Calculate mockup dimensions
+  const mockupScalePreview = style.mockupScale ?? 1.0;
   const textAreaHeight = style.textPosition === 'top'
     ? style.paddingTop + style.fontSize * 2.5
     : style.paddingBottom + style.fontSize * 2.5;
 
   const availableHeight = dimensions.height - textAreaHeight - 80;
-  const mockupHeight = Math.min(availableHeight, dimensions.height * 0.75);
+  const baseMockupHeightPreview = Math.min(availableHeight, dimensions.height * 0.75);
+  // Apply mockupScale but clamp to reasonable values
+  const clampedScalePreview = Math.max(0.3, Math.min(2.0, mockupScalePreview));
+  const mockupHeight = baseMockupHeightPreview * clampedScalePreview;
   const phoneAspect = MOCKUP_CONFIG.phoneWidth / MOCKUP_CONFIG.phoneHeight;
   const mockupWidth = mockupHeight * phoneAspect;
 
@@ -883,22 +1031,41 @@ export const generatePreviewCanvas = async (
     }
   }
 
-  // Draw text with formatting support
+  // Draw text with formatting support and adaptive sizing
   if (text) {
+    const maxTextWidth = dimensions.width * 0.85;
+
+    // Calculate max available height for text
+    const maxTextHeight = style.textPosition === 'top'
+      ? textAreaHeight - style.paddingTop - 40
+      : textAreaHeight - style.paddingBottom - 40;
+
+    // Calculate adaptive font size
+    const adaptiveFontSize = calculateAdaptiveFontSize(
+      ctx,
+      text,
+      style.fontSize,
+      maxTextWidth,
+      maxTextHeight,
+      style.fontFamily
+    );
+
+    // Create modified style with adaptive font size
+    const adaptiveStyle = { ...style, fontSize: adaptiveFontSize };
+
     ctx.fillStyle = style.textColor;
-    ctx.font = `bold ${style.fontSize}px ${style.fontFamily}`;
+    ctx.font = `bold ${adaptiveFontSize}px ${style.fontFamily}`;
     ctx.textAlign = 'left'; // We handle alignment manually for highlights
 
-    const maxTextWidth = dimensions.width * 0.85;
     const lines = wrapFormattedText(ctx, text, maxTextWidth);
-    const lineHeight = style.fontSize * 1.4;
+    const lineHeight = adaptiveFontSize * 1.4;
 
     // Calculate text area left edge
     const textAreaX = (dimensions.width - maxTextWidth) / 2;
 
     let textY: number;
     if (style.textPosition === 'top') {
-      textY = style.paddingTop + style.fontSize;
+      textY = style.paddingTop + adaptiveFontSize;
     } else {
       textY = dimensions.height - style.paddingBottom - (lines.length - 1) * lineHeight;
     }
@@ -907,7 +1074,7 @@ export const generatePreviewCanvas = async (
     const finalX = textAreaX + (style.textOffset?.x || 0);
     const finalY = textY + (style.textOffset?.y || 0);
 
-    drawFormattedText(ctx, lines, finalX, finalY, lineHeight, style, maxTextWidth);
+    drawFormattedText(ctx, lines, finalX, finalY, lineHeight, adaptiveStyle, maxTextWidth);
   }
 
   // Draw decorations (stars, laurels, etc.)

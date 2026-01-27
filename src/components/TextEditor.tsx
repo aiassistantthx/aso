@@ -1,9 +1,13 @@
 import React from 'react';
-import { Screenshot } from '../types';
+import { Screenshot, TranslationData, LaurelDecoration } from '../types';
+import { APP_STORE_LANGUAGES } from '../constants/languages';
 
 interface Props {
   screenshots: Screenshot[];
   onScreenshotsChange: (screenshots: Screenshot[]) => void;
+  translationData?: TranslationData | null;
+  selectedLanguage?: string;
+  onTranslationChange?: (data: TranslationData) => void;
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -96,16 +100,81 @@ const styles: Record<string, React.CSSProperties> = {
   }
 };
 
+const getLanguageName = (code: string): string => {
+  const lang = APP_STORE_LANGUAGES.find(l => l.code === code);
+  return lang?.name || code;
+};
+
 export const TextEditor: React.FC<Props> = ({
   screenshots,
-  onScreenshotsChange
+  onScreenshotsChange,
+  translationData,
+  selectedLanguage = 'all',
+  onTranslationChange
 }) => {
+  const isEditingTranslation = selectedLanguage !== 'all' && translationData;
+
+  // Handle source text change (affects all languages or when no translations yet)
   const handleTextChange = (id: string, text: string) => {
     onScreenshotsChange(
       screenshots.map(s =>
         s.id === id ? { ...s, text } : s
       )
     );
+  };
+
+  // Handle translated headline change
+  const handleTranslatedTextChange = (index: number, text: string) => {
+    if (!translationData || !onTranslationChange || selectedLanguage === 'all') return;
+
+    const newHeadlines = { ...translationData.headlines };
+    newHeadlines[selectedLanguage] = [...(newHeadlines[selectedLanguage] || [])];
+    newHeadlines[selectedLanguage][index] = text;
+
+    onTranslationChange({
+      ...translationData,
+      headlines: newHeadlines
+    });
+  };
+
+  // Handle laurel text change
+  const handleLaurelTextChange = (screenshotIndex: number, blockIndex: number, text: string) => {
+    if (!translationData || !onTranslationChange || selectedLanguage === 'all') return;
+
+    const newLaurelTexts = { ...translationData.laurelTexts };
+    if (!newLaurelTexts[selectedLanguage]) {
+      newLaurelTexts[selectedLanguage] = [];
+    }
+    newLaurelTexts[selectedLanguage] = [...newLaurelTexts[selectedLanguage]];
+    if (!newLaurelTexts[selectedLanguage][screenshotIndex]) {
+      newLaurelTexts[selectedLanguage][screenshotIndex] = [];
+    }
+    newLaurelTexts[selectedLanguage][screenshotIndex] = [...newLaurelTexts[selectedLanguage][screenshotIndex]];
+    newLaurelTexts[selectedLanguage][screenshotIndex][blockIndex] = text;
+
+    onTranslationChange({
+      ...translationData,
+      laurelTexts: newLaurelTexts
+    });
+  };
+
+  // Get text value to display
+  const getTextValue = (screenshot: Screenshot, index: number): string => {
+    if (isEditingTranslation) {
+      return translationData.headlines[selectedLanguage]?.[index] || screenshot.text;
+    }
+    return screenshot.text;
+  };
+
+  // Get laurel text values
+  const getLaurelTexts = (screenshot: Screenshot, index: number): string[] => {
+    const laurelDec = screenshot.decorations?.find(d => d.type === 'laurel') as LaurelDecoration | undefined;
+    if (!laurelDec) return [];
+
+    if (isEditingTranslation && translationData.laurelTexts[selectedLanguage]?.[index]) {
+      return translationData.laurelTexts[selectedLanguage][index];
+    }
+    return laurelDec.textBlocks.map(b => b.text);
   };
 
   if (screenshots.length === 0) {
@@ -121,49 +190,98 @@ export const TextEditor: React.FC<Props> = ({
 
   return (
     <div style={styles.container}>
-      <label style={styles.label}>Headline Texts</label>
+      <label style={styles.label}>
+        Headline Texts
+        {isEditingTranslation && (
+          <span style={{ fontWeight: 400, fontSize: '12px', color: '#0071e3', marginLeft: '8px' }}>
+            ({getLanguageName(selectedLanguage)})
+          </span>
+        )}
+      </label>
       <p style={styles.hint}>
-        Enter the text that will appear on each screenshot (source language)
+        {isEditingTranslation
+          ? `Edit translated texts for ${getLanguageName(selectedLanguage)}`
+          : 'Enter the text that will appear on each screenshot (source language)'
+        }
       </p>
 
-      <div style={styles.formatHint as React.CSSProperties}>
-        <strong>Formatting:</strong><br />
-        Use <span style={styles.formatExample as React.CSSProperties}>[text]</span> to highlight words<br />
-        Use <span style={styles.formatExample as React.CSSProperties}>|</span> or new line for line breaks<br />
-        Example: <span style={styles.formatExample as React.CSSProperties}>[Create]|Viral Videos in|[Seconds]</span>
-      </div>
-
-      {screenshots.map((screenshot, index) => (
-        <div key={screenshot.id} style={styles.textItem}>
-          {screenshot.preview ? (
-            <img
-              src={screenshot.preview}
-              alt={`Screenshot ${index + 1}`}
-              style={styles.thumbnail}
-            />
-          ) : (
-            <div style={styles.textOnlyThumbnail as React.CSSProperties}>
-              Text Only
-            </div>
-          )}
-          <div style={styles.inputWrapper}>
-            <div style={styles.indexLabel}>Screenshot {index + 1}</div>
-            <textarea
-              value={screenshot.text}
-              onChange={(e) => handleTextChange(screenshot.id, e.target.value)}
-              placeholder={`[Highlighted]|Regular text|[Another highlight]`}
-              style={styles.textarea as React.CSSProperties}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#0071e3';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#d2d2d7';
-              }}
-              rows={3}
-            />
-          </div>
+      {!isEditingTranslation && (
+        <div style={styles.formatHint as React.CSSProperties}>
+          <strong>Formatting:</strong><br />
+          Use <span style={styles.formatExample as React.CSSProperties}>[text]</span> to highlight words<br />
+          Use <span style={styles.formatExample as React.CSSProperties}>|</span> or new line for line breaks<br />
+          Example: <span style={styles.formatExample as React.CSSProperties}>[Create]|Viral Videos in|[Seconds]</span>
         </div>
-      ))}
+      )}
+
+      {screenshots.map((screenshot, index) => {
+        const laurelDec = screenshot.decorations?.find(d => d.type === 'laurel') as LaurelDecoration | undefined;
+        const laurelTexts = getLaurelTexts(screenshot, index);
+
+        return (
+          <div key={screenshot.id} style={styles.textItem}>
+            {screenshot.preview ? (
+              <img
+                src={screenshot.preview}
+                alt={`Screenshot ${index + 1}`}
+                style={styles.thumbnail}
+              />
+            ) : (
+              <div style={styles.textOnlyThumbnail as React.CSSProperties}>
+                Text Only
+              </div>
+            )}
+            <div style={styles.inputWrapper}>
+              <div style={styles.indexLabel}>Screenshot {index + 1}</div>
+              <textarea
+                value={getTextValue(screenshot, index)}
+                onChange={(e) => {
+                  if (isEditingTranslation) {
+                    handleTranslatedTextChange(index, e.target.value);
+                  } else {
+                    handleTextChange(screenshot.id, e.target.value);
+                  }
+                }}
+                placeholder={`[Highlighted]|Regular text|[Another highlight]`}
+                style={styles.textarea as React.CSSProperties}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#0071e3';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#d2d2d7';
+                }}
+                rows={3}
+              />
+
+              {/* Laurel text editing - only show for translation editing */}
+              {isEditingTranslation && laurelDec && laurelDec.textBlocks.length > 0 && (
+                <div style={{ marginTop: '8px' }}>
+                  <div style={{ fontSize: '11px', color: '#86868b', marginBottom: '4px' }}>
+                    Laurel Text
+                  </div>
+                  {laurelDec.textBlocks.map((block, bIdx) => (
+                    <input
+                      key={bIdx}
+                      type="text"
+                      value={laurelTexts[bIdx] || block.text}
+                      onChange={(e) => handleLaurelTextChange(index, bIdx, e.target.value)}
+                      placeholder={block.text}
+                      style={{
+                        width: '100%',
+                        padding: '6px 8px',
+                        fontSize: '13px',
+                        border: '1px solid #d2d2d7',
+                        borderRadius: '6px',
+                        marginBottom: '4px'
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };

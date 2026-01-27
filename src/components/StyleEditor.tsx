@@ -1,12 +1,24 @@
 import React from 'react';
-import { StyleConfig, DeviceSize, DEVICE_SIZES, MockupVisibility, MockupAlignment } from '../types';
+import { StyleConfig, DeviceSize, DEVICE_SIZES, MockupVisibility, MockupAlignment, Screenshot, ScreenshotStyleOverride, TranslationData, PerLanguageScreenshotStyle } from '../types';
+import { APP_STORE_LANGUAGES } from '../constants/languages';
 
 interface Props {
   style: StyleConfig;
   onStyleChange: (style: StyleConfig) => void;
   deviceSize: DeviceSize;
   onDeviceSizeChange: (size: DeviceSize) => void;
+  screenshots: Screenshot[];
+  selectedIndex: number;
+  onScreenshotsChange: (screenshots: Screenshot[]) => void;
+  translationData?: TranslationData | null;
+  selectedLanguage?: string;
+  onTranslationChange?: (data: TranslationData) => void;
 }
+
+const getLanguageName = (code: string): string => {
+  const lang = APP_STORE_LANGUAGES.find(l => l.code === code);
+  return lang?.name || code;
+};
 
 const cssStyles: Record<string, React.CSSProperties> = {
   container: {
@@ -126,9 +138,27 @@ const cssStyles: Record<string, React.CSSProperties> = {
 };
 
 const FONT_OPTIONS = [
+  // System fonts
   { value: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif', label: 'SF Pro Display' },
   { value: 'Helvetica Neue, Helvetica, Arial, sans-serif', label: 'Helvetica Neue' },
+  // Bold/Condensed fonts (like first screenshot)
+  { value: 'Bebas Neue, sans-serif', label: 'Bebas Neue (Bold)' },
+  { value: 'Anton, sans-serif', label: 'Anton (Bold)' },
+  { value: 'Oswald, sans-serif', label: 'Oswald (Condensed)' },
+  // Thin/Light fonts (like second screenshot)
+  { value: 'Lato, sans-serif', label: 'Lato' },
+  { value: 'Montserrat, sans-serif', label: 'Montserrat' },
+  { value: 'Raleway, sans-serif', label: 'Raleway' },
+  { value: 'Poppins, sans-serif', label: 'Poppins' },
+  // Modern sans-serif
+  { value: 'Inter, sans-serif', label: 'Inter' },
+  { value: 'Roboto, sans-serif', label: 'Roboto' },
+  { value: 'Open Sans, sans-serif', label: 'Open Sans' },
+  { value: 'Source Sans 3, sans-serif', label: 'Source Sans' },
+  // Serif/Elegant
+  { value: 'Playfair Display, serif', label: 'Playfair Display' },
   { value: 'Georgia, serif', label: 'Georgia' },
+  // Monospace
   { value: 'Menlo, monospace', label: 'Menlo' }
 ];
 
@@ -145,8 +175,78 @@ export const StyleEditor: React.FC<Props> = ({
   style,
   onStyleChange,
   deviceSize,
-  onDeviceSizeChange
+  onDeviceSizeChange,
+  screenshots,
+  selectedIndex,
+  onScreenshotsChange,
+  translationData,
+  selectedLanguage = 'all',
+  onTranslationChange
 }) => {
+  const selectedScreenshot = screenshots[selectedIndex];
+  const styleOverride = selectedScreenshot?.styleOverride;
+
+  const isEditingTranslation = selectedLanguage !== 'all' && translationData;
+
+  // Get effective colors (per-screenshot override or global)
+  const effectiveTextColor = styleOverride?.textColor ?? style.textColor;
+  const effectiveBackgroundColor = styleOverride?.backgroundColor ?? style.backgroundColor;
+  const effectiveGradient = styleOverride?.gradient ?? style.gradient;
+
+  const hasOverride = selectedScreenshot && (
+    styleOverride?.textColor !== undefined ||
+    styleOverride?.backgroundColor !== undefined ||
+    styleOverride?.gradient !== undefined
+  );
+
+  // Per-language style helpers
+  const getPerLangStyle = (): PerLanguageScreenshotStyle => {
+    if (!isEditingTranslation) return {};
+    return translationData.perLanguageStyles?.[selectedLanguage]?.[selectedIndex] || {};
+  };
+
+  const updatePerLangStyle = (updates: Partial<PerLanguageScreenshotStyle>) => {
+    if (!translationData || !onTranslationChange || selectedLanguage === 'all') return;
+
+    const newStyles = translationData.perLanguageStyles ? { ...translationData.perLanguageStyles } : {};
+    if (!newStyles[selectedLanguage]) {
+      newStyles[selectedLanguage] = {};
+    }
+    newStyles[selectedLanguage][selectedIndex] = {
+      ...getPerLangStyle(),
+      ...updates
+    };
+    onTranslationChange({
+      ...translationData,
+      perLanguageStyles: newStyles
+    });
+  };
+
+  const resetPerLangStyle = () => {
+    if (!translationData || !onTranslationChange) return;
+    const newStyles = { ...translationData.perLanguageStyles };
+    if (newStyles[selectedLanguage]) {
+      delete newStyles[selectedLanguage][selectedIndex];
+      if (Object.keys(newStyles[selectedLanguage]).length === 0) {
+        delete newStyles[selectedLanguage];
+      }
+    }
+    onTranslationChange({
+      ...translationData,
+      perLanguageStyles: newStyles
+    });
+  };
+
+  // Get effective font size (per-language or global)
+  const getEffectiveFontSize = (): number => {
+    if (isEditingTranslation) {
+      return getPerLangStyle().fontSize ?? style.fontSize;
+    }
+    return style.fontSize;
+  };
+
+  const hasPerLangOverride = isEditingTranslation && !!translationData?.perLanguageStyles?.[selectedLanguage]?.[selectedIndex];
+
   const updateStyle = <K extends keyof StyleConfig>(key: K, value: StyleConfig[K]) => {
     onStyleChange({ ...style, [key]: value });
   };
@@ -158,9 +258,60 @@ export const StyleEditor: React.FC<Props> = ({
     });
   };
 
-  const gradientBackground = style.gradient.enabled
-    ? `linear-gradient(${style.gradient.angle}deg, ${style.gradient.color1}, ${style.gradient.color2})`
-    : style.backgroundColor;
+  // Update per-screenshot style override
+  const updateScreenshotStyle = (updates: Partial<ScreenshotStyleOverride>) => {
+    if (!selectedScreenshot) return;
+
+    // For the first screenshot (index 0), update global style
+    if (selectedIndex === 0) {
+      if (updates.textColor !== undefined) {
+        updateStyle('textColor', updates.textColor);
+      }
+      if (updates.backgroundColor !== undefined) {
+        updateStyle('backgroundColor', updates.backgroundColor);
+      }
+      if (updates.gradient !== undefined) {
+        updateGradient(updates.gradient);
+      }
+      return;
+    }
+
+    // For other screenshots, update their styleOverride
+    const newScreenshots = screenshots.map((s, i) => {
+      if (i !== selectedIndex) return s;
+      return {
+        ...s,
+        styleOverride: {
+          ...s.styleOverride,
+          ...updates
+        }
+      };
+    });
+    onScreenshotsChange(newScreenshots);
+  };
+
+  // Update per-screenshot gradient
+  const updateScreenshotGradient = (updates: Partial<ScreenshotStyleOverride['gradient']>) => {
+    const currentGradient = effectiveGradient;
+    updateScreenshotStyle({
+      gradient: { ...currentGradient, ...updates } as ScreenshotStyleOverride['gradient']
+    });
+  };
+
+  // Reset current screenshot to use global style
+  const resetToGlobal = () => {
+    if (!selectedScreenshot || selectedIndex === 0) return;
+    const newScreenshots = screenshots.map((s, i) => {
+      if (i !== selectedIndex) return s;
+      const { styleOverride: _, ...rest } = s;
+      return rest;
+    });
+    onScreenshotsChange(newScreenshots);
+  };
+
+  const gradientBackground = effectiveGradient.enabled
+    ? `linear-gradient(${effectiveGradient.angle}deg, ${effectiveGradient.color1}, ${effectiveGradient.color2})`
+    : effectiveBackgroundColor;
 
   return (
     <div style={cssStyles.container}>
@@ -282,32 +433,89 @@ export const StyleEditor: React.FC<Props> = ({
             </div>
           </div>
         )}
+
+        {style.showMockup && (
+          <div style={cssStyles.field as React.CSSProperties}>
+            <span style={cssStyles.fieldLabel}>
+              Scale
+              {isEditingTranslation && getPerLangStyle().mockupScale !== undefined && (
+                <span style={{ color: '#0071e3', marginLeft: '4px' }}>(custom)</span>
+              )}
+            </span>
+            <div style={cssStyles.rangeContainer}>
+              <input
+                type="range"
+                min="30"
+                max="200"
+                value={Math.round((isEditingTranslation ? (getPerLangStyle().mockupScale ?? style.mockupScale ?? 1.0) : (style.mockupScale ?? 1.0)) * 100)}
+                onChange={(e) => {
+                  const newScale = Number(e.target.value) / 100;
+                  if (isEditingTranslation) {
+                    updatePerLangStyle({ mockupScale: newScale });
+                  } else {
+                    updateStyle('mockupScale', newScale);
+                  }
+                }}
+                style={cssStyles.range}
+              />
+              <span style={cssStyles.rangeValue as React.CSSProperties}>
+                {Math.round((isEditingTranslation ? (getPerLangStyle().mockupScale ?? style.mockupScale ?? 1.0) : (style.mockupScale ?? 1.0)) * 100)}%
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Background Section */}
-      <div style={cssStyles.sectionTitle as React.CSSProperties}>Background</div>
+      <div style={cssStyles.sectionTitle as React.CSSProperties}>
+        Background
+        {selectedIndex > 0 && (
+          <span style={{ fontWeight: 400, marginLeft: '8px' }}>
+            (Screen {selectedIndex + 1})
+          </span>
+        )}
+      </div>
+
+      {hasOverride && selectedIndex > 0 && (
+        <button
+          onClick={resetToGlobal}
+          style={{
+            padding: '6px 12px',
+            fontSize: '11px',
+            border: '1px solid #ff9500',
+            borderRadius: '6px',
+            backgroundColor: '#fff8e6',
+            color: '#996300',
+            cursor: 'pointer',
+            marginBottom: '12px',
+            width: '100%'
+          }}
+        >
+          Reset to global style
+        </button>
+      )}
 
       <div style={{ marginBottom: '12px' }}>
         <label style={cssStyles.toggle}>
           <input
             type="checkbox"
-            checked={style.gradient.enabled}
-            onChange={(e) => updateGradient({ enabled: e.target.checked })}
+            checked={effectiveGradient.enabled}
+            onChange={(e) => updateScreenshotGradient({ enabled: e.target.checked })}
             style={cssStyles.checkbox}
           />
           <span style={cssStyles.fieldLabel}>Use Gradient</span>
         </label>
       </div>
 
-      {style.gradient.enabled ? (
+      {effectiveGradient.enabled ? (
         <>
           <div style={cssStyles.grid}>
             <div style={cssStyles.field as React.CSSProperties}>
               <span style={cssStyles.fieldLabel}>Color 1</span>
               <input
                 type="color"
-                value={style.gradient.color1}
-                onChange={(e) => updateGradient({ color1: e.target.value })}
+                value={effectiveGradient.color1}
+                onChange={(e) => updateScreenshotGradient({ color1: e.target.value })}
                 style={cssStyles.colorInput}
               />
             </div>
@@ -315,8 +523,8 @@ export const StyleEditor: React.FC<Props> = ({
               <span style={cssStyles.fieldLabel}>Color 2</span>
               <input
                 type="color"
-                value={style.gradient.color2}
-                onChange={(e) => updateGradient({ color2: e.target.value })}
+                value={effectiveGradient.color2}
+                onChange={(e) => updateScreenshotGradient({ color2: e.target.value })}
                 style={cssStyles.colorInput}
               />
             </div>
@@ -329,11 +537,11 @@ export const StyleEditor: React.FC<Props> = ({
                 type="range"
                 min="0"
                 max="360"
-                value={style.gradient.angle}
-                onChange={(e) => updateGradient({ angle: Number(e.target.value) })}
+                value={effectiveGradient.angle}
+                onChange={(e) => updateScreenshotGradient({ angle: Number(e.target.value) })}
                 style={cssStyles.range}
               />
-              <span style={cssStyles.rangeValue as React.CSSProperties}>{style.gradient.angle}°</span>
+              <span style={cssStyles.rangeValue as React.CSSProperties}>{effectiveGradient.angle}°</span>
             </div>
           </div>
 
@@ -343,7 +551,7 @@ export const StyleEditor: React.FC<Props> = ({
               {GRADIENT_PRESETS.map((preset) => (
                 <button
                   key={preset.name}
-                  onClick={() => updateGradient({ color1: preset.color1, color2: preset.color2 })}
+                  onClick={() => updateScreenshotGradient({ color1: preset.color1, color2: preset.color2 })}
                   style={{
                     width: '32px',
                     height: '32px',
@@ -371,23 +579,49 @@ export const StyleEditor: React.FC<Props> = ({
           <span style={cssStyles.fieldLabel}>Background Color</span>
           <input
             type="color"
-            value={style.backgroundColor}
-            onChange={(e) => updateStyle('backgroundColor', e.target.value)}
+            value={effectiveBackgroundColor}
+            onChange={(e) => updateScreenshotStyle({ backgroundColor: e.target.value })}
             style={cssStyles.colorInput}
           />
         </div>
       )}
 
       {/* Text Section */}
-      <div style={cssStyles.sectionTitle as React.CSSProperties}>Text</div>
+      <div style={cssStyles.sectionTitle as React.CSSProperties}>
+        Text
+        {isEditingTranslation && (
+          <span style={{ fontWeight: 400, fontSize: '11px', color: '#0071e3', marginLeft: '8px' }}>
+            ({getLanguageName(selectedLanguage)})
+          </span>
+        )}
+      </div>
+
+      {hasPerLangOverride && (
+        <button
+          onClick={resetPerLangStyle}
+          style={{
+            padding: '6px 12px',
+            fontSize: '11px',
+            border: '1px solid #0071e3',
+            borderRadius: '6px',
+            backgroundColor: '#f0f7ff',
+            color: '#0071e3',
+            cursor: 'pointer',
+            marginBottom: '12px',
+            width: '100%'
+          }}
+        >
+          Reset to global style
+        </button>
+      )}
 
       <div style={cssStyles.grid}>
         <div style={cssStyles.field as React.CSSProperties}>
           <span style={cssStyles.fieldLabel}>Text Color</span>
           <input
             type="color"
-            value={style.textColor}
-            onChange={(e) => updateStyle('textColor', e.target.value)}
+            value={effectiveTextColor}
+            onChange={(e) => updateScreenshotStyle({ textColor: e.target.value })}
             style={cssStyles.colorInput}
           />
         </div>
@@ -403,75 +637,49 @@ export const StyleEditor: React.FC<Props> = ({
         </div>
 
         <div style={cssStyles.field as React.CSSProperties}>
-          <span style={cssStyles.fieldLabel}>Font Size</span>
+          <span style={cssStyles.fieldLabel}>
+            Font Size
+            {isEditingTranslation && getPerLangStyle().fontSize !== undefined && (
+              <span style={{ color: '#0071e3', marginLeft: '4px' }}>(custom)</span>
+            )}
+          </span>
           <div style={cssStyles.rangeContainer}>
             <input
               type="range"
               min="40"
               max="400"
-              value={style.fontSize}
-              onChange={(e) => updateStyle('fontSize', Number(e.target.value))}
+              value={getEffectiveFontSize()}
+              onChange={(e) => {
+                const newSize = Number(e.target.value);
+                if (isEditingTranslation) {
+                  updatePerLangStyle({ fontSize: newSize });
+                } else {
+                  updateStyle('fontSize', newSize);
+                }
+              }}
               style={cssStyles.range}
             />
-            <span style={cssStyles.rangeValue as React.CSSProperties}>{style.fontSize}px</span>
+            <span style={cssStyles.rangeValue as React.CSSProperties}>{getEffectiveFontSize()}px</span>
           </div>
         </div>
 
         <div style={cssStyles.field as React.CSSProperties}>
-          <span style={cssStyles.fieldLabel}>Text Position</span>
-          <div style={cssStyles.buttonGroup}>
-            <button
-              style={{
-                ...cssStyles.button,
-                ...(style.textPosition === 'top' ? cssStyles.buttonActive : {})
-              }}
-              onClick={() => updateStyle('textPosition', 'top')}
-            >
-              Top
-            </button>
-            <button
-              style={{
-                ...cssStyles.button,
-                ...(style.textPosition === 'bottom' ? cssStyles.buttonActive : {})
-              }}
-              onClick={() => updateStyle('textPosition', 'bottom')}
-            >
-              Bottom
-            </button>
-          </div>
-        </div>
-
-        <div style={cssStyles.field as React.CSSProperties}>
-          <span style={cssStyles.fieldLabel}>Text Alignment</span>
-          <div style={cssStyles.buttonGroup}>
-            <button
-              style={{
-                ...cssStyles.button,
-                ...(style.textAlign === 'left' ? cssStyles.buttonActive : {})
-              }}
-              onClick={() => updateStyle('textAlign', 'left')}
-            >
-              Left
-            </button>
-            <button
-              style={{
-                ...cssStyles.button,
-                ...(style.textAlign === 'center' ? cssStyles.buttonActive : {})
-              }}
-              onClick={() => updateStyle('textAlign', 'center')}
-            >
-              Center
-            </button>
-            <button
-              style={{
-                ...cssStyles.button,
-                ...(style.textAlign === 'right' ? cssStyles.buttonActive : {})
-              }}
-              onClick={() => updateStyle('textAlign', 'right')}
-            >
-              Right
-            </button>
-          </div>
+          <span style={cssStyles.fieldLabel}>Position</span>
+          <button
+            onClick={() => {
+              if (isEditingTranslation) {
+                updatePerLangStyle({ textOffset: { x: 0, y: getPerLangStyle().textOffset?.y ?? style.textOffset.y } });
+              } else {
+                updateStyle('textOffset', { ...style.textOffset, x: 0 });
+              }
+            }}
+            style={{
+              ...cssStyles.button,
+              width: '100%'
+            }}
+          >
+            Center Horizontally
+          </button>
         </div>
 
         <div style={cssStyles.field as React.CSSProperties}>

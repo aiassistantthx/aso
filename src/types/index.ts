@@ -31,12 +31,25 @@ export interface LaurelDecoration {
 
 export type Decoration = StarRatingDecoration | LaurelDecoration;
 
+// Per-screenshot style overrides
+export interface ScreenshotStyleOverride {
+  textColor?: string;
+  backgroundColor?: string;
+  gradient?: {
+    enabled: boolean;
+    color1: string;
+    color2: string;
+    angle: number;
+  };
+}
+
 export interface Screenshot {
   id: string;
   file: File | null;  // null for text-only slides
   preview: string;    // empty string for text-only slides
   text: string;
   decorations?: Decoration[];
+  styleOverride?: ScreenshotStyleOverride;  // per-screenshot color overrides
 }
 
 export interface GradientConfig {
@@ -66,6 +79,8 @@ export interface StyleConfig {
   // Custom position offsets (relative to default position)
   mockupOffset: Position;
   textOffset: Position;
+  // Mockup scale factor (1.0 = default size)
+  mockupScale: number;
   // Highlight settings for [text] syntax
   highlightColor: string;
   highlightPadding: number;
@@ -80,6 +95,33 @@ export interface Language {
 
 export interface TranslatedTexts {
   [languageCode: string]: string[];
+}
+
+// Per-language style overrides for individual screenshots
+export interface PerLanguageScreenshotStyle {
+  fontSize?: number;
+  textOffset?: Position;
+  mockupOffset?: Position;
+  mockupScale?: number;
+  // Decoration position overrides
+  decorationPositions?: {
+    [decorationIndex: number]: Position;
+  };
+}
+
+// Extended translation data including decoration texts and per-language styles
+export interface TranslationData {
+  headlines: TranslatedTexts;
+  // laurelTexts[languageCode][screenshotIndex][blockIndex] = translated text
+  laurelTexts: {
+    [languageCode: string]: string[][];
+  };
+  // Per-language style overrides: styles[languageCode][screenshotIndex]
+  perLanguageStyles?: {
+    [languageCode: string]: {
+      [screenshotIndex: number]: PerLanguageScreenshotStyle;
+    };
+  };
 }
 
 export type DeviceSize = '6.9' | '6.5';

@@ -131,12 +131,28 @@ const createDefaultStars = (deviceSize: DeviceSize): StarRatingDecoration => {
 };
 
 const FONT_OPTIONS = [
+  // System fonts
   { value: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif', label: 'SF Pro Display' },
   { value: 'Helvetica Neue, Helvetica, Arial, sans-serif', label: 'Helvetica Neue' },
+  // Bold/Condensed fonts
+  { value: 'Bebas Neue, sans-serif', label: 'Bebas Neue (Bold)' },
+  { value: 'Anton, sans-serif', label: 'Anton (Bold)' },
+  { value: 'Oswald, sans-serif', label: 'Oswald (Condensed)' },
+  // Thin/Light fonts
+  { value: 'Lato, sans-serif', label: 'Lato' },
+  { value: 'Montserrat, sans-serif', label: 'Montserrat' },
+  { value: 'Raleway, sans-serif', label: 'Raleway' },
+  { value: 'Poppins, sans-serif', label: 'Poppins' },
+  // Modern sans-serif
+  { value: 'Inter, sans-serif', label: 'Inter' },
+  { value: 'Roboto, sans-serif', label: 'Roboto' },
+  { value: 'Open Sans, sans-serif', label: 'Open Sans' },
+  { value: 'Source Sans 3, sans-serif', label: 'Source Sans' },
+  // Serif/Elegant
+  { value: 'Playfair Display, serif', label: 'Playfair Display' },
   { value: 'Georgia, serif', label: 'Georgia' },
-  { value: 'Menlo, monospace', label: 'Menlo' },
-  { value: 'Arial, sans-serif', label: 'Arial' },
-  { value: 'Times New Roman, serif', label: 'Times New Roman' }
+  // Monospace
+  { value: 'Menlo, monospace', label: 'Menlo' }
 ];
 
 const createDefaultLaurel = (deviceSize: DeviceSize): LaurelDecoration => {

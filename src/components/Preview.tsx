@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Screenshot, StyleConfig, DeviceSize, DEVICE_SIZES } from '../types';
+import { Screenshot, StyleConfig, DeviceSize, DEVICE_SIZES, TranslationData, Decoration, LaurelDecoration, PerLanguageScreenshotStyle } from '../types';
 import { generatePreviewCanvas, getElementBounds } from '../services/canvas';
+import { APP_STORE_LANGUAGES } from '../constants/languages';
 
 interface Props {
   screenshots: Screenshot[];
@@ -10,9 +11,12 @@ interface Props {
   style: StyleConfig;
   deviceSize: DeviceSize;
   onStyleChange: (style: StyleConfig) => void;
+  translationData?: TranslationData | null;
+  selectedLanguage?: string;
+  onTranslationChange?: (data: TranslationData) => void;
 }
 
-type DragTarget = 'mockup' | 'text' | { type: 'decoration'; index: number } | null;
+type DragTarget = 'mockup' | 'text' | 'mockup-resize' | { type: 'decoration'; index: number } | null;
 
 const cssStyles: Record<string, React.CSSProperties> = {
   container: {
@@ -92,6 +96,11 @@ const cssStyles: Record<string, React.CSSProperties> = {
   }
 };
 
+const getLanguageName = (code: string): string => {
+  const lang = APP_STORE_LANGUAGES.find(l => l.code === code);
+  return lang?.name || code;
+};
+
 export const Preview: React.FC<Props> = ({
   screenshots,
   selectedIndex,
@@ -99,7 +108,10 @@ export const Preview: React.FC<Props> = ({
   onScreenshotsChange,
   style,
   deviceSize,
-  onStyleChange
+  onStyleChange,
+  translationData,
+  selectedLanguage = 'all',
+  onTranslationChange
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const selectedScreenshot = screenshots[selectedIndex];
@@ -109,22 +121,106 @@ export const Preview: React.FC<Props> = ({
   const [dragTarget, setDragTarget] = useState<DragTarget>(null);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [initialOffset, setInitialOffset] = useState({ x: 0, y: 0 });
+  const [initialScale, setInitialScale] = useState(1.0);
+  const [initialMockupHeight, setInitialMockupHeight] = useState(0);
+
+  const isEditingTranslation = selectedLanguage !== 'all' && translationData;
 
   // Calculate scale factor for preview
   const dimensions = DEVICE_SIZES[deviceSize];
   const scale = Math.min(400 / dimensions.width, 600 / dimensions.height);
 
+  // Get per-language style overrides
+  const getPerLangStyle = (): PerLanguageScreenshotStyle => {
+    if (!isEditingTranslation) return {};
+    return translationData.perLanguageStyles?.[selectedLanguage]?.[selectedIndex] || {};
+  };
+
+  // Update per-language style
+  const updatePerLangStyle = (updates: Partial<PerLanguageScreenshotStyle>) => {
+    if (!translationData || !onTranslationChange || selectedLanguage === 'all') return;
+
+    const newStyles = translationData.perLanguageStyles ? { ...translationData.perLanguageStyles } : {};
+    if (!newStyles[selectedLanguage]) {
+      newStyles[selectedLanguage] = {};
+    }
+    newStyles[selectedLanguage][selectedIndex] = {
+      ...getPerLangStyle(),
+      ...updates
+    };
+    onTranslationChange({
+      ...translationData,
+      perLanguageStyles: newStyles
+    });
+  };
+
+  // Get effective style (merged with per-language overrides)
+  const getEffectiveStyle = (): StyleConfig => {
+    if (!isEditingTranslation) return style;
+    const perLang = getPerLangStyle();
+    return {
+      ...style,
+      fontSize: perLang.fontSize ?? style.fontSize,
+      textOffset: perLang.textOffset ?? style.textOffset,
+      mockupOffset: perLang.mockupOffset ?? style.mockupOffset,
+      mockupScale: perLang.mockupScale ?? style.mockupScale
+    };
+  };
+
+
+  // Get translated text
+  const getDisplayText = (): string => {
+    if (isEditingTranslation) {
+      return translationData.headlines[selectedLanguage]?.[selectedIndex] || selectedScreenshot?.text || 'Your headline here';
+    }
+    return selectedScreenshot?.text || 'Your headline here';
+  };
+
+  // Get translated decorations
+  const getTranslatedDecorations = (): Decoration[] | undefined => {
+    if (!selectedScreenshot?.decorations) return undefined;
+
+    if (!isEditingTranslation) return decorations;
+
+    const laurelTexts = translationData.laurelTexts[selectedLanguage]?.[selectedIndex];
+    const positionOverrides = getPerLangStyle().decorationPositions;
+
+    return selectedScreenshot.decorations.map((dec, idx) => {
+      let result = { ...dec };
+
+      // Apply position override
+      if (positionOverrides?.[idx]) {
+        result = { ...result, position: positionOverrides[idx] };
+      }
+
+      // Apply laurel text translations
+      if (dec.type === 'laurel' && laurelTexts) {
+        const laurelDec = result as LaurelDecoration;
+        result = {
+          ...laurelDec,
+          textBlocks: laurelDec.textBlocks.map((block, bIdx) => ({
+            ...block,
+            text: laurelTexts[bIdx] || block.text
+          }))
+        };
+      }
+
+      return result;
+    });
+  };
+
   useEffect(() => {
     if (canvasRef.current) {
       generatePreviewCanvas(canvasRef.current, {
         screenshot: selectedScreenshot?.preview || null,
-        text: selectedScreenshot?.text || 'Your headline here',
-        style,
+        text: getDisplayText(),
+        style: getEffectiveStyle(),
         deviceSize,
-        decorations: selectedScreenshot?.decorations
+        decorations: getTranslatedDecorations(),
+        styleOverride: selectedScreenshot?.styleOverride
       });
     }
-  }, [selectedScreenshot, style, deviceSize]);
+  }, [selectedScreenshot, style, deviceSize, translationData, selectedLanguage, selectedIndex]);
 
   const getCanvasCoordinates = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -138,9 +234,11 @@ export const Preview: React.FC<Props> = ({
   }, [scale]);
 
   const hitTest = useCallback((x: number, y: number): DragTarget => {
+    const currentDecorations = getTranslatedDecorations() || [];
+
     // Check decorations first (they're on top)
-    for (let i = decorations.length - 1; i >= 0; i--) {
-      const dec = decorations[i];
+    for (let i = currentDecorations.length - 1; i >= 0; i--) {
+      const dec = currentDecorations[i];
       if (!dec.enabled) continue;
 
       if (dec.type === 'stars') {
@@ -164,10 +262,24 @@ export const Preview: React.FC<Props> = ({
       }
     }
 
-    const bounds = getElementBounds(style, deviceSize);
+    const effectiveStyle = getEffectiveStyle();
+    const bounds = getElementBounds(effectiveStyle, deviceSize);
 
-    // Check mockup bounds
-    if (style.showMockup) {
+    // Check mockup resize handle first (bottom-right corner)
+    if (effectiveStyle.showMockup && selectedScreenshot?.preview) {
+      const mockup = bounds.mockup;
+      const handleSize = 60; // Size of resize handle area
+      const handleX = mockup.x + mockup.width - handleSize;
+      const handleY = mockup.y + mockup.height - handleSize;
+
+      if (x >= handleX && x <= mockup.x + mockup.width &&
+          y >= handleY && y <= mockup.y + mockup.height) {
+        return 'mockup-resize';
+      }
+    }
+
+    // Check mockup bounds (for dragging)
+    if (effectiveStyle.showMockup) {
       const mockup = bounds.mockup;
       if (x >= mockup.x && x <= mockup.x + mockup.width &&
           y >= mockup.y && y <= mockup.y + mockup.height) {
@@ -183,7 +295,7 @@ export const Preview: React.FC<Props> = ({
     }
 
     return null;
-  }, [style, deviceSize, decorations]);
+  }, [style, deviceSize, decorations, translationData, selectedLanguage, selectedIndex]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const coords = getCanvasCoordinates(e);
@@ -194,17 +306,27 @@ export const Preview: React.FC<Props> = ({
       setDragTarget(target);
       setDragStart(coords);
 
-      if (target === 'mockup') {
-        setInitialOffset(style.mockupOffset);
+      const effectiveStyle = getEffectiveStyle();
+      const currentDecorations = getTranslatedDecorations() || [];
+
+      if (target === 'mockup-resize') {
+        // Store initial scale and mockup height for resize calculation
+        setInitialScale(effectiveStyle.mockupScale ?? 1.0);
+        const bounds = getElementBounds(effectiveStyle, deviceSize);
+        setInitialMockupHeight(bounds.mockup.height);
+      } else if (target === 'mockup') {
+        setInitialOffset(effectiveStyle.mockupOffset);
       } else if (target === 'text') {
-        setInitialOffset(style.textOffset);
+        setInitialOffset(effectiveStyle.textOffset);
       } else if (typeof target === 'object' && target.type === 'decoration') {
-        const dec = decorations[target.index];
-        setInitialOffset(dec.position);
+        const dec = currentDecorations[target.index];
+        if (dec) {
+          setInitialOffset(dec.position);
+        }
       }
       e.preventDefault();
     }
-  }, [getCanvasCoordinates, hitTest, style.mockupOffset, style.textOffset, decorations]);
+  }, [getCanvasCoordinates, hitTest, style, decorations, translationData, selectedLanguage, selectedIndex, deviceSize]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDragging || !dragTarget) return;
@@ -213,26 +335,59 @@ export const Preview: React.FC<Props> = ({
     const deltaX = coords.x - dragStart.x;
     const deltaY = coords.y - dragStart.y;
 
+    if (dragTarget === 'mockup-resize') {
+      // Calculate new scale based on vertical delta (diagonal drag)
+      const delta = Math.max(deltaX, deltaY); // Use the larger of the two for smooth scaling
+      const scaleDelta = delta / initialMockupHeight;
+      const newScale = Math.max(0.3, Math.min(2.0, initialScale + scaleDelta));
+
+      if (isEditingTranslation) {
+        updatePerLangStyle({ mockupScale: newScale });
+      } else {
+        onStyleChange({ ...style, mockupScale: newScale });
+      }
+      return;
+    }
+
     const newPosition = {
       x: initialOffset.x + deltaX,
       y: initialOffset.y + deltaY
     };
 
     if (dragTarget === 'mockup') {
-      onStyleChange({ ...style, mockupOffset: newPosition });
+      if (isEditingTranslation) {
+        updatePerLangStyle({ mockupOffset: newPosition });
+      } else {
+        onStyleChange({ ...style, mockupOffset: newPosition });
+      }
     } else if (dragTarget === 'text') {
-      onStyleChange({ ...style, textOffset: newPosition });
+      if (isEditingTranslation) {
+        updatePerLangStyle({ textOffset: newPosition });
+      } else {
+        onStyleChange({ ...style, textOffset: newPosition });
+      }
     } else if (typeof dragTarget === 'object' && dragTarget.type === 'decoration') {
-      // Update decoration position
-      const newDecorations = decorations.map((dec, i) =>
-        i === dragTarget.index ? { ...dec, position: newPosition } : dec
-      );
-      const newScreenshots = screenshots.map((s, i) =>
-        i === selectedIndex ? { ...s, decorations: newDecorations } : s
-      );
-      onScreenshotsChange(newScreenshots);
+      if (isEditingTranslation) {
+        // Update per-language decoration position
+        const currentPositions = getPerLangStyle().decorationPositions || {};
+        updatePerLangStyle({
+          decorationPositions: {
+            ...currentPositions,
+            [dragTarget.index]: newPosition
+          }
+        });
+      } else {
+        // Update global decoration position
+        const newDecorations = decorations.map((dec, i) =>
+          i === dragTarget.index ? { ...dec, position: newPosition } : dec
+        );
+        const newScreenshots = screenshots.map((s, i) =>
+          i === selectedIndex ? { ...s, decorations: newDecorations } : s
+        );
+        onScreenshotsChange(newScreenshots);
+      }
     }
-  }, [isDragging, dragTarget, getCanvasCoordinates, dragStart, initialOffset, onStyleChange, style, decorations, screenshots, selectedIndex, onScreenshotsChange]);
+  }, [isDragging, dragTarget, getCanvasCoordinates, dragStart, initialOffset, initialScale, initialMockupHeight, onStyleChange, style, decorations, screenshots, selectedIndex, onScreenshotsChange, isEditingTranslation, translationData, selectedLanguage, onTranslationChange]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -247,36 +402,87 @@ export const Preview: React.FC<Props> = ({
   }, [isDragging]);
 
   const resetPositions = useCallback(() => {
-    onStyleChange({
-      ...style,
-      mockupOffset: { x: 0, y: 0 },
-      textOffset: { x: 0, y: 0 }
-    });
-  }, [onStyleChange, style]);
+    if (isEditingTranslation && translationData && onTranslationChange) {
+      // Reset per-language styles for current screenshot
+      const newStyles = { ...translationData.perLanguageStyles };
+      if (newStyles[selectedLanguage]) {
+        delete newStyles[selectedLanguage][selectedIndex];
+        if (Object.keys(newStyles[selectedLanguage]).length === 0) {
+          delete newStyles[selectedLanguage];
+        }
+      }
+      onTranslationChange({
+        ...translationData,
+        perLanguageStyles: newStyles
+      });
+    } else {
+      onStyleChange({
+        ...style,
+        mockupOffset: { x: 0, y: 0 },
+        textOffset: { x: 0, y: 0 },
+        mockupScale: 1.0
+      });
+    }
+  }, [onStyleChange, style, isEditingTranslation, translationData, selectedLanguage, selectedIndex, onTranslationChange]);
 
-  const hasCustomPosition = style.mockupOffset.x !== 0 || style.mockupOffset.y !== 0 ||
-                            style.textOffset.x !== 0 || style.textOffset.y !== 0;
+  // Determine cursor style based on hover position
+  const [hoverTarget, setHoverTarget] = useState<DragTarget>(null);
+
+  const handleMouseMoveForCursor = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (isDragging) return; // Don't update hover state while dragging
+    const coords = getCanvasCoordinates(e);
+    const target = hitTest(coords.x, coords.y);
+    setHoverTarget(target);
+  }, [isDragging, getCanvasCoordinates, hitTest]);
+
+  const getCursorStyle = (): string => {
+    if (isDragging) {
+      return dragTarget === 'mockup-resize' ? 'nwse-resize' : 'grabbing';
+    }
+    if (hoverTarget === 'mockup-resize') return 'nwse-resize';
+    if (hoverTarget) return 'grab';
+    return 'default';
+  };
+
+  const hasCustomPosition = isEditingTranslation
+    ? !!translationData?.perLanguageStyles?.[selectedLanguage]?.[selectedIndex]
+    : (style.mockupOffset.x !== 0 || style.mockupOffset.y !== 0 ||
+       style.textOffset.x !== 0 || style.textOffset.y !== 0 ||
+       (style.mockupScale ?? 1.0) !== 1.0);
 
   return (
     <div style={cssStyles.container as React.CSSProperties}>
-      <label style={cssStyles.label}>Preview</label>
+      <label style={cssStyles.label}>
+        Preview
+        {isEditingTranslation && (
+          <span style={{ fontWeight: 400, fontSize: '12px', color: '#0071e3', marginLeft: '8px' }}>
+            ({getLanguageName(selectedLanguage)})
+          </span>
+        )}
+      </label>
 
       <div style={cssStyles.previewWrapper as React.CSSProperties}>
         <canvas
           ref={canvasRef}
           style={{
             ...cssStyles.canvas,
-            cursor: isDragging ? 'grabbing' : 'grab'
+            cursor: getCursorStyle()
           }}
           onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
+          onMouseMove={(e) => {
+            handleMouseMoveForCursor(e);
+            handleMouseMove(e);
+          }}
           onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseLeave}
+          onMouseLeave={() => {
+            handleMouseLeave();
+            setHoverTarget(null);
+          }}
         />
       </div>
 
       <p style={cssStyles.dragHint as React.CSSProperties}>
-        Drag to move elements (mockup, text, decorations)
+        Drag to move/resize elements. Drag corner to resize mockup.
       </p>
 
       {hasCustomPosition && (

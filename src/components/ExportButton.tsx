@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Screenshot, StyleConfig, DeviceSize } from '../types';
-import { translateTexts, initializeOpenAI } from '../services/openai';
+import { Screenshot, StyleConfig, DeviceSize, TranslationData } from '../types';
+import { translateAllContent, initializeOpenAI } from '../services/openai';
 import { generateZipArchive } from '../services/zip';
 
 interface Props {
@@ -11,6 +11,8 @@ interface Props {
   targetLanguages: string[];
   apiKey: string;
   onApiKeyChange: (key: string) => void;
+  translationData: TranslationData | null;
+  onTranslationChange: (data: TranslationData | null) => void;
 }
 
 const cssStyles: Record<string, React.CSSProperties> = {
@@ -45,8 +47,12 @@ const cssStyles: Record<string, React.CSSProperties> = {
     color: '#86868b',
     marginTop: '4px'
   },
+  buttonGroup: {
+    display: 'flex',
+    gap: '8px'
+  },
   exportButton: {
-    width: '100%',
+    flex: 1,
     padding: '14px 24px',
     fontSize: '16px',
     fontWeight: 600,
@@ -63,6 +69,18 @@ const cssStyles: Record<string, React.CSSProperties> = {
     backgroundColor: '#d2d2d7',
     color: '#86868b',
     cursor: 'not-allowed'
+  },
+  secondaryButton: {
+    flex: 1,
+    padding: '14px 24px',
+    fontSize: '16px',
+    fontWeight: 600,
+    border: '1px solid #0071e3',
+    borderRadius: '10px',
+    backgroundColor: '#fff',
+    color: '#0071e3',
+    cursor: 'pointer',
+    transition: 'all 0.2s'
   },
   progressContainer: {
     marginTop: '16px'
@@ -97,6 +115,14 @@ const cssStyles: Record<string, React.CSSProperties> = {
     padding: '8px',
     backgroundColor: '#f5f5f7',
     borderRadius: '6px'
+  },
+  translationReady: {
+    fontSize: '12px',
+    color: '#34c759',
+    marginBottom: '12px',
+    padding: '8px',
+    backgroundColor: '#e8f9ed',
+    borderRadius: '6px'
   }
 };
 
@@ -107,25 +133,29 @@ export const ExportButton: React.FC<Props> = ({
   sourceLanguage,
   targetLanguages,
   apiKey,
-  onApiKeyChange
+  onApiKeyChange,
+  translationData,
+  onTranslationChange
 }) => {
+  const [isTranslating, setIsTranslating] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
 
-  const canExport = screenshots.length > 0 &&
+  const canTranslate = screenshots.length > 0 &&
     screenshots.some(s => s.text) &&
     targetLanguages.length > 0 &&
     apiKey.trim();
 
-  const handleExport = async () => {
-    if (!canExport || isExporting) return;
+  const handleTranslate = async () => {
+    if (!canTranslate || isTranslating) return;
 
-    setIsExporting(true);
+    setIsTranslating(true);
     setProgress(0);
     setStatus('Initializing...');
     setError('');
+    onTranslationChange(null);
 
     try {
       // Initialize OpenAI
@@ -134,25 +164,43 @@ export const ExportButton: React.FC<Props> = ({
       // Get texts to translate
       const texts = screenshots.map(s => s.text || '');
 
-      // Translate texts
+      // Translate texts (including laurel texts)
       setStatus('Translating texts...');
-      const translations = await translateTexts(
+      const data: TranslationData = await translateAllContent(
         texts,
+        screenshots,
         sourceLanguage,
         targetLanguages,
-        (p) => setProgress(p * 0.4) // Translation is 40% of progress
+        (p) => setProgress(p)
       );
 
-      // Generate ZIP
-      setProgress(40);
-      setStatus('Generating images...');
+      onTranslationChange(data);
+      setProgress(100);
+      setStatus('Translation complete!');
+    } catch (err) {
+      console.error('Translation error:', err);
+      setError(err instanceof Error ? err.message : 'Translation failed');
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  const handleExport = async () => {
+    if (!translationData || isExporting) return;
+
+    setIsExporting(true);
+    setProgress(0);
+    setStatus('Generating images...');
+    setError('');
+
+    try {
       await generateZipArchive({
         screenshots,
-        translations,
+        translationData,
         style,
         deviceSize,
         onProgress: (p, s) => {
-          setProgress(40 + p * 0.6); // Image generation is 60% of progress
+          setProgress(p);
           setStatus(s);
         }
       });
@@ -167,6 +215,61 @@ export const ExportButton: React.FC<Props> = ({
     }
   };
 
+  const handleQuickExport = async () => {
+    if (!canTranslate || isTranslating || isExporting) return;
+
+    setIsTranslating(true);
+    setProgress(0);
+    setStatus('Initializing...');
+    setError('');
+
+    try {
+      // Initialize OpenAI
+      initializeOpenAI(apiKey.trim());
+
+      // Get texts to translate
+      const texts = screenshots.map(s => s.text || '');
+
+      // Translate texts
+      setStatus('Translating texts...');
+      const data: TranslationData = await translateAllContent(
+        texts,
+        screenshots,
+        sourceLanguage,
+        targetLanguages,
+        (p) => setProgress(p * 0.4)
+      );
+
+      onTranslationChange(data);
+      setIsTranslating(false);
+
+      // Generate ZIP
+      setIsExporting(true);
+      setProgress(40);
+      setStatus('Generating images...');
+
+      await generateZipArchive({
+        screenshots,
+        translationData: data,
+        style,
+        deviceSize,
+        onProgress: (p, s) => {
+          setProgress(40 + p * 0.6);
+          setStatus(s);
+        }
+      });
+
+      setProgress(100);
+      setStatus('Export complete!');
+    } catch (err) {
+      console.error('Export error:', err);
+      setError(err instanceof Error ? err.message : 'Export failed');
+    } finally {
+      setIsTranslating(false);
+      setIsExporting(false);
+    }
+  };
+
   const getMissingRequirements = (): string[] => {
     const missing: string[] = [];
     if (screenshots.length === 0) missing.push('Upload at least one screenshot');
@@ -177,6 +280,7 @@ export const ExportButton: React.FC<Props> = ({
   };
 
   const missingRequirements = getMissingRequirements();
+  const isWorking = isTranslating || isExporting;
 
   return (
     <div style={cssStyles.container}>
@@ -207,22 +311,42 @@ export const ExportButton: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Export Button */}
-      <button
-        onClick={handleExport}
-        disabled={!canExport || isExporting}
-        style={{
-          ...cssStyles.exportButton,
-          ...(canExport && !isExporting
-            ? cssStyles.exportButtonEnabled
-            : cssStyles.exportButtonDisabled)
-        }}
-      >
-        {isExporting ? 'Exporting...' : `Export to ${targetLanguages.length} Language${targetLanguages.length !== 1 ? 's' : ''}`}
-      </button>
+      {/* Translation ready indicator */}
+      {translationData && !isWorking && (
+        <div style={cssStyles.translationReady}>
+          Translations ready for {Object.keys(translationData.headlines).length} languages.
+          Use the sidebar to edit individual languages.
+        </div>
+      )}
+
+      {/* Export Buttons */}
+      <div style={cssStyles.buttonGroup as React.CSSProperties}>
+        <button
+          onClick={handleTranslate}
+          disabled={!canTranslate || isWorking}
+          style={{
+            ...cssStyles.secondaryButton,
+            ...((!canTranslate || isWorking) ? { opacity: 0.5, cursor: 'not-allowed' } : {})
+          }}
+        >
+          {isTranslating ? 'Translating...' : translationData ? 'Re-translate' : 'Translate'}
+        </button>
+        <button
+          onClick={translationData ? handleExport : handleQuickExport}
+          disabled={!canTranslate || isWorking}
+          style={{
+            ...cssStyles.exportButton,
+            ...(canTranslate && !isWorking
+              ? cssStyles.exportButtonEnabled
+              : cssStyles.exportButtonDisabled)
+          }}
+        >
+          {isExporting ? 'Exporting...' : translationData ? 'Export ZIP' : 'Translate & Export'}
+        </button>
+      </div>
 
       {/* Progress */}
-      {isExporting && (
+      {isWorking && (
         <div style={cssStyles.progressContainer}>
           <div style={cssStyles.progressBar}>
             <div
