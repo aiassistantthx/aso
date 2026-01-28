@@ -3,7 +3,6 @@ import { Screenshot, StyleConfig, DeviceSize, TranslationData } from './types';
 import { ScreenshotUploader } from './components/ScreenshotUploader';
 import { TextEditor } from './components/TextEditor';
 import { StyleEditor } from './components/StyleEditor';
-import { DecorationsEditor } from './components/DecorationsEditor';
 import { ScreensFlowEditor } from './components/ScreensFlowEditor';
 import { LanguageSelector } from './components/LanguageSelector';
 import { ExportButton } from './components/ExportButton';
@@ -36,7 +35,7 @@ const defaultStyle: StyleConfig = {
   paddingBottom: 60,
   showMockup: true,
   mockupColor: 'black',
-  mockupStyle: 'realistic',
+  mockupStyle: 'flat',
   mockupVisibility: 'full',
   mockupAlignment: 'center',
   mockupOffset: { x: 0, y: 0 },
@@ -562,6 +561,14 @@ function App() {
         </div>
       )}
 
+      {/* Screenshot Uploader - always visible at top */}
+      <div style={{ maxWidth: '1600px', margin: '0 auto', padding: '16px 24px' }}>
+        <ScreenshotUploader
+          screenshots={screenshots}
+          onScreenshotsChange={setScreenshots}
+        />
+      </div>
+
       {/* Screens Flow Editor */}
       {screenshots.length > 0 && (
         <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
@@ -571,6 +578,7 @@ function App() {
             onSelectIndex={setSelectedPreviewIndex}
             onScreenshotsChange={setScreenshots}
             style={styleConfig}
+            onStyleChange={setStyleConfig}
             deviceSize={deviceSize}
             translationData={translationData}
             selectedLanguage={selectedLanguage}
@@ -592,12 +600,6 @@ function App() {
         <div style={translationData ? styles.mainContent : styles.mainContent as React.CSSProperties}>
           {/* Left Panel - Settings */}
           <div style={styles.leftPanel as React.CSSProperties}>
-            <div style={styles.card}>
-              <ScreenshotUploader
-                screenshots={screenshots}
-                onScreenshotsChange={setScreenshots}
-              />
-            </div>
 
             <div style={styles.card}>
               <TextEditor
@@ -621,15 +623,6 @@ function App() {
                 translationData={translationData}
                 selectedLanguage={selectedLanguage}
                 onTranslationChange={setTranslationData}
-              />
-            </div>
-
-            <div style={styles.card}>
-              <DecorationsEditor
-                screenshots={screenshots}
-                selectedIndex={selectedPreviewIndex}
-                onScreenshotsChange={setScreenshots}
-                deviceSize={deviceSize}
               />
             </div>
 

@@ -185,18 +185,19 @@ const drawFormattedText = (
       const segmentWidth = ctx.measureText(segment.text).width;
 
       if (segment.highlighted && segment.text.trim()) {
-        // Draw highlight background
-        const padding = style.highlightPadding || 12;
-        const radius = style.highlightBorderRadius || 8;
+        // Draw highlight background - adaptive padding based on font size
+        const paddingH = Math.max(style.highlightPadding || 12, style.fontSize * 0.18); // Horizontal
+        const paddingV = Math.max(8, style.fontSize * 0.12); // Vertical
+        const radius = style.highlightBorderRadius || Math.max(8, style.fontSize * 0.1);
 
         ctx.save();
         ctx.fillStyle = style.highlightColor || '#FFE135';
         ctx.beginPath();
         ctx.roundRect(
-          x - padding / 2,
-          y - style.fontSize * 0.85,
-          segmentWidth + padding,
-          style.fontSize * 1.15,
+          x - paddingH,
+          y - style.fontSize * 0.88 - paddingV,
+          segmentWidth + paddingH * 2,
+          style.fontSize * 1.1 + paddingV * 2,
           radius
         );
         ctx.fill();
@@ -212,7 +213,8 @@ const drawFormattedText = (
   });
 };
 
-// Calculate adaptive font size to fit text within bounds
+// Calculate adaptive font size to fill available space
+// Tries to maximize font size while still fitting within bounds
 const calculateAdaptiveFontSize = (
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -221,36 +223,44 @@ const calculateAdaptiveFontSize = (
   maxHeight: number,
   fontFamily: string
 ): number => {
-  const minFontSize = Math.max(30, baseFontSize * 0.4); // Don't go below 40% of original or 30px
-  let fontSize = baseFontSize;
+  const minFontSize = Math.max(36, baseFontSize * 0.3); // Don't go below 30% of original or 36px
+  const maxFontSize = Math.min(baseFontSize * 2, 200); // Can grow up to 2x or 200px max
 
-  while (fontSize >= minFontSize) {
-    ctx.font = `bold ${fontSize}px ${fontFamily}`;
+  // Binary search for optimal font size
+  let low = minFontSize;
+  let high = maxFontSize;
+  let bestFit = minFontSize;
+
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+    ctx.font = `bold ${mid}px ${fontFamily}`;
     const lines = wrapFormattedText(ctx, text, maxWidth);
-    const lineHeight = fontSize * 1.4;
+    const lineHeight = mid * 1.4;
     const totalHeight = lines.length * lineHeight;
 
     // Check if text fits
-    if (totalHeight <= maxHeight) {
-      // Also check that no single line is too wide (for very long words)
-      let allLinesFit = true;
+    let fits = totalHeight <= maxHeight;
+
+    // Also check that no single line is too wide (for very long words)
+    if (fits) {
       for (const line of lines) {
         const lineWidth = measureLineWidth(ctx, line);
-        if (lineWidth > maxWidth * 1.05) { // Allow 5% overflow
-          allLinesFit = false;
+        if (lineWidth > maxWidth * 1.02) { // Allow 2% overflow
+          fits = false;
           break;
         }
       }
-      if (allLinesFit) {
-        return fontSize;
-      }
     }
 
-    // Reduce font size and try again
-    fontSize -= 4;
+    if (fits) {
+      bestFit = mid;
+      low = mid + 1; // Try larger
+    } else {
+      high = mid - 1; // Try smaller
+    }
   }
 
-  return minFontSize;
+  return bestFit;
 };
 
 // Draw a 5-pointed star
@@ -643,6 +653,88 @@ const getVisibilityRatio = (visibility: StyleConfig['mockupVisibility']): number
     case '2/3': return 2 / 3;
     case '1/2': return 0.5;
     default: return 1;
+  }
+};
+
+// Calculate bounding box of a rotated rectangle
+// Returns the top Y coordinate of the rotated mockup
+interface RotatedBounds {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+  width: number;
+  height: number;
+}
+
+const calculateRotatedMockupBounds = (
+  centerX: number,
+  centerY: number,
+  width: number,
+  height: number,
+  rotationDegrees: number
+): RotatedBounds => {
+  const rad = (rotationDegrees * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(rad));
+  const sin = Math.abs(Math.sin(rad));
+
+  // Bounding box dimensions after rotation
+  const bboxWidth = width * cos + height * sin;
+  const bboxHeight = width * sin + height * cos;
+
+  return {
+    top: centerY - bboxHeight / 2,
+    bottom: centerY + bboxHeight / 2,
+    left: centerX - bboxWidth / 2,
+    right: centerX + bboxWidth / 2,
+    width: bboxWidth,
+    height: bboxHeight
+  };
+};
+
+// Calculate available text area based on mockup position and rotation
+interface TextAreaBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+const calculateTextArea = (
+  canvasWidth: number,
+  canvasHeight: number,
+  mockupCenterX: number,
+  mockupCenterY: number,
+  mockupWidth: number,
+  mockupHeight: number,
+  rotation: number,
+  textPosition: 'top' | 'bottom',
+  paddingTop: number,
+  paddingBottom: number,
+  sidePadding: number
+): TextAreaBounds => {
+  const rotatedBounds = calculateRotatedMockupBounds(
+    mockupCenterX,
+    mockupCenterY,
+    mockupWidth,
+    mockupHeight,
+    rotation
+  );
+
+  const width = canvasWidth - sidePadding * 2;
+  const x = sidePadding;
+  const gapFromMockup = 40; // Gap between text and mockup
+
+  if (textPosition === 'top') {
+    // Text at top: from paddingTop to mockup's top edge (minus gap)
+    const availableBottom = Math.max(rotatedBounds.top - gapFromMockup, paddingTop + 50);
+    const height = availableBottom - paddingTop;
+    return { x, y: paddingTop, width, height: Math.max(height, 100) };
+  } else {
+    // Text at bottom: from mockup's bottom edge (plus gap) to canvas bottom minus paddingBottom
+    const availableTop = Math.min(rotatedBounds.bottom + gapFromMockup, canvasHeight - paddingBottom - 50);
+    const height = canvasHeight - paddingBottom - availableTop;
+    return { x, y: availableTop, width, height: Math.max(height, 100) };
   }
 };
 
@@ -1352,20 +1444,51 @@ export const generateScreenshotImage = async (
     drawBackgroundPattern(ctx, canvas.width, canvas.height, style.pattern);
   }
 
-  // Calculate mockup dimensions - per-screenshot scale overrides global style
+  // Calculate mockup dimensions - same as before for compatibility
   const mockupScale = mockupSettings?.scale ?? style.mockupScale ?? 1.0;
+  const rotation = mockupSettings?.rotation ?? style.mockupRotation ?? 0;
+  const visibilityRatio = getVisibilityRatio(style.mockupVisibility);
+
+  // Original mockup size calculation for text area positioning
   const textAreaHeight = style.textPosition === 'top'
     ? style.paddingTop + style.fontSize * 2.5
     : style.paddingBottom + style.fontSize * 2.5;
 
   const availableHeight = canvas.height - textAreaHeight - 80;
   const baseMockupHeight = Math.min(availableHeight, canvas.height * 0.75);
-  // Apply mockupScale but clamp to reasonable values
   const clampedScale = Math.max(0.3, Math.min(2.0, mockupScale));
   const mockupHeight = baseMockupHeight * clampedScale;
-  // Maintain phone aspect ratio
   const phoneAspect = MOCKUP_CONFIG.phoneWidth / MOCKUP_CONFIG.phoneHeight;
   const mockupWidth = mockupHeight * phoneAspect;
+
+  // Calculate mockup center for text positioning
+  const visiblePhoneHeight = mockupHeight * visibilityRatio;
+  const hiddenHeight = mockupHeight - visiblePhoneHeight;
+
+  let mockupCenterX = canvas.width / 2;
+  let mockupCenterY: number;
+
+  switch (style.mockupAlignment) {
+    case 'top':
+      mockupCenterY = -hiddenHeight + mockupHeight / 2;
+      break;
+    case 'bottom':
+      mockupCenterY = canvas.height - visiblePhoneHeight - 40 + mockupHeight / 2;
+      break;
+    case 'center':
+    default:
+      mockupCenterY = (canvas.height - mockupHeight) / 2 + mockupHeight / 2;
+      break;
+  }
+
+  // Apply mockup offsets for text area calculation
+  if (mockupSettings) {
+    mockupCenterX += (mockupSettings.offsetX / 100) * canvas.width;
+    mockupCenterY += (mockupSettings.offsetY / 100) * canvas.height;
+  } else {
+    mockupCenterX += style.mockupOffset?.x || 0;
+    mockupCenterY += style.mockupOffset?.y || 0;
+  }
 
   const mockupX = (canvas.width - mockupWidth) / 2;
   const mockupY = style.textPosition === 'top'
@@ -1373,7 +1496,9 @@ export const generateScreenshotImage = async (
     : 40;
 
   // Only show mockup if there's a screenshot AND showMockup is enabled
-  if (style.showMockup && screenshotForMockup) {
+  const hasMockup = !!(style.showMockup && screenshotForMockup);
+
+  if (hasMockup) {
     await drawMockupWithScreenshot(ctx, mockupX, mockupY, mockupWidth, mockupHeight, canvas.width, canvas.height, screenshotForMockup, style, mockupContinuation, mockupSettings);
   } else if (screenshotForMockup && !style.showMockup) {
     // Draw screenshot without mockup (legacy mode)
@@ -1400,50 +1525,72 @@ export const generateScreenshotImage = async (
     ctx.restore();
   }
 
-  // Draw text with formatting support and adaptive sizing
+  // Draw text with auto-sizing to fill available space
   if (text) {
-    const maxTextWidth = canvas.width * 0.85;
+    const sidePadding = canvas.width * 0.075;
+    const maxTextWidth = canvas.width - sidePadding * 2;
 
-    // Calculate max available height for text
-    const maxTextHeight = style.textPosition === 'top'
-      ? textAreaHeight - style.paddingTop - 40
-      : textAreaHeight - style.paddingBottom - 40;
+    // Calculate available text area based on mockup bounds
+    let textArea: TextAreaBounds;
 
-    // Calculate adaptive font size
+    if (hasMockup) {
+      textArea = calculateTextArea(
+        canvas.width,
+        canvas.height,
+        mockupCenterX,
+        mockupCenterY,
+        mockupWidth,
+        mockupHeight,
+        rotation,
+        style.textPosition,
+        style.paddingTop,
+        style.paddingBottom,
+        sidePadding
+      );
+    } else {
+      const availHeight = canvas.height * 0.4;
+      textArea = {
+        x: sidePadding,
+        y: style.textPosition === 'top' ? style.paddingTop : canvas.height - style.paddingBottom - availHeight,
+        width: maxTextWidth,
+        height: availHeight
+      };
+    }
+
+    // Calculate adaptive font size to fill available area
     const adaptiveFontSize = calculateAdaptiveFontSize(
       ctx,
       text,
       style.fontSize,
-      maxTextWidth,
-      maxTextHeight,
+      textArea.width,
+      textArea.height,
       style.fontFamily
     );
 
-    // Create modified style with adaptive font size
     const adaptiveStyle = { ...style, fontSize: adaptiveFontSize };
 
     ctx.fillStyle = style.textColor;
     ctx.font = `bold ${adaptiveFontSize}px ${style.fontFamily}`;
-    ctx.textAlign = 'left'; // We handle alignment manually for highlights
+    ctx.textAlign = 'left';
 
-    const lines = wrapFormattedText(ctx, text, maxTextWidth);
+    const lines = wrapFormattedText(ctx, text, textArea.width);
     const lineHeight = adaptiveFontSize * 1.4;
-
-    // Calculate text area left edge
-    const textAreaX = (canvas.width - maxTextWidth) / 2;
+    const totalTextHeight = lines.length * lineHeight;
 
     let textY: number;
     if (style.textPosition === 'top') {
-      textY = style.paddingTop + adaptiveFontSize;
+      textY = textArea.y + adaptiveFontSize + (textArea.height - totalTextHeight) / 4;
     } else {
-      textY = canvas.height - style.paddingBottom - (lines.length - 1) * lineHeight;
+      textY = textArea.y + textArea.height - totalTextHeight + adaptiveFontSize;
     }
 
-    // Apply custom offset from drag & drop
-    const finalX = textAreaX + (style.textOffset?.x || 0);
-    const finalY = textY + (style.textOffset?.y || 0);
+    // Apply custom offset
+    const textOffsetX = ((style.textOffset?.x || 0) / 100) * canvas.width;
+    const textOffsetY = ((style.textOffset?.y || 0) / 100) * canvas.height;
+    const finalX = textArea.x + textOffsetX;
+    const finalY = textY + textOffsetY;
 
-    drawFormattedText(ctx, lines, finalX, finalY, lineHeight, adaptiveStyle, maxTextWidth);
+    drawFormattedText(ctx, lines, finalX, finalY, lineHeight, adaptiveStyle, textArea.width);
   }
 
   // Draw decorations (stars, laurels, etc.)
@@ -1468,7 +1615,6 @@ export const generatePreviewCanvas = async (
   const { screenshot, text, style: baseStyle, deviceSize, styleOverride, mockupScreenshot, mockupContinuation, mockupSettings } = options;
   const style = getEffectiveStyle(baseStyle, styleOverride);
   const dimensions = DEVICE_SIZES[deviceSize];
-  // Use mockupScreenshot if provided (for continuation), otherwise use screenshot
   const screenshotForMockup = mockupScreenshot !== undefined ? mockupScreenshot : screenshot;
 
   // Scale down for preview
@@ -1477,44 +1623,70 @@ export const generatePreviewCanvas = async (
   canvas.height = dimensions.height * scale;
   const ctx = canvas.getContext('2d')!;
 
-  // Clear canvas completely before drawing
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
   ctx.scale(scale, scale);
 
-  // Draw gradient/solid background
   drawGradientBackground(ctx, dimensions.width, dimensions.height, style);
 
-  // Draw background pattern if present
   if (style.pattern) {
     drawBackgroundPattern(ctx, dimensions.width, dimensions.height, style.pattern);
   }
 
-  // Calculate mockup dimensions - per-screenshot scale overrides global style
+  // Calculate mockup dimensions - original calculation for compatibility
   const mockupScalePreview = mockupSettings?.scale ?? style.mockupScale ?? 1.0;
+  const rotation = mockupSettings?.rotation ?? style.mockupRotation ?? 0;
+  const visibilityRatio = getVisibilityRatio(style.mockupVisibility);
+
   const textAreaHeight = style.textPosition === 'top'
     ? style.paddingTop + style.fontSize * 2.5
     : style.paddingBottom + style.fontSize * 2.5;
 
   const availableHeight = dimensions.height - textAreaHeight - 80;
-  const baseMockupHeightPreview = Math.min(availableHeight, dimensions.height * 0.75);
-  // Apply mockupScale but clamp to reasonable values
+  const baseMockupHeight = Math.min(availableHeight, dimensions.height * 0.75);
   const clampedScalePreview = Math.max(0.3, Math.min(2.0, mockupScalePreview));
-  const mockupHeight = baseMockupHeightPreview * clampedScalePreview;
+  const mockupHeight = baseMockupHeight * clampedScalePreview;
   const phoneAspect = MOCKUP_CONFIG.phoneWidth / MOCKUP_CONFIG.phoneHeight;
   const mockupWidth = mockupHeight * phoneAspect;
+
+  // Calculate mockup center for text positioning
+  const visiblePhoneHeight = mockupHeight * visibilityRatio;
+  const hiddenHeight = mockupHeight - visiblePhoneHeight;
+
+  let mockupCenterX = dimensions.width / 2;
+  let mockupCenterY: number;
+
+  switch (style.mockupAlignment) {
+    case 'top':
+      mockupCenterY = -hiddenHeight + mockupHeight / 2;
+      break;
+    case 'bottom':
+      mockupCenterY = dimensions.height - visiblePhoneHeight - 40 + mockupHeight / 2;
+      break;
+    case 'center':
+    default:
+      mockupCenterY = (dimensions.height - mockupHeight) / 2 + mockupHeight / 2;
+      break;
+  }
+
+  if (mockupSettings) {
+    mockupCenterX += (mockupSettings.offsetX / 100) * dimensions.width;
+    mockupCenterY += (mockupSettings.offsetY / 100) * dimensions.height;
+  } else {
+    mockupCenterX += style.mockupOffset?.x || 0;
+    mockupCenterY += style.mockupOffset?.y || 0;
+  }
 
   const mockupX = (dimensions.width - mockupWidth) / 2;
   const mockupY = style.textPosition === 'top'
     ? textAreaHeight + 40
     : 40;
 
-  // Only show mockup if there's a screenshot AND showMockup is enabled
-  if (style.showMockup && screenshotForMockup) {
+  const hasMockup = !!(style.showMockup && screenshotForMockup);
+
+  if (hasMockup) {
     try {
       await drawMockupWithScreenshot(ctx, mockupX, mockupY, mockupWidth, mockupHeight, dimensions.width, dimensions.height, screenshotForMockup, style, mockupContinuation, mockupSettings);
     } catch (e) {
-      // Mockup not loaded yet, draw fallback
       ctx.fillStyle = '#1d1d1f';
       ctx.beginPath();
       ctx.roundRect(mockupX, mockupY, mockupWidth, mockupHeight, 60);
@@ -1548,52 +1720,70 @@ export const generatePreviewCanvas = async (
     }
   }
 
-  // Draw text with formatting support and adaptive sizing
+  // Draw text with auto-sizing
   if (text) {
-    const maxTextWidth = dimensions.width * 0.85;
+    const sidePadding = dimensions.width * 0.075;
+    const maxTextWidth = dimensions.width - sidePadding * 2;
 
-    // Calculate max available height for text
-    const maxTextHeight = style.textPosition === 'top'
-      ? textAreaHeight - style.paddingTop - 40
-      : textAreaHeight - style.paddingBottom - 40;
+    let textArea: TextAreaBounds;
 
-    // Calculate adaptive font size
+    if (hasMockup) {
+      textArea = calculateTextArea(
+        dimensions.width,
+        dimensions.height,
+        mockupCenterX,
+        mockupCenterY,
+        mockupWidth,
+        mockupHeight,
+        rotation,
+        style.textPosition,
+        style.paddingTop,
+        style.paddingBottom,
+        sidePadding
+      );
+    } else {
+      const availHeight = dimensions.height * 0.4;
+      textArea = {
+        x: sidePadding,
+        y: style.textPosition === 'top' ? style.paddingTop : dimensions.height - style.paddingBottom - availHeight,
+        width: maxTextWidth,
+        height: availHeight
+      };
+    }
+
     const adaptiveFontSize = calculateAdaptiveFontSize(
       ctx,
       text,
       style.fontSize,
-      maxTextWidth,
-      maxTextHeight,
+      textArea.width,
+      textArea.height,
       style.fontFamily
     );
 
-    // Create modified style with adaptive font size
     const adaptiveStyle = { ...style, fontSize: adaptiveFontSize };
 
     ctx.fillStyle = style.textColor;
     ctx.font = `bold ${adaptiveFontSize}px ${style.fontFamily}`;
-    ctx.textAlign = 'left'; // We handle alignment manually for highlights
+    ctx.textAlign = 'left';
 
-    const lines = wrapFormattedText(ctx, text, maxTextWidth);
+    const lines = wrapFormattedText(ctx, text, textArea.width);
     const lineHeight = adaptiveFontSize * 1.4;
-
-    // Calculate text area left edge
-    const textAreaX = (dimensions.width - maxTextWidth) / 2;
+    const totalTextHeight = lines.length * lineHeight;
 
     let textY: number;
     if (style.textPosition === 'top') {
-      textY = style.paddingTop + adaptiveFontSize;
+      textY = textArea.y + adaptiveFontSize + (textArea.height - totalTextHeight) / 4;
     } else {
-      textY = dimensions.height - style.paddingBottom - (lines.length - 1) * lineHeight;
+      textY = textArea.y + textArea.height - totalTextHeight + adaptiveFontSize;
     }
 
-    // Apply custom offset from drag & drop
-    const finalX = textAreaX + (style.textOffset?.x || 0);
-    const finalY = textY + (style.textOffset?.y || 0);
+    const textOffsetX = ((style.textOffset?.x || 0) / 100) * dimensions.width;
+    const textOffsetY = ((style.textOffset?.y || 0) / 100) * dimensions.height;
+    const finalX = textArea.x + textOffsetX;
+    const finalY = textY + textOffsetY;
 
-    drawFormattedText(ctx, lines, finalX, finalY, lineHeight, adaptiveStyle, maxTextWidth);
+    drawFormattedText(ctx, lines, finalX, finalY, lineHeight, adaptiveStyle, textArea.width);
   }
 
-  // Draw decorations (stars, laurels, etc.)
   await drawDecorations(ctx, options.decorations);
 };

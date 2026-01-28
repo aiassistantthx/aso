@@ -1,12 +1,15 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Screenshot, StyleConfig, DeviceSize, DEVICE_SIZES, TranslationData, ScreenshotMockupSettings, MockupStyle } from '../types';
 
+type DragMode = 'mockup' | 'text';
+
 interface Props {
   screenshots: Screenshot[];
   selectedIndex: number;
   onSelectIndex: (index: number) => void;
   onScreenshotsChange: (screenshots: Screenshot[]) => void;
   style: StyleConfig;
+  onStyleChange: (style: StyleConfig) => void;
   deviceSize: DeviceSize;
   translationData?: TranslationData | null;
   selectedLanguage?: string;
@@ -273,12 +276,14 @@ const LinkedPairCanvas: React.FC<{
   index2: number;
   selectedIndex: number;
   style: StyleConfig;
+  onStyleChange: (style: StyleConfig) => void;
   deviceSize: DeviceSize;
   onSelectIndex: (index: number) => void;
   onBothSettingsChange: (s1: ScreenshotMockupSettings, s2: ScreenshotMockupSettings) => void;
   onUnlink: () => void;
   translationData?: TranslationData | null;
   selectedLanguage?: string;
+  dragMode: DragMode;
 }> = ({
   screen1,
   screen2,
@@ -286,12 +291,14 @@ const LinkedPairCanvas: React.FC<{
   index2,
   selectedIndex,
   style,
+  onStyleChange,
   deviceSize,
   onSelectIndex,
   onBothSettingsChange,
   onUnlink,
   translationData,
-  selectedLanguage = 'all'
+  selectedLanguage = 'all',
+  dragMode
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -346,7 +353,7 @@ const LinkedPairCanvas: React.FC<{
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const previewHeight = 340;
+    const previewHeight = 420;
     const aspectRatio = dimensions.width / dimensions.height;
     const singleScreenWidth = previewHeight * aspectRatio;
     const combinedWidth = singleScreenWidth * 2;
@@ -389,9 +396,18 @@ const LinkedPairCanvas: React.FC<{
       ctx.restore();
     }
 
-    // Draw text
-    drawText(ctx, getDisplayText(screen1, index1), 0, previewHeight, singleScreenWidth, style, screen1.styleOverride);
-    drawText(ctx, getDisplayText(screen2, index2), singleScreenWidth, previewHeight, singleScreenWidth, style, screen2.styleOverride);
+    // Draw text with mockup info for auto-sizing
+    const mockupInfo = img && style.showMockup ? {
+      centerY: previewHeight * (0.5 + localOffsetY / 100),
+      height: previewHeight * 0.7 * (settings1.scale || 1.0),
+      width: previewHeight * 0.7 * (settings1.scale || 1.0) * 0.49,
+      rotation: localRotation
+    } : undefined;
+
+    // For screen1, mockup is positioned relative to singleScreenWidth, so centerY is the same
+    // For screen2, mockup spans across both screens, so it's relative to screen1's space
+    drawText(ctx, getDisplayText(screen1, index1), 0, previewHeight, singleScreenWidth, style, screen1.styleOverride, mockupInfo);
+    drawText(ctx, getDisplayText(screen2, index2), singleScreenWidth, previewHeight, singleScreenWidth, style, screen2.styleOverride, mockupInfo);
   }, [dimensions, style, screen1, screen2, localOffsetX, localOffsetY, localRotation, settings1.scale, index1, index2, translationData, selectedLanguage]);
 
   // Redraw on changes
@@ -414,13 +430,25 @@ const LinkedPairCanvas: React.FC<{
     const deltaX = ((e.clientX - dragStart.x) / (rect.width / 2)) * 100;
     const deltaY = ((e.clientY - dragStart.y) / rect.height) * 100;
 
-    const newOffsetX = Math.max(-50, Math.min(150, localOffsetX + deltaX));
-    const newOffsetY = Math.max(-30, Math.min(30, localOffsetY + deltaY));
+    if (dragMode === 'text') {
+      // Update text offset in style
+      onStyleChange({
+        ...style,
+        textOffset: {
+          x: Math.max(-50, Math.min(50, (style.textOffset?.x || 0) + deltaX)),
+          y: Math.max(-50, Math.min(50, (style.textOffset?.y || 0) + deltaY))
+        }
+      });
+      setDragStart({ x: e.clientX, y: e.clientY });
+    } else {
+      const newOffsetX = Math.max(-50, Math.min(150, localOffsetX + deltaX));
+      const newOffsetY = Math.max(-30, Math.min(30, localOffsetY + deltaY));
 
-    setLocalOffsetX(newOffsetX);
-    setLocalOffsetY(newOffsetY);
-    setDragStart({ x: e.clientX, y: e.clientY });
-  }, [isDragging, dragStart, localOffsetX, localOffsetY]);
+      setLocalOffsetX(newOffsetX);
+      setLocalOffsetY(newOffsetY);
+      setDragStart({ x: e.clientX, y: e.clientY });
+    }
+  }, [isDragging, dragStart, localOffsetX, localOffsetY, dragMode, style, onStyleChange]);
 
   const handleMouseUp = useCallback(() => {
     if (isDragging) {
@@ -468,12 +496,26 @@ const LinkedPairCanvas: React.FC<{
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
-  const previewHeight = 340;
+  const previewHeight = 420;
   const aspectRatio = dimensions.width / dimensions.height;
   const singleScreenWidth = previewHeight * aspectRatio;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      {/* Position indicator - above canvas */}
+      <div style={{
+        backgroundColor: dragMode === 'text' ? 'rgba(0,113,227,0.85)' : 'rgba(0,0,0,0.7)',
+        color: '#fff',
+        padding: '4px 12px',
+        borderRadius: '8px',
+        fontSize: '11px',
+        marginBottom: '8px'
+      }}>
+        {dragMode === 'text'
+          ? `Text: X:${Math.round(style.textOffset?.x || 0)}% Y:${Math.round(style.textOffset?.y || 0)}%`
+          : `X:${Math.round(localOffsetX)}% Y:${Math.round(localOffsetY)}% R:${localRotation}°`}
+      </div>
+
       <div
         ref={containerRef}
         onMouseDown={handleMouseDown}
@@ -535,57 +577,16 @@ const LinkedPairCanvas: React.FC<{
             {index2 + 1}
           </div>
         </div>
-
-        {/* Unlink button */}
-        <button
-          onClick={onUnlink}
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            border: '2px solid #fff',
-            backgroundColor: '#0071e3',
-            color: '#fff',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '14px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            zIndex: 10
-          }}
-          title="Unlink screens"
-        >
-          🔗
-        </button>
-
-        {/* Position indicator */}
-        <div style={{
-          position: 'absolute',
-          top: '8px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          color: '#fff',
-          padding: '4px 12px',
-          borderRadius: '8px',
-          fontSize: '11px'
-        }}>
-          X:{Math.round(localOffsetX)}% Y:{Math.round(localOffsetY)}% R:{localRotation}°
-        </div>
       </div>
 
-      {/* Rotation controls */}
+      {/* Controls below canvas */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '8px',
+        gap: '12px',
         marginTop: '8px'
       }}>
+        {/* Rotation controls */}
         <button
           onClick={() => handleRotationChange(-5)}
           style={{
@@ -617,6 +618,27 @@ const LinkedPairCanvas: React.FC<{
         >
           ↻
         </button>
+
+        {/* Unlink button */}
+        <button
+          onClick={onUnlink}
+          style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            border: '2px solid #d1d1d6',
+            backgroundColor: '#fff',
+            color: '#0071e3',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '14px'
+          }}
+          title="Unlink screens"
+        >
+          🔗
+        </button>
       </div>
     </div>
   );
@@ -646,33 +668,237 @@ function drawBackground(
   ctx.fillRect(x, y, width, height);
 }
 
+// Calculate rotated bounding box top position
+function getRotatedMockupTop(
+  centerY: number,
+  mockupWidth: number,
+  mockupHeight: number,
+  rotationDegrees: number
+): number {
+  const rad = (rotationDegrees * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(rad));
+  const sin = Math.abs(Math.sin(rad));
+  const bboxHeight = mockupWidth * sin + mockupHeight * cos;
+  return centerY - bboxHeight / 2;
+}
+
+// Calculate adaptive font size for preview
+function calculatePreviewFontSize(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  maxHeight: number,
+  fontFamily: string
+): number {
+  const minFontSize = 8;
+  const maxFontSize = 24;
+
+  let low = minFontSize;
+  let high = maxFontSize;
+  let bestFit = minFontSize;
+
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+    ctx.font = `bold ${mid}px ${fontFamily}`;
+    const lines = wrapText(ctx, text, maxWidth);
+    const lineHeight = mid * 1.3;
+    const totalHeight = lines.length * lineHeight;
+
+    if (totalHeight <= maxHeight) {
+      bestFit = mid;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+
+  return bestFit;
+}
+
+// Text segment with highlight info
+interface TextSegment {
+  text: string;
+  highlighted: boolean;
+}
+
+// Parsed line with segments
+interface ParsedLine {
+  segments: TextSegment[];
+}
+
+// Parse text with [highlighted] syntax
+function parseFormattedText(text: string): ParsedLine[] {
+  const rawLines = text.split(/\||\n/);
+
+  return rawLines.map(line => {
+    const segments: TextSegment[] = [];
+    const regex = /\[([^\]]+)\]|([^\[]+)/g;
+    let match;
+
+    while ((match = regex.exec(line)) !== null) {
+      if (match[1]) {
+        segments.push({ text: match[1], highlighted: true });
+      } else if (match[2]) {
+        segments.push({ text: match[2], highlighted: false });
+      }
+    }
+
+    return { segments };
+  });
+}
+
+// Measure line width
+function measureLineWidth(ctx: CanvasRenderingContext2D, line: ParsedLine): number {
+  return line.segments.reduce((total, seg) => total + ctx.measureText(seg.text).width, 0);
+}
+
+// Wrap formatted text
+function wrapFormattedText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): ParsedLine[] {
+  const parsedLines = parseFormattedText(text);
+  const wrappedLines: ParsedLine[] = [];
+
+  for (const line of parsedLines) {
+    let currentLine: TextSegment[] = [];
+    let currentWidth = 0;
+
+    for (const segment of line.segments) {
+      const words = segment.text.split(' ');
+
+      for (let i = 0; i < words.length; i++) {
+        const word = words[i];
+        const wordWithSpace = i > 0 || currentLine.length > 0 ? ' ' + word : word;
+        const wordWidth = ctx.measureText(wordWithSpace).width;
+
+        if (currentWidth + wordWidth > maxWidth && currentLine.length > 0) {
+          wrappedLines.push({ segments: currentLine });
+          currentLine = [];
+          currentWidth = 0;
+          currentLine.push({ text: word, highlighted: segment.highlighted });
+          currentWidth = ctx.measureText(word).width;
+        } else {
+          if (currentLine.length > 0 && currentLine[currentLine.length - 1].highlighted === segment.highlighted) {
+            currentLine[currentLine.length - 1].text += wordWithSpace;
+          } else {
+            currentLine.push({ text: wordWithSpace.trimStart() ? wordWithSpace : word, highlighted: segment.highlighted });
+          }
+          currentWidth += wordWidth;
+        }
+      }
+    }
+
+    if (currentLine.length > 0) {
+      wrappedLines.push({ segments: currentLine });
+    }
+  }
+
+  return wrappedLines;
+}
+
 function drawText(
   ctx: CanvasRenderingContext2D,
   text: string,
   x: number,
-  _canvasHeight: number,
+  canvasHeight: number,
   width: number,
   style: StyleConfig,
-  override?: Screenshot['styleOverride']
+  override?: Screenshot['styleOverride'],
+  mockupInfo?: { centerY: number; height: number; width: number; rotation: number }
 ) {
   if (!text) return;
 
   const textColor = override?.textColor ?? style.textColor;
-  const fontSize = Math.min(16, style.fontSize * 0.15);
-
-  ctx.fillStyle = textColor;
-  ctx.font = `bold ${fontSize}px ${style.fontFamily}`;
-  ctx.textAlign = 'center';
-
-  const textY = style.paddingTop * 0.15 + fontSize;
   const maxWidth = width * 0.85;
-  const lines = wrapText(ctx, text, maxWidth);
 
-  lines.forEach((line, i) => {
-    ctx.fillText(line, x + width / 2, textY + i * fontSize * 1.3);
+  // Calculate available text area based on mockup position
+  let availableHeight: number;
+  let textAreaY: number;
+
+  if (mockupInfo && style.showMockup) {
+    const mockupTop = getRotatedMockupTop(
+      mockupInfo.centerY,
+      mockupInfo.width,
+      mockupInfo.height,
+      mockupInfo.rotation
+    );
+
+    const paddingTop = style.paddingTop * 0.04;
+    const gapFromMockup = 4;
+
+    if (style.textPosition === 'top') {
+      availableHeight = Math.max(mockupTop - gapFromMockup - paddingTop, 20);
+      textAreaY = paddingTop;
+    } else {
+      const mockupBottom = mockupInfo.centerY + mockupInfo.height / 2;
+      availableHeight = Math.max(canvasHeight - mockupBottom - gapFromMockup - 8, 20);
+      textAreaY = mockupBottom + gapFromMockup;
+    }
+  } else {
+    availableHeight = canvasHeight * 0.3;
+    textAreaY = style.textPosition === 'top' ? 8 : canvasHeight - availableHeight - 8;
+  }
+
+  // Calculate adaptive font size (use plain text for sizing)
+  const fontSize = calculatePreviewFontSize(ctx, text, maxWidth, availableHeight, style.fontFamily);
+
+  ctx.font = `bold ${fontSize}px ${style.fontFamily}`;
+
+  const lines = wrapFormattedText(ctx, text, maxWidth);
+  const lineHeight = fontSize * 1.3;
+  const totalTextHeight = lines.length * lineHeight;
+
+  // Apply text offset
+  const textOffsetX = (style.textOffset?.x || 0) * width / 100;
+  const textOffsetY = (style.textOffset?.y || 0) * canvasHeight / 100;
+
+  // Position text within available area
+  let textY: number;
+  if (style.textPosition === 'top') {
+    textY = textAreaY + fontSize + (availableHeight - totalTextHeight) / 4 + textOffsetY;
+  } else {
+    textY = textAreaY + (availableHeight - totalTextHeight) / 2 + fontSize + textOffsetY;
+  }
+
+  // Draw each line with highlights
+  lines.forEach((line, lineIndex) => {
+    const y = textY + lineIndex * lineHeight;
+    const lineWidth = measureLineWidth(ctx, line);
+
+    // Center the line
+    let lineX = x + (width - lineWidth) / 2 + textOffsetX;
+
+    for (const segment of line.segments) {
+      const segmentWidth = ctx.measureText(segment.text).width;
+
+      if (segment.highlighted && segment.text.trim()) {
+        // Draw highlight background - adaptive padding based on font size
+        const paddingH = fontSize * 0.25; // Horizontal padding
+        const paddingV = fontSize * 0.15; // Vertical padding
+        const radius = fontSize * 0.15;
+
+        ctx.save();
+        ctx.fillStyle = style.highlightColor || '#FFE135';
+        ctx.beginPath();
+        ctx.roundRect(
+          lineX - paddingH,
+          y - fontSize * 0.9 - paddingV,
+          segmentWidth + paddingH * 2,
+          fontSize * 1.1 + paddingV * 2,
+          radius
+        );
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Draw text
+      ctx.fillStyle = textColor;
+      ctx.textAlign = 'left';
+      ctx.fillText(segment.text, lineX, y);
+      lineX += segmentWidth;
+    }
   });
 }
 
+// Simple wrap for font size calculation (strips formatting)
 function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
   const words = text.replace(/\[|\]/g, '').split(' ');
   const lines: string[] = [];
@@ -700,11 +926,13 @@ const SingleScreenPreview: React.FC<{
   deviceSize: DeviceSize;
   onClick: () => void;
   onSettingsChange: (settings: ScreenshotMockupSettings) => void;
+  onStyleChange: (style: StyleConfig) => void;
   onLinkToNext: () => void;
   showLinkButton: boolean;
   translationData?: TranslationData | null;
   selectedLanguage?: string;
   allScreenshots: Screenshot[];
+  dragMode: DragMode;
 }> = ({
   screenshot,
   index,
@@ -713,11 +941,13 @@ const SingleScreenPreview: React.FC<{
   deviceSize,
   onClick,
   onSettingsChange,
+  onStyleChange,
   onLinkToNext,
   showLinkButton,
   translationData,
   selectedLanguage = 'all',
-  allScreenshots
+  allScreenshots,
+  dragMode
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -751,7 +981,7 @@ const SingleScreenPreview: React.FC<{
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const previewHeight = 340;
+    const previewHeight = 420;
     const aspectRatio = dimensions.width / dimensions.height;
     const previewWidth = previewHeight * aspectRatio;
 
@@ -782,12 +1012,18 @@ const SingleScreenPreview: React.FC<{
 
         ctx.restore();
 
-        // Draw text
-        drawText(ctx, getDisplayText(), 0, previewHeight, previewWidth, style, screenshot.styleOverride);
+        // Draw text with mockup info for auto-sizing
+        const mockupInfo = {
+          centerY: mockupCenterY,
+          height: mockupHeight,
+          width: mockupWidth,
+          rotation: settings.rotation
+        };
+        drawText(ctx, getDisplayText(), 0, previewHeight, previewWidth, style, screenshot.styleOverride, mockupInfo);
       };
       img.src = mockupScreenshot;
     } else {
-      drawText(ctx, getDisplayText(), 0, previewHeight, previewWidth, style, screenshot.styleOverride);
+      drawText(ctx, getDisplayText(), 0, previewHeight, previewWidth, style, screenshot.styleOverride, undefined);
     }
   }, [screenshot, style, deviceSize, settings, translationData, selectedLanguage, allScreenshots]);
 
@@ -806,14 +1042,26 @@ const SingleScreenPreview: React.FC<{
     const deltaX = ((e.clientX - dragStart.x) / rect.width) * 100;
     const deltaY = ((e.clientY - dragStart.y) / rect.height) * 100;
 
-    onSettingsChange({
-      ...settings,
-      offsetX: Math.max(-80, Math.min(80, settings.offsetX + deltaX)),
-      offsetY: Math.max(-30, Math.min(30, settings.offsetY + deltaY))
-    });
+    if (dragMode === 'text') {
+      // Update text offset in style
+      onStyleChange({
+        ...style,
+        textOffset: {
+          x: Math.max(-50, Math.min(50, (style.textOffset?.x || 0) + deltaX)),
+          y: Math.max(-50, Math.min(50, (style.textOffset?.y || 0) + deltaY))
+        }
+      });
+    } else {
+      // Update mockup offset
+      onSettingsChange({
+        ...settings,
+        offsetX: Math.max(-80, Math.min(80, settings.offsetX + deltaX)),
+        offsetY: Math.max(-30, Math.min(30, settings.offsetY + deltaY))
+      });
+    }
 
     setDragStart({ x: e.clientX, y: e.clientY });
-  }, [isDragging, dragStart, settings, onSettingsChange]);
+  }, [isDragging, dragStart, settings, onSettingsChange, dragMode, style, onStyleChange]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -830,13 +1078,34 @@ const SingleScreenPreview: React.FC<{
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
-  const previewHeight = 340;
+  const previewHeight = 420;
   const aspectRatio = dimensions.width / dimensions.height;
   const previewWidth = previewHeight * aspectRatio;
+
+  // Check if there's any offset to show
+  const hasOffset = dragMode === 'mockup'
+    ? (settings.offsetX !== 0 || settings.offsetY !== 0 || settings.rotation !== 0)
+    : (style.textOffset?.x !== 0 || style.textOffset?.y !== 0);
 
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        {/* Position indicator - above canvas */}
+        {hasOffset && (
+          <div style={{
+            backgroundColor: dragMode === 'text' ? 'rgba(0,113,227,0.85)' : 'rgba(0,0,0,0.7)',
+            color: '#fff',
+            padding: '3px 8px',
+            borderRadius: '6px',
+            fontSize: '10px',
+            marginBottom: '6px'
+          }}>
+            {dragMode === 'text'
+              ? `Text: X:${Math.round(style.textOffset?.x || 0)}% Y:${Math.round(style.textOffset?.y || 0)}%`
+              : `X:${Math.round(settings.offsetX)}% Y:${Math.round(settings.offsetY)}%`}
+          </div>
+        )}
+
         <div
           ref={containerRef}
           onClick={onClick}
@@ -874,22 +1143,6 @@ const SingleScreenPreview: React.FC<{
           }}>
             {index + 1}
           </div>
-
-          {/* Position indicator */}
-          {(settings.offsetX !== 0 || settings.offsetY !== 0) && (
-            <div style={{
-              position: 'absolute',
-              top: '8px',
-              right: '8px',
-              backgroundColor: 'rgba(0,0,0,0.7)',
-              color: '#fff',
-              padding: '4px 8px',
-              borderRadius: '6px',
-              fontSize: '10px'
-            }}>
-              X:{Math.round(settings.offsetX)}% Y:{Math.round(settings.offsetY)}%
-            </div>
-          )}
         </div>
 
         {/* Rotation controls */}
@@ -975,10 +1228,12 @@ export const ScreensFlowEditor: React.FC<Props> = ({
   onSelectIndex,
   onScreenshotsChange,
   style,
+  onStyleChange,
   deviceSize,
   translationData,
   selectedLanguage = 'all'
 }) => {
+  const [dragMode, setDragMode] = useState<DragMode>('mockup');
 
   const updateSettings = (index: number, settings: ScreenshotMockupSettings) => {
     const newScreenshots = screenshots.map((s, i) =>
@@ -1001,8 +1256,17 @@ export const ScreensFlowEditor: React.FC<Props> = ({
 
     const screen1Settings = screenshots[index].mockupSettings || DEFAULT_MOCKUP_SETTINGS;
 
+    // When linking screen1 and screen2:
+    // - screen2 uses screen1's screenshot in the mockup (continuation)
+    // - screen2's original screenshot moves to screen3 (if exists)
+    const screen2Screenshot = {
+      file: screenshots[index + 1].file,
+      preview: screenshots[index + 1].preview
+    };
+
     const newScreenshots = screenshots.map((s, i) => {
       if (i === index) {
+        // Screen 1: mark as linked, position mockup at right edge
         return {
           ...s,
           mockupSettings: {
@@ -1013,14 +1277,25 @@ export const ScreensFlowEditor: React.FC<Props> = ({
         };
       }
       if (i === index + 1) {
+        // Screen 2: use screen1's screenshot (via linkedMockupIndex), clear its own screenshot
         return {
           ...s,
+          file: null,
+          preview: '',
           linkedMockupIndex: index,
           mockupSettings: {
             ...(s.mockupSettings || DEFAULT_MOCKUP_SETTINGS),
             offsetX: -50,
             rotation: screen1Settings.rotation
           }
+        };
+      }
+      if (i === index + 2 && screen2Screenshot.preview) {
+        // Screen 3: receives screen2's original screenshot (if screen2 had one)
+        return {
+          ...s,
+          file: screen2Screenshot.file,
+          preview: screen2Screenshot.preview
         };
       }
       return s;
@@ -1086,8 +1361,52 @@ export const ScreensFlowEditor: React.FC<Props> = ({
         <span style={{ fontSize: '14px', fontWeight: 600, color: '#1d1d1f' }}>
           Screens Flow ({screenshots.length})
         </span>
+
+        {/* Drag mode toggle */}
+        <div style={{
+          display: 'flex',
+          backgroundColor: '#f0f0f5',
+          borderRadius: '8px',
+          padding: '2px'
+        }}>
+          <button
+            onClick={() => setDragMode('mockup')}
+            style={{
+              padding: '6px 12px',
+              fontSize: '12px',
+              fontWeight: 500,
+              border: 'none',
+              borderRadius: '6px',
+              backgroundColor: dragMode === 'mockup' ? '#fff' : 'transparent',
+              color: dragMode === 'mockup' ? '#0071e3' : '#666',
+              cursor: 'pointer',
+              boxShadow: dragMode === 'mockup' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+              transition: 'all 0.2s'
+            }}
+          >
+            Mockup
+          </button>
+          <button
+            onClick={() => setDragMode('text')}
+            style={{
+              padding: '6px 12px',
+              fontSize: '12px',
+              fontWeight: 500,
+              border: 'none',
+              borderRadius: '6px',
+              backgroundColor: dragMode === 'text' ? '#fff' : 'transparent',
+              color: dragMode === 'text' ? '#0071e3' : '#666',
+              cursor: 'pointer',
+              boxShadow: dragMode === 'text' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+              transition: 'all 0.2s'
+            }}
+          >
+            Text
+          </button>
+        </div>
+
         <span style={{ fontSize: '12px', color: '#86868b' }}>
-          Drag mockups to position • Click ○ to link screens
+          Drag {dragMode === 'mockup' ? 'mockups' : 'text'} to position • Click ○ to link screens
         </span>
       </div>
 
@@ -1109,12 +1428,14 @@ export const ScreensFlowEditor: React.FC<Props> = ({
                 index2={item.index2}
                 selectedIndex={selectedIndex}
                 style={style}
+                onStyleChange={onStyleChange}
                 deviceSize={deviceSize}
                 onSelectIndex={onSelectIndex}
                 onBothSettingsChange={(s1, s2) => updateBothSettings(item.index1, item.index2, s1, s2)}
                 onUnlink={() => unlinkScreens(item.index1)}
                 translationData={translationData}
                 selectedLanguage={selectedLanguage}
+                dragMode={dragMode}
               />
             );
           } else {
@@ -1132,11 +1453,13 @@ export const ScreensFlowEditor: React.FC<Props> = ({
                 deviceSize={deviceSize}
                 onClick={() => onSelectIndex(item.index)}
                 onSettingsChange={(settings) => updateSettings(item.index, settings)}
+                onStyleChange={onStyleChange}
                 onLinkToNext={() => linkScreens(item.index)}
                 showLinkButton={item.index < screenshots.length - 1}
                 translationData={translationData}
                 selectedLanguage={selectedLanguage}
                 allScreenshots={screenshots}
+                dragMode={dragMode}
               />
             );
           }

@@ -135,10 +135,94 @@ const getLanguageName = (code: string): string => {
   return lang?.name || code;
 };
 
+// Mini preview for showing all screenshots (exported for use in other components)
+export const MiniPreview: React.FC<{
+  screenshot: Screenshot;
+  index: number;
+  isSelected: boolean;
+  style: StyleConfig;
+  deviceSize: DeviceSize;
+  onClick: () => void;
+  translationData?: TranslationData | null;
+  selectedLanguage?: string;
+  allScreenshots: Screenshot[];
+}> = ({ screenshot, index, isSelected, style, deviceSize, onClick, translationData, selectedLanguage = 'all', allScreenshots }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isEditingTranslation = selectedLanguage !== 'all' && translationData;
+
+  const getDisplayText = (): string => {
+    if (isEditingTranslation) {
+      return translationData.headlines[selectedLanguage]?.[index] || screenshot?.text || '';
+    }
+    return screenshot?.text || '';
+  };
+
+  // Get the screenshot to show in mockup (may be linked to another screen)
+  const getMockupScreenshot = (): string | null => {
+    if (!screenshot) return null;
+    const linkedIndex = screenshot.linkedMockupIndex;
+    if (linkedIndex !== undefined && allScreenshots[linkedIndex]) {
+      return allScreenshots[linkedIndex].preview || null;
+    }
+    return screenshot.preview || null;
+  };
+
+  useEffect(() => {
+    if (canvasRef.current) {
+      generatePreviewCanvas(canvasRef.current, {
+        screenshot: screenshot?.preview || null,
+        text: getDisplayText(),
+        style,
+        deviceSize,
+        decorations: screenshot?.decorations,
+        styleOverride: screenshot?.styleOverride,
+        mockupScreenshot: getMockupScreenshot(),
+        mockupContinuation: screenshot?.mockupContinuation
+      });
+    }
+  }, [screenshot, style, deviceSize, translationData, selectedLanguage, allScreenshots]);
+
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        flexShrink: 0,
+        cursor: 'pointer',
+        borderRadius: '16px',
+        overflow: 'hidden',
+        border: isSelected ? '3px solid #0071e3' : '3px solid transparent',
+        boxShadow: isSelected ? '0 8px 24px rgba(0, 113, 227, 0.3)' : '0 4px 16px rgba(0,0,0,0.1)',
+        transition: 'all 0.2s ease',
+        backgroundColor: '#f5f5f7'
+      }}
+    >
+      <canvas
+        ref={canvasRef}
+        style={{
+          width: '180px',
+          height: '310px',
+          display: 'block',
+          borderRadius: '13px 13px 0 0'
+        }}
+      />
+      <div style={{
+        padding: '8px',
+        backgroundColor: isSelected ? '#0071e3' : '#fff',
+        textAlign: 'center',
+        fontSize: '13px',
+        fontWeight: 600,
+        color: isSelected ? '#fff' : '#86868b'
+      }}>
+        {index + 1}
+      </div>
+    </div>
+  );
+};
+
 export const Preview: React.FC<Props> = ({
   screenshots,
   selectedIndex,
-  onSelectIndex,
+  onSelectIndex: _onSelectIndex,
   onScreenshotsChange,
   style,
   deviceSize,
@@ -243,6 +327,16 @@ export const Preview: React.FC<Props> = ({
     });
   };
 
+  // Get the screenshot to show in mockup (may be linked to another screen)
+  const getMockupScreenshot = (): string | null => {
+    if (!selectedScreenshot) return null;
+    const linkedIndex = selectedScreenshot.linkedMockupIndex;
+    if (linkedIndex !== undefined && screenshots[linkedIndex]) {
+      return screenshots[linkedIndex].preview || null;
+    }
+    return selectedScreenshot.preview || null;
+  };
+
   useEffect(() => {
     if (canvasRef.current) {
       generatePreviewCanvas(canvasRef.current, {
@@ -251,10 +345,12 @@ export const Preview: React.FC<Props> = ({
         style: getEffectiveStyle(),
         deviceSize,
         decorations: getTranslatedDecorations(),
-        styleOverride: selectedScreenshot?.styleOverride
+        styleOverride: selectedScreenshot?.styleOverride,
+        mockupScreenshot: getMockupScreenshot(),
+        mockupContinuation: selectedScreenshot?.mockupContinuation
       });
     }
-  }, [selectedScreenshot, style, deviceSize, translationData, selectedLanguage, selectedIndex]);
+  }, [selectedScreenshot, style, deviceSize, translationData, selectedLanguage, selectedIndex, screenshots]);
 
   const getCanvasCoordinates = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -542,61 +638,6 @@ export const Preview: React.FC<Props> = ({
         <p style={cssStyles.hint as React.CSSProperties}>
           Upload a screenshot to see it in the mockup
         </p>
-      )}
-
-      {screenshots.length > 1 && (
-        <div style={cssStyles.thumbnailStrip}>
-          {screenshots.map((screenshot, index) => (
-            screenshot.preview ? (
-              <img
-                key={screenshot.id}
-                src={screenshot.preview}
-                alt={`Thumbnail ${index + 1}`}
-                style={{
-                  ...cssStyles.thumbnail,
-                  ...(index === selectedIndex ? cssStyles.thumbnailActive : {})
-                }}
-                onClick={() => onSelectIndex(index)}
-                onMouseEnter={(e) => {
-                  if (index !== selectedIndex) {
-                    e.currentTarget.style.transform = 'scale(1.03)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (index !== selectedIndex) {
-                    e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.08)';
-                  }
-                }}
-              />
-            ) : (
-              <div
-                key={screenshot.id}
-                style={{
-                  ...cssStyles.thumbnail,
-                  ...cssStyles.textOnlyThumbnail,
-                  ...(index === selectedIndex ? cssStyles.thumbnailActive : {})
-                }}
-                onClick={() => onSelectIndex(index)}
-                onMouseEnter={(e) => {
-                  if (index !== selectedIndex) {
-                    e.currentTarget.style.transform = 'scale(1.03)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.3)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (index !== selectedIndex) {
-                    e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.08)';
-                  }
-                }}
-              >
-                Text Only
-              </div>
-            )
-          ))}
-        </div>
       )}
     </div>
   );

@@ -22,7 +22,6 @@ export const Slider: React.FC<SliderProps> = ({
 }) => {
   const percentage = ((value - min) / (max - min)) * 100;
   const [isDragging, setIsDragging] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <div style={{ marginBottom: '12px' }}>
@@ -64,8 +63,6 @@ export const Slider: React.FC<SliderProps> = ({
           display: 'flex',
           alignItems: 'center'
         }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
       >
         {/* Track background */}
         <div style={{

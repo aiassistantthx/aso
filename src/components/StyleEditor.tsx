@@ -1,9 +1,40 @@
 import React from 'react';
-import { StyleConfig, DeviceSize, DEVICE_SIZES, MockupVisibility, MockupAlignment, MockupStyle, Screenshot, ScreenshotStyleOverride, TranslationData, PerLanguageScreenshotStyle, MockupContinuation, Template } from '../types';
+import { StyleConfig, DeviceSize, DEVICE_SIZES, MockupVisibility, MockupAlignment, Screenshot, ScreenshotStyleOverride, TranslationData, PerLanguageScreenshotStyle, MockupContinuation, Template, StarRatingDecoration, LaurelDecoration } from '../types';
 import { APP_STORE_LANGUAGES } from '../constants/languages';
 import { Toggle, Slider, ColorPicker, SegmentedControl } from './ui';
 import { colors } from '../styles/common';
 import { TEMPLATES } from '../constants/templates';
+
+// Default decorations
+const createDefaultStars = (deviceSize: DeviceSize): StarRatingDecoration => {
+  const dimensions = DEVICE_SIZES[deviceSize];
+  return {
+    type: 'stars',
+    enabled: true,
+    count: 5,
+    size: 120,
+    color: '#FFD700',
+    position: { x: dimensions.width / 2, y: dimensions.height * 0.15 }
+  };
+};
+
+const createDefaultLaurel = (deviceSize: DeviceSize): LaurelDecoration => {
+  const dimensions = DEVICE_SIZES[deviceSize];
+  return {
+    type: 'laurel',
+    enabled: true,
+    size: 1.5,
+    color: '#E91E8B',
+    position: { x: dimensions.width / 2, y: dimensions.height * 0.5 },
+    textBlocks: [
+      { text: 'You need only', size: 60, bold: false },
+      { text: '1', size: 200, bold: true },
+      { text: 'App to create|Viral Video', size: 50, bold: false }
+    ],
+    textColor: '#000000',
+    fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif'
+  };
+};
 
 interface Props {
   style: StyleConfig;
@@ -432,19 +463,6 @@ export const StyleEditor: React.FC<Props> = ({
           />
         )}
 
-        {style.showMockup && (
-          <SegmentedControl
-            label="Style"
-            options={[
-              { value: 'realistic', label: 'Realistic' },
-              { value: 'flat', label: 'Flat' },
-              { value: 'minimal', label: 'Minimal' },
-              { value: 'outline', label: 'Outline' }
-            ]}
-            value={style.mockupStyle || 'realistic'}
-            onChange={(value) => updateStyle('mockupStyle', value as MockupStyle)}
-          />
-        )}
 
         {style.showMockup && (
           <SegmentedControl
@@ -863,6 +881,122 @@ export const StyleEditor: React.FC<Props> = ({
           unit="px"
         />
       </div>
+
+      {/* Decorations Section */}
+      {selectedScreenshot && (
+        <>
+          <div style={cssStyles.sectionTitle as React.CSSProperties}>
+            <span>✨</span> Decorations
+            <span style={{ fontWeight: 400, fontSize: '11px', color: colors.textSecondary }}>
+              Screen {selectedIndex + 1}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => {
+                const decorations = selectedScreenshot.decorations || [];
+                const newDecoration = createDefaultStars(deviceSize);
+                const newScreenshots = screenshots.map((s, i) =>
+                  i === selectedIndex ? { ...s, decorations: [...decorations, newDecoration] } : s
+                );
+                onScreenshotsChange(newScreenshots);
+              }}
+              style={{
+                flex: 1,
+                padding: '10px 16px',
+                fontSize: '13px',
+                fontWeight: 500,
+                border: `1px solid ${colors.borderLight}`,
+                borderRadius: '10px',
+                backgroundColor: colors.white,
+                color: colors.text,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.background}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.white}
+            >
+              <span>⭐</span> Add Stars
+            </button>
+            <button
+              onClick={() => {
+                const decorations = selectedScreenshot.decorations || [];
+                const newDecoration = createDefaultLaurel(deviceSize);
+                const newScreenshots = screenshots.map((s, i) =>
+                  i === selectedIndex ? { ...s, decorations: [...decorations, newDecoration] } : s
+                );
+                onScreenshotsChange(newScreenshots);
+              }}
+              style={{
+                flex: 1,
+                padding: '10px 16px',
+                fontSize: '13px',
+                fontWeight: 500,
+                border: `1px solid ${colors.borderLight}`,
+                borderRadius: '10px',
+                backgroundColor: colors.white,
+                color: colors.text,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.background}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.white}
+            >
+              <span>🏆</span> Add Laurel
+            </button>
+          </div>
+
+          {/* List existing decorations */}
+          {selectedScreenshot.decorations && selectedScreenshot.decorations.length > 0 && (
+            <div style={{ marginTop: '8px' }}>
+              {selectedScreenshot.decorations.map((dec, decIndex) => (
+                <div key={decIndex} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 12px',
+                  backgroundColor: colors.background,
+                  borderRadius: '8px',
+                  marginBottom: '4px',
+                  fontSize: '13px'
+                }}>
+                  <span>{dec.type === 'stars' ? '⭐ Stars' : '🏆 Laurel'}</span>
+                  <button
+                    onClick={() => {
+                      const newDecorations = selectedScreenshot.decorations!.filter((_, i) => i !== decIndex);
+                      const newScreenshots = screenshots.map((s, i) =>
+                        i === selectedIndex ? { ...s, decorations: newDecorations } : s
+                      );
+                      onScreenshotsChange(newScreenshots);
+                    }}
+                    style={{
+                      padding: '4px 8px',
+                      fontSize: '11px',
+                      fontWeight: 500,
+                      border: 'none',
+                      borderRadius: '6px',
+                      backgroundColor: '#ff3b30',
+                      color: '#fff',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };
