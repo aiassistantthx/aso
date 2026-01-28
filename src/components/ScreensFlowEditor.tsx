@@ -1222,6 +1222,170 @@ const SingleScreenPreview: React.FC<{
   );
 };
 
+// Compact upload card for adding screenshots
+const UploadCard: React.FC<{
+  onFilesSelected: (files: FileList) => void;
+  onAddTextSlide: () => void;
+  isCompact?: boolean;
+}> = ({ onFilesSelected, onAddTextSlide, isCompact = false }) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files.length > 0) {
+      onFilesSelected(e.dataTransfer.files);
+    }
+  }, [onFilesSelected]);
+
+  const dimensions = DEVICE_SIZES['6.9'];
+  const previewHeight = 420;
+  const aspectRatio = dimensions.width / dimensions.height;
+  const previewWidth = previewHeight * aspectRatio;
+
+  if (isCompact) {
+    // Compact version - just an add button card
+    return (
+      <div
+        onClick={() => inputRef.current?.click()}
+        onDrop={handleDrop}
+        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+        onDragLeave={() => setIsDragging(false)}
+        style={{
+          width: `${previewWidth}px`,
+          height: `${previewHeight}px`,
+          borderRadius: '16px',
+          border: isDragging ? '3px solid #0071e3' : '3px dashed #d1d1d6',
+          backgroundColor: isDragging ? '#f0f7ff' : '#fafafa',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '12px',
+          cursor: 'pointer',
+          transition: 'all 0.2s'
+        }}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          style={{ display: 'none' }}
+          onChange={(e) => e.target.files && onFilesSelected(e.target.files)}
+        />
+        <div style={{
+          width: '48px',
+          height: '48px',
+          borderRadius: '50%',
+          backgroundColor: '#e8f5e9',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '24px'
+        }}>
+          +
+        </div>
+        <span style={{ fontSize: '13px', fontWeight: 500, color: '#666' }}>
+          Add Screenshot
+        </span>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onAddTextSlide();
+          }}
+          style={{
+            padding: '8px 14px',
+            fontSize: '12px',
+            fontWeight: 500,
+            border: '1px solid #0071e3',
+            borderRadius: '8px',
+            backgroundColor: '#fff',
+            color: '#0071e3',
+            cursor: 'pointer'
+          }}
+        >
+          📝 Text Slide
+        </button>
+      </div>
+    );
+  }
+
+  // Full version - empty state
+  return (
+    <div
+      onDrop={handleDrop}
+      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+      onDragLeave={() => setIsDragging(false)}
+      onClick={() => inputRef.current?.click()}
+      style={{
+        padding: '60px 40px',
+        borderRadius: '20px',
+        border: isDragging ? '3px solid #0071e3' : '3px dashed #d1d1d6',
+        backgroundColor: isDragging ? '#f0f7ff' : '#fafafa',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '16px',
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+        maxWidth: '600px',
+        margin: '0 auto'
+      }}
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        style={{ display: 'none' }}
+        onChange={(e) => e.target.files && onFilesSelected(e.target.files)}
+      />
+      <div style={{
+        width: '72px',
+        height: '72px',
+        borderRadius: '20px',
+        backgroundColor: '#e8f5e9',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '32px'
+      }}>
+        📸
+      </div>
+      <div style={{ textAlign: 'center' }}>
+        <p style={{ fontSize: '16px', fontWeight: 600, color: '#1d1d1f', margin: '0 0 4px 0' }}>
+          Drop screenshots here or click to upload
+        </p>
+        <p style={{ fontSize: '13px', color: '#86868b', margin: 0 }}>
+          PNG or JPG • Max 10 files
+        </p>
+      </div>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onAddTextSlide();
+        }}
+        style={{
+          padding: '10px 20px',
+          fontSize: '14px',
+          fontWeight: 600,
+          border: '1px solid #0071e3',
+          borderRadius: '10px',
+          backgroundColor: '#fff',
+          color: '#0071e3',
+          cursor: 'pointer',
+          marginTop: '8px'
+        }}
+      >
+        📝 Or add a text-only slide
+      </button>
+    </div>
+  );
+};
+
 export const ScreensFlowEditor: React.FC<Props> = ({
   screenshots,
   selectedIndex,
@@ -1234,6 +1398,45 @@ export const ScreensFlowEditor: React.FC<Props> = ({
   selectedLanguage = 'all'
 }) => {
   const [dragMode, setDragMode] = useState<DragMode>('mockup');
+  const maxScreenshots = 10;
+
+  // Handle file upload
+  const handleFilesSelected = useCallback((files: FileList) => {
+    const remainingSlots = maxScreenshots - screenshots.length;
+    const filesToAdd = Array.from(files).slice(0, remainingSlots);
+
+    const newScreenshots: Screenshot[] = filesToAdd.map((file, index) => ({
+      id: `${Date.now()}-${index}`,
+      file,
+      preview: URL.createObjectURL(file),
+      text: ''
+    }));
+
+    onScreenshotsChange([...screenshots, ...newScreenshots]);
+  }, [screenshots, onScreenshotsChange]);
+
+  // Add text-only slide
+  const handleAddTextSlide = useCallback(() => {
+    if (screenshots.length >= maxScreenshots) return;
+
+    const newScreenshot: Screenshot = {
+      id: `${Date.now()}-text`,
+      file: null as unknown as File,
+      preview: '',
+      text: 'Your text here'
+    };
+
+    onScreenshotsChange([...screenshots, newScreenshot]);
+  }, [screenshots, onScreenshotsChange]);
+
+  // Remove screenshot
+  const handleRemoveScreenshot = useCallback((id: string) => {
+    const screenshot = screenshots.find(s => s.id === id);
+    if (screenshot && screenshot.preview) {
+      URL.revokeObjectURL(screenshot.preview);
+    }
+    onScreenshotsChange(screenshots.filter(s => s.id !== id));
+  }, [screenshots, onScreenshotsChange]);
 
   const updateSettings = (index: number, settings: ScreenshotMockupSettings) => {
     const newScreenshots = screenshots.map((s, i) =>
@@ -1346,6 +1549,22 @@ export const ScreensFlowEditor: React.FC<Props> = ({
     }
   }
 
+  // Empty state - show full upload UI
+  if (screenshots.length === 0) {
+    return (
+      <div style={{
+        padding: '40px 24px',
+        backgroundColor: '#fff',
+        borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
+      }}>
+        <UploadCard
+          onFilesSelected={handleFilesSelected}
+          onAddTextSlide={handleAddTextSlide}
+        />
+      </div>
+    );
+  }
+
   return (
     <div style={{
       padding: '20px 24px',
@@ -1359,7 +1578,7 @@ export const ScreensFlowEditor: React.FC<Props> = ({
         marginBottom: '16px'
       }}>
         <span style={{ fontSize: '14px', fontWeight: 600, color: '#1d1d1f' }}>
-          Screens Flow ({screenshots.length})
+          Screens ({screenshots.length}/{maxScreenshots})
         </span>
 
         {/* Drag mode toggle */}
@@ -1405,9 +1624,32 @@ export const ScreensFlowEditor: React.FC<Props> = ({
           </button>
         </div>
 
-        <span style={{ fontSize: '12px', color: '#86868b' }}>
+        <span style={{ fontSize: '12px', color: '#86868b', flex: 1 }}>
           Drag {dragMode === 'mockup' ? 'mockups' : 'text'} to position • Click ○ to link screens
         </span>
+
+        {/* Reset button */}
+        <button
+          onClick={() => {
+            const newScreenshots = screenshots.map(s => {
+              const { mockupSettings: _, linkedMockupIndex: __, ...rest } = s;
+              return rest;
+            });
+            onScreenshotsChange(newScreenshots);
+          }}
+          style={{
+            padding: '6px 12px',
+            fontSize: '11px',
+            fontWeight: 500,
+            border: '1px solid #d1d1d6',
+            borderRadius: '6px',
+            backgroundColor: '#fff',
+            color: '#666',
+            cursor: 'pointer'
+          }}
+        >
+          Reset Layout
+        </button>
       </div>
 
       <div style={{
@@ -1420,23 +1662,24 @@ export const ScreensFlowEditor: React.FC<Props> = ({
         {renderItems.map((item) => {
           if (item.type === 'pair') {
             return (
-              <LinkedPairCanvas
-                key={`pair-${item.index1}`}
-                screen1={screenshots[item.index1]}
-                screen2={screenshots[item.index2]}
-                index1={item.index1}
-                index2={item.index2}
-                selectedIndex={selectedIndex}
-                style={style}
-                onStyleChange={onStyleChange}
-                deviceSize={deviceSize}
-                onSelectIndex={onSelectIndex}
-                onBothSettingsChange={(s1, s2) => updateBothSettings(item.index1, item.index2, s1, s2)}
-                onUnlink={() => unlinkScreens(item.index1)}
-                translationData={translationData}
-                selectedLanguage={selectedLanguage}
-                dragMode={dragMode}
-              />
+              <div key={`pair-${item.index1}`} style={{ position: 'relative' }}>
+                <LinkedPairCanvas
+                  screen1={screenshots[item.index1]}
+                  screen2={screenshots[item.index2]}
+                  index1={item.index1}
+                  index2={item.index2}
+                  selectedIndex={selectedIndex}
+                  style={style}
+                  onStyleChange={onStyleChange}
+                  deviceSize={deviceSize}
+                  onSelectIndex={onSelectIndex}
+                  onBothSettingsChange={(s1, s2) => updateBothSettings(item.index1, item.index2, s1, s2)}
+                  onUnlink={() => unlinkScreens(item.index1)}
+                  translationData={translationData}
+                  selectedLanguage={selectedLanguage}
+                  dragMode={dragMode}
+                />
+              </div>
             );
           } else {
             const screen = screenshots[item.index];
@@ -1444,51 +1687,64 @@ export const ScreensFlowEditor: React.FC<Props> = ({
             if (isLastLinkedScreen) return null; // Skip - already rendered in pair
 
             return (
-              <SingleScreenPreview
-                key={screen.id}
-                screenshot={screen}
-                index={item.index}
-                isSelected={item.index === selectedIndex}
-                style={style}
-                deviceSize={deviceSize}
-                onClick={() => onSelectIndex(item.index)}
-                onSettingsChange={(settings) => updateSettings(item.index, settings)}
-                onStyleChange={onStyleChange}
-                onLinkToNext={() => linkScreens(item.index)}
-                showLinkButton={item.index < screenshots.length - 1}
-                translationData={translationData}
-                selectedLanguage={selectedLanguage}
-                allScreenshots={screenshots}
-                dragMode={dragMode}
-              />
+              <div key={screen.id} style={{ position: 'relative' }}>
+                {/* Delete button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemoveScreenshot(screen.id);
+                  }}
+                  style={{
+                    position: 'absolute',
+                    top: '-8px',
+                    right: '-8px',
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    border: 'none',
+                    backgroundColor: '#ff3b30',
+                    color: '#fff',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 10,
+                    boxShadow: '0 2px 6px rgba(255,59,48,0.4)'
+                  }}
+                  title="Remove screenshot"
+                >
+                  ×
+                </button>
+                <SingleScreenPreview
+                  screenshot={screen}
+                  index={item.index}
+                  isSelected={item.index === selectedIndex}
+                  style={style}
+                  deviceSize={deviceSize}
+                  onClick={() => onSelectIndex(item.index)}
+                  onSettingsChange={(settings) => updateSettings(item.index, settings)}
+                  onStyleChange={onStyleChange}
+                  onLinkToNext={() => linkScreens(item.index)}
+                  showLinkButton={item.index < screenshots.length - 1}
+                  translationData={translationData}
+                  selectedLanguage={selectedLanguage}
+                  allScreenshots={screenshots}
+                  dragMode={dragMode}
+                />
+              </div>
             );
           }
         })}
-      </div>
 
-      {/* Reset button */}
-      <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-        <button
-          onClick={() => {
-            const newScreenshots = screenshots.map(s => {
-              const { mockupSettings: _, linkedMockupIndex: __, ...rest } = s;
-              return rest;
-            });
-            onScreenshotsChange(newScreenshots);
-          }}
-          style={{
-            padding: '8px 16px',
-            fontSize: '12px',
-            fontWeight: 500,
-            border: '1px solid #d1d1d6',
-            borderRadius: '8px',
-            backgroundColor: '#fff',
-            color: '#666',
-            cursor: 'pointer'
-          }}
-        >
-          Reset All
-        </button>
+        {/* Add more screenshots */}
+        {screenshots.length < maxScreenshots && (
+          <UploadCard
+            onFilesSelected={handleFilesSelected}
+            onAddTextSlide={handleAddTextSlide}
+            isCompact
+          />
+        )}
       </div>
     </div>
   );

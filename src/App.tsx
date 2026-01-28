@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Screenshot, StyleConfig, DeviceSize, TranslationData } from './types';
-import { ScreenshotUploader } from './components/ScreenshotUploader';
 import { TextEditor } from './components/TextEditor';
 import { StyleEditor } from './components/StyleEditor';
 import { ScreensFlowEditor } from './components/ScreensFlowEditor';
@@ -561,30 +560,20 @@ function App() {
         </div>
       )}
 
-      {/* Screenshot Uploader - always visible at top */}
-      <div style={{ maxWidth: '1600px', margin: '0 auto', padding: '16px 24px' }}>
-        <ScreenshotUploader
+      {/* Screens Flow Editor with integrated uploader */}
+      <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
+        <ScreensFlowEditor
           screenshots={screenshots}
+          selectedIndex={selectedPreviewIndex}
+          onSelectIndex={setSelectedPreviewIndex}
           onScreenshotsChange={setScreenshots}
+          style={styleConfig}
+          onStyleChange={setStyleConfig}
+          deviceSize={deviceSize}
+          translationData={translationData}
+          selectedLanguage={selectedLanguage}
         />
       </div>
-
-      {/* Screens Flow Editor */}
-      {screenshots.length > 0 && (
-        <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
-          <ScreensFlowEditor
-            screenshots={screenshots}
-            selectedIndex={selectedPreviewIndex}
-            onSelectIndex={setSelectedPreviewIndex}
-            onScreenshotsChange={setScreenshots}
-            style={styleConfig}
-            onStyleChange={setStyleConfig}
-            deviceSize={deviceSize}
-            translationData={translationData}
-            selectedLanguage={selectedLanguage}
-          />
-        </div>
-      )}
 
       {/* Main Content */}
       <main style={styles.main}>
