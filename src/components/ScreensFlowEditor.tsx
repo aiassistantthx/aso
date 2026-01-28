@@ -1554,6 +1554,7 @@ export const ScreensFlowEditor: React.FC<Props> = ({
     return (
       <div style={{
         padding: '40px 24px',
+        marginTop: '16px',
         backgroundColor: '#fff',
         borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
       }}>
@@ -1568,6 +1569,8 @@ export const ScreensFlowEditor: React.FC<Props> = ({
   return (
     <div style={{
       padding: '20px 24px',
+      paddingTop: '28px',
+      marginTop: '16px',
       backgroundColor: '#fff',
       borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
     }}>
@@ -1656,6 +1659,7 @@ export const ScreensFlowEditor: React.FC<Props> = ({
         display: 'flex',
         gap: '16px',
         overflowX: 'auto',
+        paddingTop: '12px',
         paddingBottom: '16px',
         alignItems: 'flex-start'
       }}>
