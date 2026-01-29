@@ -60,27 +60,29 @@ async function start() {
     fs.mkdirSync(uploadsDir, { recursive: true });
   }
 
+  // Serve frontend static files in production (register first to get decorateReply)
+  const distDir = path.resolve(__dirname, '../../dist');
+  if (fs.existsSync(distDir)) {
+    await fastify.register(fastifyStatic, {
+      root: distDir,
+      prefix: '/',
+      wildcard: false,
+    });
+  }
+
   await fastify.register(fastifyStatic, {
     root: uploadsDir,
     prefix: '/uploads/',
     decorateReply: false,
   });
 
-  // Serve frontend static files in production
-  const distDir = path.resolve(__dirname, '../../dist');
   if (fs.existsSync(distDir)) {
-    await fastify.register(fastifyStatic, {
-      root: distDir,
-      prefix: '/',
-      decorateReply: false,
-    });
-
     // SPA fallback: serve index.html for non-API routes
     fastify.setNotFoundHandler(async (request, reply) => {
       if (request.url.startsWith('/api/') || request.url.startsWith('/uploads/')) {
         return reply.status(404).send({ error: 'Not found' });
       }
-      return reply.sendFile('index.html', distDir);
+      return reply.sendFile('index.html');
     });
   }
 
