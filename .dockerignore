@@ -1,8 +1,8 @@
 node_modules
 dist
+server/dist
+server/uploads
 .git
-.gitignore
 *.md
 .env
 .env.*
-.DS_Store

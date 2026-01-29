@@ -1,30 +1,44 @@
-# Build stage
-FROM node:20-alpine AS build
-
+# Stage 1: Build frontend
+FROM node:20-alpine AS frontend-builder
 WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies
-RUN npm ci
-
-# Copy source code
-COPY . .
-
-# Build the app
+COPY package.json package-lock.json* ./
+COPY server/package.json ./server/
+RUN npm install
+COPY tsconfig.json tsconfig.node.json vite.config.ts index.html ./
+COPY src/ ./src/
 RUN npm run build
 
-# Production stage
-FROM nginx:alpine
+# Stage 2: Build server
+FROM node:20-alpine AS server-builder
+WORKDIR /app
+COPY package.json package-lock.json* ./
+COPY server/package.json ./server/
+RUN npm install
+COPY server/ ./server/
+RUN cd server && npx prisma generate
+RUN npm run build:server
 
-# Copy built assets from build stage
-COPY --from=build /app/dist /usr/share/nginx/html
+# Stage 3: Production
+FROM node:20-alpine AS production
+WORKDIR /app
 
-# Copy nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY package.json package-lock.json* ./
+COPY server/package.json ./server/
+RUN npm install --omit=dev
 
-# Expose port 80
-EXPOSE 80
+COPY server/prisma/ ./server/prisma/
+RUN cd server && npx prisma generate
 
-CMD ["nginx", "-g", "daemon off;"]
+# Copy built assets
+COPY --from=frontend-builder /app/dist ./dist
+COPY --from=server-builder /app/server/dist ./server/dist
+
+# Create uploads directory
+RUN mkdir -p uploads
+
+EXPOSE 3001
+
+ENV NODE_ENV=production
+ENV PORT=3001
+
+CMD ["node", "server/dist/index.js"]
