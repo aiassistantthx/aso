@@ -189,6 +189,7 @@ export const metadataProjects = {
   generate: (id: string) =>
     request<MetadataProjectFull>(`/api/metadata/${id}/generate`, {
       method: 'POST',
+      body: JSON.stringify({}),
     }),
 
   translate: (id: string, targetLanguages: string[]) =>
