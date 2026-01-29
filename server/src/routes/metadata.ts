@@ -199,7 +199,53 @@ Rules:
       });
 
       const content = response.choices[0]?.message?.content || '{}';
-      const metadata = JSON.parse(content);
+      let metadata = JSON.parse(content) as Record<string, string>;
+
+      // Validate all fields and fix those exceeding limits
+      const overFields = Object.entries(limits).filter(
+        ([field, limit]) => metadata[field] && metadata[field].length > limit,
+      );
+
+      if (overFields.length > 0) {
+        const fixList = overFields
+          .map(([field, limit]) => `- "${field}": currently ${metadata[field].length} chars, max ${limit}. Current value: "${metadata[field]}"`)
+          .join('\n');
+
+        const fixPrompt = `These generated ASO fields exceed character limits. Rewrite ONLY these fields to fit.
+
+App name: "${project.appName}"
+${project.targetKeywords ? `Target keywords: "${project.targetKeywords}"` : ''}
+
+Fields to fix:
+${fixList}
+
+Rules:
+- Keep app name "${project.appName}" in appName
+- Incorporate keywords naturally
+- Stay marketing-friendly
+- Return ONLY valid JSON with just the fixed fields`;
+
+        const fixResponse = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: 'You are an ASO expert. Return only valid JSON. Every field MUST respect its character limit.' },
+            { role: 'user', content: fixPrompt },
+          ],
+          temperature: 0.3,
+          response_format: { type: 'json_object' },
+        });
+
+        const fixContent = fixResponse.choices[0]?.message?.content || '{}';
+        const fixes = JSON.parse(fixContent) as Record<string, string>;
+
+        for (const [field, limit] of overFields) {
+          if (fixes[field] && fixes[field].length <= limit) {
+            metadata[field] = fixes[field];
+          } else if (fixes[field]) {
+            metadata[field] = fixes[field].slice(0, limit);
+          }
+        }
+      }
 
       const updated = await fastify.prisma.metadataProject.update({
         where: { id },
@@ -260,6 +306,9 @@ Rules:
     const limits = getLimits(project.platform);
     const translations: Record<string, Record<string, string>> = {};
 
+    // Identify which fields have strict short limits (appName, subtitle, shortDescription)
+    const strictFields = Object.entries(limits).filter(([, limit]) => limit <= 100);
+
     for (const lang of targetLanguages) {
       if (lang === project.sourceLanguage) continue;
 
@@ -267,22 +316,31 @@ Rules:
         .map(([field, limit]) => `${field} (max ${limit} chars)`)
         .join(', ');
 
+      const keywordsContext = project.targetKeywords
+        ? `\nTarget keywords that MUST be incorporated where possible: "${project.targetKeywords}"`
+        : '';
+
       const prompt = `Translate this ${project.platform === 'ios' ? 'App Store (iOS)' : 'Google Play (Android)'} metadata from ${project.sourceLanguage} to ${lang}.
+
+App name: "${project.appName}"${keywordsContext}
 
 Current metadata:
 ${JSON.stringify(editedMetadata, null, 2)}
 
 Rules:
 - Adapt the marketing tone to the target culture
-- Respect character limits strictly: ${fieldsDescription}
-- ${project.platform === 'ios' ? 'For keywords: use equivalent search terms in the target language, comma-separated, no spaces' : 'Keep shortDescription catchy in target language'}
+- STRICTLY respect character limits: ${fieldsDescription}
+- The app name "${project.appName}" MUST remain in appName field (keep original or transliterate only if culturally appropriate)
+- For short fields (appName, subtitle/shortDescription): if the direct translation exceeds the limit, rewrite it shorter while keeping the app name and key meaning
+- Incorporate target keywords naturally into the translated text${keywordsContext ? ', especially the provided target keywords' : ''}
+- ${project.platform === 'ios' ? 'For keywords: use equivalent search terms in the target language, comma-separated, no spaces' : 'Keep shortDescription catchy and keyword-rich in target language'}
 - Return ONLY valid JSON with the same field names`;
 
       try {
         const response = await openai.chat.completions.create({
           model: 'gpt-4o-mini',
           messages: [
-            { role: 'system', content: 'You are a professional ASO translator. Return only valid JSON.' },
+            { role: 'system', content: 'You are a professional ASO translator. Return only valid JSON. Every field MUST respect its character limit.' },
             { role: 'user', content: prompt },
           ],
           temperature: 0.3,
@@ -290,7 +348,56 @@ Rules:
         });
 
         const content = response.choices[0]?.message?.content || '{}';
-        translations[lang] = JSON.parse(content);
+        let translated = JSON.parse(content) as Record<string, string>;
+
+        // Validate strict fields and retry those that exceed limits
+        const overLimitFields = strictFields.filter(
+          ([field, limit]) => translated[field] && translated[field].length > limit,
+        );
+
+        if (overLimitFields.length > 0) {
+          const fixList = overLimitFields
+            .map(([field, limit]) => `- "${field}": currently ${translated[field].length} chars, max ${limit}. Current value: "${translated[field]}"`)
+            .join('\n');
+
+          const fixPrompt = `The following translated fields exceed their character limits. Rewrite ONLY these fields to fit within limits.
+
+App name: "${project.appName}"${keywordsContext}
+
+Fields to fix:
+${fixList}
+
+Rules:
+- Keep the app name "${project.appName}" in the appName field
+- Incorporate target keywords where possible
+- Keep it marketing-friendly and natural in ${lang}
+- Return ONLY valid JSON with just the fixed fields`;
+
+          const fixResponse = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [
+              { role: 'system', content: 'You are a professional ASO translator. Return only valid JSON. Every field MUST respect its character limit.' },
+              { role: 'user', content: fixPrompt },
+            ],
+            temperature: 0.2,
+            response_format: { type: 'json_object' },
+          });
+
+          const fixContent = fixResponse.choices[0]?.message?.content || '{}';
+          const fixes = JSON.parse(fixContent) as Record<string, string>;
+
+          // Merge fixes into translated result
+          for (const [field, limit] of overLimitFields) {
+            if (fixes[field] && fixes[field].length <= limit) {
+              translated[field] = fixes[field];
+            } else if (fixes[field]) {
+              // Still over limit — hard truncate as last resort
+              translated[field] = fixes[field].slice(0, limit);
+            }
+          }
+        }
+
+        translations[lang] = translated;
       } catch (error) {
         fastify.log.error(error, `Metadata translation error for ${lang}`);
         translations[lang] = { ...editedMetadata };
