@@ -5,6 +5,8 @@ import { useAuth } from '../services/authContext';
 interface Props {
   onOpenProject: (id: string) => void;
   onNewProject: () => void;
+  onOpenProfile: () => void;
+  onOpenMetadata?: () => void;
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -221,7 +223,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
 };
 
-export const Dashboard: React.FC<Props> = ({ onOpenProject, onNewProject }) => {
+export const Dashboard: React.FC<Props> = ({ onOpenProject, onNewProject, onOpenProfile, onOpenMetadata }) => {
   const { user, logout } = useAuth();
   const [projectList, setProjectList] = useState<ProjectListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -303,7 +305,12 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNewProject }) => {
               {plan}
             </span>
             <div style={styles.userMenu as React.CSSProperties}>
-              <span style={styles.userName}>{user?.name || user?.email}</span>
+              <span
+                style={{ ...styles.userName, cursor: 'pointer', textDecoration: 'none' }}
+                onClick={onOpenProfile}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#0071e3'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#1d1d1f'; }}
+              >{user?.name || user?.email}</span>
               <button
                 style={styles.logoutButton}
                 onClick={logout}
@@ -326,12 +333,24 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNewProject }) => {
             {projectList.length} project{projectList.length !== 1 ? 's' : ''}
             {plan === 'FREE' && ` / 3 max`}
           </span>
-          <button
-            style={styles.newButton}
-            onClick={onNewProject}
-          >
-            + New Project
-          </button>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              style={{
+                ...styles.newButton,
+                background: 'linear-gradient(135deg, #34c759 0%, #30d158 100%)',
+                boxShadow: '0 4px 14px rgba(52, 199, 89, 0.35)',
+              }}
+              onClick={onOpenMetadata}
+            >
+              ASO Texts
+            </button>
+            <button
+              style={styles.newButton}
+              onClick={onNewProject}
+            >
+              + New Project
+            </button>
+          </div>
         </div>
 
         {loading ? (

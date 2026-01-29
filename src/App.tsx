@@ -4,14 +4,19 @@ import { AuthPage } from './components/AuthPage';
 import { Dashboard } from './components/Dashboard';
 import { Editor } from './components/Editor';
 import { Landing } from './components/Landing';
-import { projects as projectsApi } from './services/api';
+import { ProfilePage } from './components/ProfilePage';
+import { MetadataPage } from './components/MetadataPage';
+import { projects as projectsApi, auth as authApi } from './services/api';
 
 type Route =
   | { page: 'landing' }
   | { page: 'login' }
   | { page: 'register' }
   | { page: 'dashboard' }
-  | { page: 'editor'; projectId: string };
+  | { page: 'editor'; projectId: string }
+  | { page: 'profile' }
+  | { page: 'metadata' }
+  | { page: 'metadata-editor'; projectId: string };
 
 const defaultStyle = {
   backgroundColor: '#667eea',
@@ -43,6 +48,66 @@ const defaultStyle = {
   highlightBorderRadius: 8,
 };
 
+function AdminPlanToggle() {
+  const { user, refreshUser } = useAuth();
+  const [toggling, setToggling] = useState(false);
+
+  if (!user || user.email !== 'vorobyeviv@gmail.com') return null;
+
+  const plan = user.plan ?? 'FREE';
+
+  const handleToggle = async () => {
+    if (toggling) return;
+    setToggling(true);
+    try {
+      await authApi.togglePlan();
+      await refreshUser();
+    } catch (err) {
+      console.error('Failed to toggle plan:', err);
+    } finally {
+      setToggling(false);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        bottom: '20px',
+        right: '20px',
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        backgroundColor: '#1d1d1f',
+        color: '#fff',
+        padding: '10px 16px',
+        borderRadius: '12px',
+        fontSize: '13px',
+        fontWeight: 600,
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+        cursor: 'pointer',
+        userSelect: 'none',
+        opacity: toggling ? 0.6 : 1,
+        transition: 'opacity 0.2s',
+      }}
+      onClick={handleToggle}
+    >
+      <span style={{ fontSize: '11px', color: '#86868b' }}>DEV</span>
+      <span style={{
+        padding: '3px 10px',
+        borderRadius: '6px',
+        backgroundColor: plan === 'PRO' ? '#248a3d' : '#0071e3',
+        fontSize: '12px',
+        fontWeight: 700,
+      }}>
+        {plan}
+      </span>
+      <span style={{ fontSize: '11px', color: '#86868b' }}>click to toggle</span>
+    </div>
+  );
+}
+
 function AppRouter() {
   const { user, loading } = useAuth();
   const [route, setRoute] = useState<Route>({ page: 'landing' });
@@ -57,6 +122,15 @@ function AppRouter() {
         setRoute({ page: 'register' });
       } else if (path === '/dashboard') {
         setRoute({ page: 'dashboard' });
+      } else if (path === '/profile') {
+        setRoute({ page: 'profile' });
+      } else if (path === '/metadata') {
+        setRoute({ page: 'metadata' });
+      } else if (path.startsWith('/metadata/')) {
+        const projectId = path.replace('/metadata/', '');
+        if (projectId) {
+          setRoute({ page: 'metadata-editor', projectId });
+        }
       } else if (path.startsWith('/editor/')) {
         const projectId = path.replace('/editor/', '');
         if (projectId) {
@@ -81,7 +155,7 @@ function AppRouter() {
         navigate('dashboard');
       }
     } else {
-      if (route.page === 'dashboard' || route.page === 'editor') {
+      if (route.page === 'dashboard' || route.page === 'editor' || route.page === 'profile' || route.page === 'metadata' || route.page === 'metadata-editor') {
         navigate('landing');
       }
     }
@@ -103,6 +177,15 @@ function AppRouter() {
     } else if (page === 'dashboard') {
       path = '/dashboard';
       newRoute = { page: 'dashboard' };
+    } else if (page === 'profile') {
+      path = '/profile';
+      newRoute = { page: 'profile' };
+    } else if (page === 'metadata') {
+      path = '/metadata';
+      newRoute = { page: 'metadata' };
+    } else if (page === 'metadata-editor' && projectId) {
+      path = `/metadata/${projectId}`;
+      newRoute = { page: 'metadata-editor', projectId };
     } else if (page === 'editor' && projectId) {
       path = `/editor/${projectId}`;
       newRoute = { page: 'editor', projectId };
@@ -180,6 +263,32 @@ function AppRouter() {
         <Dashboard
           onOpenProject={(id) => navigate('editor', id)}
           onNewProject={handleNewProject}
+          onOpenProfile={() => navigate('profile')}
+          onOpenMetadata={() => navigate('metadata')}
+        />
+      );
+
+    case 'profile':
+      return (
+        <ProfilePage
+          onBack={() => navigate('dashboard')}
+        />
+      );
+
+    case 'metadata':
+      return (
+        <MetadataPage
+          onBack={() => navigate('dashboard')}
+          onOpenProject={(id) => navigate('metadata-editor', id)}
+        />
+      );
+
+    case 'metadata-editor':
+      return (
+        <MetadataPage
+          projectId={route.projectId}
+          onBack={() => navigate('metadata')}
+          onOpenProject={(id) => navigate('metadata-editor', id)}
         />
       );
 
@@ -200,6 +309,7 @@ function App() {
   return (
     <AuthProvider>
       <AppRouter />
+      <AdminPlanToggle />
     </AuthProvider>
   );
 }

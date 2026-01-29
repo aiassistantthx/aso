@@ -88,6 +88,9 @@ export const auth = {
   },
 
   hasToken: () => !!getToken(),
+
+  togglePlan: () =>
+    request<{ plan: 'FREE' | 'PRO' }>('/api/auth/toggle-plan', { method: 'POST' }),
 };
 
 // Projects
@@ -162,6 +165,39 @@ export const translate = {
     }),
 };
 
+// Metadata Projects
+export const metadataProjects = {
+  list: () => request<MetadataProjectListItem[]>('/api/metadata'),
+
+  get: (id: string) => request<MetadataProjectFull>(`/api/metadata/${id}`),
+
+  create: (name: string, platform: string) =>
+    request<MetadataProjectFull>('/api/metadata', {
+      method: 'POST',
+      body: JSON.stringify({ name, platform }),
+    }),
+
+  update: (id: string, data: Record<string, unknown>) =>
+    request<MetadataProjectFull>(`/api/metadata/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    request<void>(`/api/metadata/${id}`, { method: 'DELETE' }),
+
+  generate: (id: string) =>
+    request<MetadataProjectFull>(`/api/metadata/${id}/generate`, {
+      method: 'POST',
+    }),
+
+  translate: (id: string, targetLanguages: string[]) =>
+    request<MetadataProjectFull>(`/api/metadata/${id}/translate`, {
+      method: 'POST',
+      body: JSON.stringify({ targetLanguages }),
+    }),
+};
+
 // Stripe
 export const stripe = {
   checkout: () =>
@@ -207,6 +243,32 @@ export interface ProjectFull {
   createdAt: string;
   updatedAt: string;
   screenshots: ScreenshotRecord[];
+}
+
+export interface MetadataProjectListItem {
+  id: string;
+  name: string;
+  platform: string;
+  appName: string;
+  updatedAt: string;
+}
+
+export interface MetadataProjectFull {
+  id: string;
+  userId: string;
+  name: string;
+  platform: string;
+  inputMode: string;
+  appName: string;
+  briefDescription: string;
+  targetKeywords: string;
+  generatedMetadata: Record<string, string> | null;
+  editedMetadata: Record<string, string> | null;
+  translations: Record<string, Record<string, string>> | null;
+  sourceLanguage: string;
+  targetLanguages: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ScreenshotRecord {

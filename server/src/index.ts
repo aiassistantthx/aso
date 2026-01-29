@@ -15,6 +15,7 @@ import projectRoutes from './routes/projects.js';
 import screenshotRoutes from './routes/screenshots.js';
 import translateRoutes from './routes/translate.js';
 import stripeRoutes from './routes/stripe.js';
+import metadataRoutes from './routes/metadata.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -53,6 +54,7 @@ async function start() {
   await fastify.register(screenshotRoutes);
   await fastify.register(translateRoutes);
   await fastify.register(stripeRoutes);
+  await fastify.register(metadataRoutes);
 
   // Serve uploaded files
   const uploadsDir = path.join(process.cwd(), 'uploads');

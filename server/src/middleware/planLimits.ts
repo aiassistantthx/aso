@@ -5,11 +5,15 @@ const PLAN_LIMITS = {
     maxProjects: 3,
     maxTranslationsPerDay: 5,
     maxTargetLanguages: 2,
+    maxMetadataProjects: 1,
+    maxMetadataTargetLanguages: 2,
   },
   PRO: {
     maxProjects: Infinity,
     maxTranslationsPerDay: Infinity,
     maxTargetLanguages: Infinity,
+    maxMetadataProjects: Infinity,
+    maxMetadataTargetLanguages: Infinity,
   },
 } as const;
 
@@ -37,6 +41,30 @@ export async function checkProjectLimit(request: FastifyRequest, reply: FastifyR
         error: 'Plan limit reached',
         message: `Free plan allows up to ${limits.maxProjects} projects. Upgrade to Pro for unlimited projects.`,
         limit: 'projects',
+      });
+      return;
+    }
+  }
+}
+
+export async function checkMetadataProjectLimit(request: FastifyRequest, reply: FastifyReply) {
+  const userId = request.user.id;
+  const prisma = request.server.prisma;
+
+  const subscription = await prisma.subscription.findUnique({
+    where: { userId },
+  });
+
+  const plan = subscription?.plan ?? 'FREE';
+  const limits = getPlanLimits(plan);
+
+  if (limits.maxMetadataProjects !== Infinity) {
+    const count = await prisma.metadataProject.count({ where: { userId } });
+    if (count >= limits.maxMetadataProjects) {
+      reply.status(403).send({
+        error: 'Plan limit reached',
+        message: `Free plan allows up to ${limits.maxMetadataProjects} metadata project${limits.maxMetadataProjects !== 1 ? 's' : ''}. Upgrade to Pro for unlimited.`,
+        limit: 'metadataProjects',
       });
       return;
     }

@@ -15,6 +15,7 @@ model User {
   stripeCustomerId String?       @unique
   createdAt        DateTime      @default(now())
   projects         Project[]
+  metadataProjects MetadataProject[]
   subscription     Subscription?
 }
 
@@ -46,6 +47,25 @@ model Project {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
   screenshots     Screenshot[]
+}
+
+model MetadataProject {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+  name              String
+  platform          String   // "ios" | "android"
+  inputMode         String   @default("description") // "description" | "keywords"
+  appName           String   @default("")
+  briefDescription  String   @default("")
+  targetKeywords    String   @default("")
+  generatedMetadata Json?
+  editedMetadata    Json?
+  translations      Json?
+  sourceLanguage    String   @default("en-US")
+  targetLanguages   String[] @default([])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model Screenshot {
