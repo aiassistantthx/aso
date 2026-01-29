@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Screenshot, StyleConfig, DeviceSize, TranslationData } from '../types';
 import { StyleEditor } from './StyleEditor';
 import { ScreensFlowEditor } from './ScreensFlowEditor';
@@ -169,6 +169,9 @@ export const Editor: React.FC<Props> = ({ projectId, onBack }) => {
   const [translationData, setTranslationData] = useState<TranslationData | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<string>('all');
   const [projectName, setProjectName] = useState('');
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
@@ -363,6 +366,25 @@ export const Editor: React.FC<Props> = ({ projectId, onBack }) => {
     }
   }, [projectId, projectName, styleConfig, deviceSize, sourceLanguage, targetLanguages, translationData, screenshots]);
 
+  const startEditingName = useCallback(() => {
+    setNameDraft(projectName);
+    setEditingName(true);
+    setTimeout(() => nameInputRef.current?.select(), 0);
+  }, [projectName]);
+
+  const commitName = useCallback(async () => {
+    const trimmed = nameDraft.trim();
+    if (trimmed && trimmed !== projectName) {
+      setProjectName(trimmed);
+      try {
+        await projectsApi.update(projectId, { name: trimmed });
+      } catch (err) {
+        console.error('Failed to rename project:', err);
+      }
+    }
+    setEditingName(false);
+  }, [nameDraft, projectName, projectId]);
+
   return (
     <div style={styles.app}>
       {/* Header */}
@@ -379,7 +401,42 @@ export const Editor: React.FC<Props> = ({ projectId, onBack }) => {
               ← Back
             </button>
             <div>
-              <h1 style={styles.logo}>{projectName || 'Untitled Project'}</h1>
+              {editingName ? (
+                <input
+                  ref={nameInputRef}
+                  value={nameDraft}
+                  onChange={(e) => setNameDraft(e.target.value)}
+                  onBlur={commitName}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') commitName();
+                    if (e.key === 'Escape') setEditingName(false);
+                  }}
+                  autoFocus
+                  style={{
+                    fontSize: '18px',
+                    fontWeight: 700,
+                    color: '#1d1d1f',
+                    letterSpacing: '-0.4px',
+                    border: '1px solid #0071e3',
+                    borderRadius: '8px',
+                    padding: '4px 10px',
+                    outline: 'none',
+                    width: '240px',
+                    boxShadow: '0 0 0 3px rgba(0, 113, 227, 0.12)',
+                  }}
+                />
+              ) : (
+                <h1
+                  style={{ ...styles.logo, cursor: 'pointer' }}
+                  onClick={startEditingName}
+                  title="Click to rename"
+                >
+                  {projectName || 'Untitled Project'}
+                  <span style={{ marginLeft: '8px', fontSize: '14px', color: '#86868b', fontWeight: 400 }}>
+                    &#9998;
+                  </span>
+                </h1>
+              )}
               <p style={styles.subtitle}>
                 {user?.plan === 'PRO' ? 'Pro' : 'Free'} plan
               </p>

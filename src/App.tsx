@@ -116,11 +116,12 @@ function AppRouter() {
   }, []);
 
   const handleNewProject = useCallback(async () => {
+    const defaultName = `Project ${new Date().toLocaleDateString()}`;
+    const name = window.prompt('Project name', defaultName);
+    if (!name || !name.trim()) return;
+
     try {
-      const project = await projectsApi.create(
-        `Project ${new Date().toLocaleDateString()}`,
-        defaultStyle,
-      );
+      const project = await projectsApi.create(name.trim(), defaultStyle);
       navigate('editor', project.id);
     } catch (err) {
       console.error('Failed to create project:', err);

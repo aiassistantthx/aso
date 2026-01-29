@@ -241,6 +241,21 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNewProject }) => {
     loadProjects();
   }, [loadProjects]);
 
+  const handleRename = async (id: string, currentName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newName = window.prompt('Rename project', currentName);
+    if (!newName || newName.trim() === '' || newName.trim() === currentName) return;
+
+    try {
+      await projectsApi.update(id, { name: newName.trim() });
+      setProjectList((prev) =>
+        prev.map((p) => p.id === id ? { ...p, name: newName.trim() } : p),
+      );
+    } catch (err) {
+      console.error('Failed to rename project:', err);
+    }
+  };
+
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!window.confirm('Are you sure you want to delete this project?')) return;
@@ -381,6 +396,12 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNewProject }) => {
                   </div>
                 </div>
                 <div style={styles.cardActions as React.CSSProperties}>
+                  <button
+                    style={styles.cardActionButton}
+                    onClick={(e) => handleRename(project.id, project.name, e)}
+                  >
+                    Rename
+                  </button>
                   <button
                     style={styles.deleteButton}
                     onClick={(e) => handleDelete(project.id, e)}
