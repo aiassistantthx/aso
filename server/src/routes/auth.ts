@@ -63,6 +63,42 @@ export default async function authRoutes(fastify: FastifyInstance) {
     });
   });
 
+  // Toggle plan (admin only - vorobyeviv@gmail.com)
+  fastify.post('/api/auth/toggle-plan', {
+    onRequest: [fastify.authenticate],
+  }, async (request, reply) => {
+    const user = await fastify.prisma.user.findUnique({
+      where: { id: request.user.id },
+      include: { subscription: true },
+    });
+
+    if (!user || user.email !== 'vorobyeviv@gmail.com') {
+      return reply.status(403).send({ error: 'Not authorized' });
+    }
+
+    const currentPlan = user.subscription?.plan ?? 'FREE';
+    const newPlan = currentPlan === 'FREE' ? 'PRO' : 'FREE';
+
+    if (user.subscription) {
+      await fastify.prisma.subscription.update({
+        where: { userId: user.id },
+        data: { plan: newPlan, status: 'active', currentPeriodEnd: new Date('2099-12-31') },
+      });
+    } else {
+      await fastify.prisma.subscription.create({
+        data: {
+          userId: user.id,
+          stripeSubscriptionId: `test_${user.id}`,
+          plan: newPlan,
+          status: 'active',
+          currentPeriodEnd: new Date('2099-12-31'),
+        },
+      });
+    }
+
+    return reply.send({ plan: newPlan });
+  });
+
   // Get current user
   fastify.get('/api/auth/me', {
     onRequest: [fastify.authenticate],

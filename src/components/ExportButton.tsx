@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Screenshot, StyleConfig, DeviceSize, TranslationData } from '../types';
-import { translateAllContent, initializeOpenAI } from '../services/openai';
 import { generateZipArchive } from '../services/zip';
+import { translate as translateApi } from '../services/api';
 
 interface Props {
   screenshots: Screenshot[];
@@ -9,10 +9,10 @@ interface Props {
   deviceSize: DeviceSize;
   sourceLanguage: string;
   targetLanguages: string[];
-  apiKey: string;
-  onApiKeyChange: (key: string) => void;
   translationData: TranslationData | null;
   onTranslationChange: (data: TranslationData | null) => void;
+  userPlan: 'FREE' | 'PRO';
+  onUpgrade: () => void;
 }
 
 const cssStyles: Record<string, React.CSSProperties> = {
@@ -45,31 +45,6 @@ const cssStyles: Record<string, React.CSSProperties> = {
     fontSize: '16px',
     fontWeight: 600,
     color: '#1d1d1f'
-  },
-  label: {
-    display: 'block',
-    fontSize: '13px',
-    fontWeight: 600,
-    color: '#1d1d1f',
-    marginBottom: '8px'
-  },
-  apiKeySection: {
-    marginBottom: '18px'
-  },
-  input: {
-    width: '100%',
-    padding: '12px 14px',
-    fontSize: '14px',
-    border: '1px solid #e0e0e5',
-    borderRadius: '10px',
-    outline: 'none',
-    fontFamily: 'SF Mono, Monaco, Consolas, monospace',
-    transition: 'border-color 0.2s ease, box-shadow 0.2s ease'
-  },
-  hint: {
-    fontSize: '12px',
-    color: '#86868b',
-    marginTop: '6px'
   },
   buttonGroup: {
     display: 'flex',
@@ -159,7 +134,88 @@ const cssStyles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: '8px'
-  }
+  },
+  overlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+  },
+  popup: {
+    backgroundColor: '#fff',
+    borderRadius: '20px',
+    padding: '40px',
+    maxWidth: '420px',
+    width: '90%',
+    textAlign: 'center',
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+  },
+  popupTitle: {
+    fontSize: '24px',
+    fontWeight: 700,
+    color: '#1d1d1f',
+    marginBottom: '8px',
+  },
+  popupSubtitle: {
+    fontSize: '15px',
+    color: '#86868b',
+    marginBottom: '24px',
+    lineHeight: '1.5',
+  },
+  popupFeatures: {
+    textAlign: 'left',
+    marginBottom: '24px',
+    padding: '0 16px',
+  },
+  popupFeature: {
+    fontSize: '14px',
+    color: '#1d1d1f',
+    padding: '8px 0',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+  },
+  popupPrice: {
+    fontSize: '36px',
+    fontWeight: 700,
+    color: '#1d1d1f',
+    marginBottom: '4px',
+  },
+  popupPricePeriod: {
+    fontSize: '14px',
+    color: '#86868b',
+    marginBottom: '20px',
+  },
+  popupButton: {
+    width: '100%',
+    padding: '14px',
+    fontSize: '16px',
+    fontWeight: 600,
+    border: 'none',
+    borderRadius: '12px',
+    background: 'linear-gradient(135deg, #0071e3 0%, #0077ed 100%)',
+    color: '#fff',
+    cursor: 'pointer',
+    marginBottom: '12px',
+    boxShadow: '0 4px 14px rgba(0, 113, 227, 0.35)',
+  },
+  popupCancel: {
+    width: '100%',
+    padding: '12px',
+    fontSize: '14px',
+    fontWeight: 500,
+    border: 'none',
+    borderRadius: '10px',
+    backgroundColor: 'transparent',
+    color: '#86868b',
+    cursor: 'pointer',
+  },
 };
 
 export const ExportButton: React.FC<Props> = ({
@@ -168,58 +224,108 @@ export const ExportButton: React.FC<Props> = ({
   deviceSize,
   sourceLanguage,
   targetLanguages,
-  apiKey,
-  onApiKeyChange,
   translationData,
-  onTranslationChange
+  onTranslationChange,
+  userPlan,
+  onUpgrade,
 }) => {
   const [isTranslating, setIsTranslating] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const canTranslate = screenshots.length > 0 &&
     screenshots.some(s => s.text) &&
-    targetLanguages.length > 0 &&
-    apiKey.trim();
+    targetLanguages.length > 0;
 
-  // Can export without translation if we have screenshots (API key not required)
   const canExportSourceOnly = screenshots.length > 0 &&
     screenshots.some(s => s.text || s.preview);
 
   const handleTranslate = async () => {
     if (!canTranslate || isTranslating) return;
 
+    if (userPlan === 'FREE') {
+      setShowPaywall(true);
+      return;
+    }
+
+    await doTranslate();
+  };
+
+  const doTranslate = async (): Promise<TranslationData | null> => {
     setIsTranslating(true);
     setProgress(0);
-    setStatus('Initializing...');
+    setStatus('Translating texts...');
     setError('');
     onTranslationChange(null);
 
     try {
-      // Initialize OpenAI
-      initializeOpenAI(apiKey.trim());
-
-      // Get texts to translate
       const texts = screenshots.map(s => s.text || '');
 
-      // Translate texts (including laurel texts)
-      setStatus('Translating texts...');
-      const data: TranslationData = await translateAllContent(
-        texts,
-        screenshots,
-        sourceLanguage,
-        targetLanguages,
-        (p) => setProgress(p)
-      );
+      // Translate headlines via server API
+      setProgress(20);
+      const headlineResult = await translateApi.translate(texts, sourceLanguage, targetLanguages);
+
+      // Translate laurel texts if any
+      setProgress(60);
+      const laurelTexts = screenshots.map(s => {
+        const laurelDec = s.decorations?.find(d => d.type === 'laurel');
+        if (laurelDec && 'textBlocks' in laurelDec) {
+          return laurelDec.textBlocks.map(b => b.text);
+        }
+        return [];
+      });
+
+      const hasLaurelTexts = laurelTexts.some(arr => arr.length > 0);
+      let laurelResults: Record<string, string[][]> = {};
+
+      if (hasLaurelTexts) {
+        // Flatten all laurel texts, translate, then unflatten
+        const flatLaurelTexts: string[] = [];
+        const laurelLengths: number[] = [];
+        for (const arr of laurelTexts) {
+          laurelLengths.push(arr.length);
+          flatLaurelTexts.push(...arr);
+        }
+
+        if (flatLaurelTexts.length > 0) {
+          const laurelTranslated = await translateApi.translate(flatLaurelTexts, sourceLanguage, targetLanguages);
+
+          // Unflatten for each language
+          for (const lang of Object.keys(laurelTranslated.translations)) {
+            const flat = laurelTranslated.translations[lang];
+            const unflattened: string[][] = [];
+            let offset = 0;
+            for (const len of laurelLengths) {
+              unflattened.push(flat.slice(offset, offset + len));
+              offset += len;
+            }
+            laurelResults[lang] = unflattened;
+          }
+        }
+      }
+
+      // Build source laurel texts
+      if (!laurelResults[sourceLanguage]) {
+        laurelResults[sourceLanguage] = laurelTexts;
+      }
+
+      const data: TranslationData = {
+        headlines: headlineResult.translations,
+        laurelTexts: laurelResults,
+        perLanguageStyles: translationData?.perLanguageStyles || {},
+      };
 
       onTranslationChange(data);
       setProgress(100);
       setStatus('Translation complete!');
+      return data;
     } catch (err) {
       console.error('Translation error:', err);
       setError(err instanceof Error ? err.message : 'Translation failed');
+      return null;
     } finally {
       setIsTranslating(false);
     }
@@ -227,6 +333,11 @@ export const ExportButton: React.FC<Props> = ({
 
   const handleExport = async () => {
     if (!translationData || isExporting) return;
+
+    if (userPlan === 'FREE') {
+      setShowPaywall(true);
+      return;
+    }
 
     setIsExporting(true);
     setProgress(0);
@@ -258,32 +369,20 @@ export const ExportButton: React.FC<Props> = ({
   const handleQuickExport = async () => {
     if (!canTranslate || isTranslating || isExporting) return;
 
+    if (userPlan === 'FREE') {
+      setShowPaywall(true);
+      return;
+    }
+
     setIsTranslating(true);
     setProgress(0);
-    setStatus('Initializing...');
+    setStatus('Translating texts...');
     setError('');
 
     try {
-      // Initialize OpenAI
-      initializeOpenAI(apiKey.trim());
+      const data = await doTranslate();
+      if (!data) return;
 
-      // Get texts to translate
-      const texts = screenshots.map(s => s.text || '');
-
-      // Translate texts
-      setStatus('Translating texts...');
-      const data: TranslationData = await translateAllContent(
-        texts,
-        screenshots,
-        sourceLanguage,
-        targetLanguages,
-        (p) => setProgress(p * 0.4)
-      );
-
-      onTranslationChange(data);
-      setIsTranslating(false);
-
-      // Generate ZIP
       setIsExporting(true);
       setProgress(40);
       setStatus('Generating images...');
@@ -310,7 +409,6 @@ export const ExportButton: React.FC<Props> = ({
     }
   };
 
-  // Export only source language without translation
   const handleExportSourceOnly = async () => {
     if (!canExportSourceOnly || isWorking) return;
 
@@ -320,7 +418,6 @@ export const ExportButton: React.FC<Props> = ({
     setError('');
 
     try {
-      // Create simple translation data with only source language
       const texts = screenshots.map(s => s.text || '');
       const laurelTexts = screenshots.map(s => {
         const laurelDec = s.decorations?.find(d => d.type === 'laurel');
@@ -366,7 +463,6 @@ export const ExportButton: React.FC<Props> = ({
     if (screenshots.length === 0) missing.push('Upload at least one screenshot');
     if (!screenshots.some(s => s.text)) missing.push('Add text to at least one screenshot');
     if (targetLanguages.length === 0) missing.push('Select at least one target language');
-    if (!apiKey.trim()) missing.push('Enter your OpenAI API key');
     return missing;
   };
 
@@ -379,29 +475,6 @@ export const ExportButton: React.FC<Props> = ({
       <div style={cssStyles.header as React.CSSProperties}>
         <div style={cssStyles.headerIcon as React.CSSProperties}>🚀</div>
         <span style={cssStyles.headerTitle}>Export Screenshots</span>
-      </div>
-
-      {/* API Key Input */}
-      <div style={cssStyles.apiKeySection}>
-        <label style={cssStyles.label}>OpenAI API Key</label>
-        <input
-          type="password"
-          value={apiKey}
-          onChange={(e) => onApiKeyChange(e.target.value)}
-          placeholder="sk-..."
-          style={cssStyles.input}
-          onFocus={(e) => {
-            e.currentTarget.style.borderColor = '#0071e3';
-            e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0, 113, 227, 0.12)';
-          }}
-          onBlur={(e) => {
-            e.currentTarget.style.borderColor = '#e0e0e5';
-            e.currentTarget.style.boxShadow = 'none';
-          }}
-        />
-        <p style={cssStyles.hint}>
-          Required for translation. Your key is not stored.
-        </p>
       </div>
 
       {/* Requirements */}
@@ -424,6 +497,32 @@ export const ExportButton: React.FC<Props> = ({
             Translations ready for <strong>{Object.keys(translationData.headlines).length}</strong> languages.
             Use the sidebar to edit.
           </span>
+        </div>
+      )}
+
+      {/* Pro badge for translation buttons */}
+      {userPlan === 'FREE' && (
+        <div style={{
+          fontSize: '13px',
+          color: '#86868b',
+          marginBottom: '14px',
+          padding: '10px 14px',
+          backgroundColor: '#f0f7ff',
+          borderRadius: '10px',
+          border: '1px solid rgba(0, 113, 227, 0.1)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+        }}>
+          <span style={{
+            backgroundColor: '#0071e3',
+            color: '#fff',
+            fontSize: '11px',
+            fontWeight: 700,
+            padding: '2px 8px',
+            borderRadius: '6px',
+          }}>PRO</span>
+          <span>Translation & translated export require a Pro plan</span>
         </div>
       )}
 
@@ -521,6 +620,61 @@ export const ExportButton: React.FC<Props> = ({
       {/* Error */}
       {error && (
         <p style={cssStyles.error}>{error}</p>
+      )}
+
+      {/* Paywall Popup */}
+      {showPaywall && (
+        <div
+          style={cssStyles.overlay as React.CSSProperties}
+          onClick={() => setShowPaywall(false)}
+        >
+          <div
+            style={cssStyles.popup as React.CSSProperties}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={cssStyles.popupTitle as React.CSSProperties}>
+              Upgrade to Pro
+            </div>
+            <p style={cssStyles.popupSubtitle as React.CSSProperties}>
+              Unlock translation and multi-language export to reach users worldwide.
+            </p>
+            <div style={cssStyles.popupFeatures as React.CSSProperties}>
+              <div style={cssStyles.popupFeature as React.CSSProperties}>
+                <span style={{ color: '#34c759' }}>✓</span>
+                Unlimited projects
+              </div>
+              <div style={cssStyles.popupFeature as React.CSSProperties}>
+                <span style={{ color: '#34c759' }}>✓</span>
+                AI-powered translation to 30+ languages
+              </div>
+              <div style={cssStyles.popupFeature as React.CSSProperties}>
+                <span style={{ color: '#34c759' }}>✓</span>
+                Translated screenshot export (ZIP)
+              </div>
+              <div style={cssStyles.popupFeature as React.CSSProperties}>
+                <span style={{ color: '#34c759' }}>✓</span>
+                Unlimited target languages
+              </div>
+            </div>
+            <div style={cssStyles.popupPrice as React.CSSProperties}>$9.99</div>
+            <div style={cssStyles.popupPricePeriod as React.CSSProperties}>per month</div>
+            <button
+              style={cssStyles.popupButton}
+              onClick={() => {
+                setShowPaywall(false);
+                onUpgrade();
+              }}
+            >
+              Upgrade Now
+            </button>
+            <button
+              style={cssStyles.popupCancel}
+              onClick={() => setShowPaywall(false)}
+            >
+              Maybe later
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -165,7 +165,6 @@ export const Editor: React.FC<Props> = ({ projectId, onBack }) => {
     'en-US', 'de-DE', 'fr-FR', 'es-ES', 'it-IT',
     'pt-BR', 'ja-JP', 'ko-KR', 'zh-Hans', 'ru-RU',
   ]);
-  const [apiKey, setApiKey] = useState('');
   const [translationData, setTranslationData] = useState<TranslationData | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<string>('all');
   const [projectName, setProjectName] = useState('');
@@ -174,6 +173,7 @@ export const Editor: React.FC<Props> = ({ projectId, onBack }) => {
   const nameInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
 
   // Load project from API
   useEffect(() => {
@@ -295,9 +295,12 @@ export const Editor: React.FC<Props> = ({ projectId, onBack }) => {
 
     if (toUpload.length > 0) {
       const uploadedScreenshots: Screenshot[] = [...screenshots];
+      setUploadProgress({ current: 0, total: toUpload.length });
 
-      for (const s of toUpload) {
+      for (let idx = 0; idx < toUpload.length; idx++) {
+        const s = toUpload[idx];
         if (!s.file) continue;
+        setUploadProgress({ current: idx + 1, total: toUpload.length });
         try {
           const result = await screenshotsApi.upload(projectId, s.file);
           // Load the uploaded image as base64
@@ -326,6 +329,7 @@ export const Editor: React.FC<Props> = ({ projectId, onBack }) => {
         }
       }
 
+      setUploadProgress(null);
       setScreenshots(uploadedScreenshots);
     } else {
       // Just update state (reorder, text change, etc.)
@@ -456,6 +460,52 @@ export const Editor: React.FC<Props> = ({ projectId, onBack }) => {
         </div>
       </header>
 
+      {/* Upload Progress */}
+      {uploadProgress && (
+        <div style={{
+          maxWidth: '1600px',
+          margin: '0 auto',
+          padding: '12px 24px 0',
+        }}>
+          <div style={{
+            backgroundColor: '#fff',
+            borderRadius: '12px',
+            padding: '14px 18px',
+            border: '1px solid rgba(0, 0, 0, 0.06)',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '8px',
+            }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#1d1d1f' }}>
+                Uploading screenshots...
+              </span>
+              <span style={{ fontSize: '13px', color: '#86868b' }}>
+                {uploadProgress.current} / {uploadProgress.total}
+              </span>
+            </div>
+            <div style={{
+              width: '100%',
+              height: '6px',
+              backgroundColor: '#e8e8ed',
+              borderRadius: '3px',
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                height: '100%',
+                width: `${(uploadProgress.current / uploadProgress.total) * 100}%`,
+                background: 'linear-gradient(90deg, #0071e3 0%, #4a9eff 100%)',
+                borderRadius: '3px',
+                transition: 'width 0.3s ease',
+              }} />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Screens Flow Editor */}
       <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
         <ScreensFlowEditor
@@ -513,10 +563,13 @@ export const Editor: React.FC<Props> = ({ projectId, onBack }) => {
               deviceSize={deviceSize}
               sourceLanguage={sourceLanguage}
               targetLanguages={targetLanguages}
-              apiKey={apiKey}
-              onApiKeyChange={setApiKey}
               translationData={translationData}
               onTranslationChange={setTranslationData}
+              userPlan={user?.plan ?? 'FREE'}
+              onUpgrade={() => {
+                // TODO: Stripe checkout integration
+                window.alert('Stripe checkout coming soon!');
+              }}
             />
           </div>
         </div>
