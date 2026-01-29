@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Screenshot, StyleConfig, DeviceSize, TranslationData } from './types';
-import { TextEditor } from './components/TextEditor';
 import { StyleEditor } from './components/StyleEditor';
 import { ScreensFlowEditor } from './components/ScreensFlowEditor';
 import { LanguageSelector } from './components/LanguageSelector';
@@ -110,8 +109,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     gap: '24px',
-    minWidth: 0,
-    maxWidth: '800px'
+    minWidth: 0
   },
   leftPanel: {
     display: 'flex',
@@ -560,8 +558,11 @@ function App() {
         </div>
       )}
 
-      {/* Screens Flow Editor with integrated uploader */}
-      <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
+      {/* Screens Flow Editor with integrated uploader - sticky on larger screens */}
+      <div style={{
+        maxWidth: '1600px',
+        margin: '0 auto'
+      }}>
         <ScreensFlowEditor
           screenshots={screenshots}
           selectedIndex={selectedPreviewIndex}
@@ -572,6 +573,7 @@ function App() {
           deviceSize={deviceSize}
           translationData={translationData}
           selectedLanguage={selectedLanguage}
+          onTranslationChange={setTranslationData}
         />
       </div>
 
@@ -591,21 +593,10 @@ function App() {
           <div style={styles.leftPanel as React.CSSProperties}>
 
             <div style={styles.card}>
-              <TextEditor
-                screenshots={screenshots}
-                onScreenshotsChange={setScreenshots}
-                translationData={translationData}
-                selectedLanguage={selectedLanguage}
-                onTranslationChange={setTranslationData}
-              />
-            </div>
-
-            <div style={styles.card}>
               <StyleEditor
                 style={styleConfig}
                 onStyleChange={setStyleConfig}
                 deviceSize={deviceSize}
-                onDeviceSizeChange={setDeviceSize}
                 screenshots={screenshots}
                 selectedIndex={selectedPreviewIndex}
                 onScreenshotsChange={setScreenshots}

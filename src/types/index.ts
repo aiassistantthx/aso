@@ -35,6 +35,7 @@ export type Decoration = StarRatingDecoration | LaurelDecoration;
 export interface ScreenshotStyleOverride {
   textColor?: string;
   backgroundColor?: string;
+  highlightColor?: string;
   gradient?: {
     enabled: boolean;
     color1: string;
@@ -50,7 +51,7 @@ export interface ScreenshotMockupSettings {
   offsetX: number;
   offsetY: number;
   rotation: number;  // degrees
-  scale: number;     // 1.0 = default
+  scale?: number;    // optional - falls back to style.mockupScale if undefined
   // Link to next screen (for smooth transitions)
   linkedToNext?: boolean;
 }

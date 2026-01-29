@@ -1,9 +1,9 @@
 import React from 'react';
-import { StyleConfig, DeviceSize, DEVICE_SIZES, MockupVisibility, MockupAlignment, Screenshot, ScreenshotStyleOverride, TranslationData, PerLanguageScreenshotStyle, MockupContinuation, Template, StarRatingDecoration, LaurelDecoration } from '../types';
+import { StyleConfig, DeviceSize, DEVICE_SIZES, Screenshot, ScreenshotStyleOverride, TranslationData, PerLanguageScreenshotStyle, StarRatingDecoration, LaurelDecoration, BackgroundPatternType } from '../types';
 import { APP_STORE_LANGUAGES } from '../constants/languages';
 import { Toggle, Slider, ColorPicker, SegmentedControl } from './ui';
 import { colors } from '../styles/common';
-import { TEMPLATES } from '../constants/templates';
+import { THEME_PRESETS, THEME_PRESET_GROUPS, ThemePreset, PATTERN_OPTIONS } from '../constants/templates';
 
 // Default decorations
 const createDefaultStars = (deviceSize: DeviceSize): StarRatingDecoration => {
@@ -40,7 +40,6 @@ interface Props {
   style: StyleConfig;
   onStyleChange: (style: StyleConfig) => void;
   deviceSize: DeviceSize;
-  onDeviceSizeChange: (size: DeviceSize) => void;
   screenshots: Screenshot[];
   selectedIndex: number;
   onScreenshotsChange: (screenshots: Screenshot[]) => void;
@@ -232,7 +231,6 @@ export const StyleEditor: React.FC<Props> = ({
   style,
   onStyleChange,
   deviceSize,
-  onDeviceSizeChange,
   screenshots,
   selectedIndex,
   onScreenshotsChange,
@@ -308,30 +306,66 @@ export const StyleEditor: React.FC<Props> = ({
     onStyleChange({ ...style, [key]: value });
   };
 
-  const applyTemplate = (template: Template) => {
-    // Update global style with template settings
+  const applyThemePreset = (preset: ThemePreset) => {
+    // Update global style with full template settings (colors + fonts + pattern)
     onStyleChange({
       ...style,
-      backgroundColor: template.backgroundColor,
-      gradient: template.gradient,
-      textColor: template.textColor,
-      fontFamily: template.fontFamily,
-      fontSize: template.fontSize,
-      textAlign: template.textAlign,
-      paddingTop: template.paddingTop,
-      paddingBottom: template.paddingBottom,
-      mockupColor: template.mockupColor,
-      mockupScale: template.mockupScale,
-      highlightColor: template.highlightColor,
-      pattern: template.pattern
+      backgroundColor: preset.backgroundColor,
+      gradient: preset.gradient,
+      textColor: preset.textColor,
+      highlightColor: preset.highlightColor,
+      mockupColor: preset.mockupColor,
+      pattern: preset.pattern || { type: 'none', color: '#000', opacity: 0, size: 0, spacing: 0 },
+      fontFamily: preset.fontFamily,
+      fontSize: preset.fontSize,
+      textAlign: preset.textAlign || 'center',
+      mockupScale: preset.mockupScale ?? style.mockupScale
     });
 
-    // Clear all per-screenshot style overrides so template applies uniformly
-    const newScreenshots = screenshots.map(s => {
-      const { styleOverride: _, ...rest } = s;
-      return rest;
+    // Apply alternating colors if template has them
+    if (preset.alternatingColors && preset.alternatingColors.length > 0) {
+      const allColors = [
+        { backgroundColor: preset.backgroundColor, gradient: preset.gradient, textColor: preset.textColor, highlightColor: preset.highlightColor },
+        ...preset.alternatingColors
+      ];
+
+      const newScreenshots = screenshots.map((s, i) => {
+        const colorIndex = i % allColors.length;
+        const colorVariant = allColors[colorIndex];
+
+        // First screen uses global style (no override needed)
+        if (i === 0) {
+          const { styleOverride: _, ...rest } = s;
+          return rest;
+        }
+
+        // Other screens get styleOverride with alternating colors
+        return {
+          ...s,
+          styleOverride: {
+            backgroundColor: colorVariant.backgroundColor,
+            gradient: colorVariant.gradient,
+            textColor: colorVariant.textColor || preset.textColor,
+            highlightColor: colorVariant.highlightColor || preset.highlightColor
+          }
+        };
+      });
+      onScreenshotsChange(newScreenshots);
+    } else {
+      // Clear all per-screenshot style overrides so template applies uniformly
+      const newScreenshots = screenshots.map(s => {
+        const { styleOverride: _, ...rest } = s;
+        return rest;
+      });
+      onScreenshotsChange(newScreenshots);
+    }
+  };
+
+  const updatePattern = (updates: Partial<StyleConfig['pattern']>) => {
+    onStyleChange({
+      ...style,
+      pattern: { ...(style.pattern || { type: 'none', color: '#000', opacity: 0, size: 0, spacing: 0 }), ...updates }
     });
-    onScreenshotsChange(newScreenshots);
   };
 
   const updateGradient = (updates: Partial<StyleConfig['gradient']>) => {
@@ -404,22 +438,6 @@ export const StyleEditor: React.FC<Props> = ({
       </label>
 
       <div style={cssStyles.grid}>
-        {/* Device Size */}
-        <div style={cssStyles.field as React.CSSProperties}>
-          <span style={cssStyles.fieldLabel}>Device Size</span>
-          <select
-            value={deviceSize}
-            onChange={(e) => onDeviceSizeChange(e.target.value as DeviceSize)}
-            style={cssStyles.select}
-          >
-            {(Object.keys(DEVICE_SIZES) as DeviceSize[]).map((size) => (
-              <option key={size} value={size}>
-                {DEVICE_SIZES[size].name}
-              </option>
-            ))}
-          </select>
-        </div>
-
         {/* Font */}
         <div style={cssStyles.field as React.CSSProperties}>
           <span style={cssStyles.fieldLabel}>Font Family</span>
@@ -463,207 +481,169 @@ export const StyleEditor: React.FC<Props> = ({
           />
         )}
 
-
-        {style.showMockup && (
-          <SegmentedControl
-            label="Visibility"
-            options={[
-              { value: 'full', label: 'Full' },
-              { value: '2/3', label: '2/3' },
-              { value: '1/2', label: '1/2' }
-            ]}
-            value={style.mockupVisibility}
-            onChange={(value) => updateStyle('mockupVisibility', value as MockupVisibility)}
-          />
-        )}
-
-        {style.showMockup && (
-          <SegmentedControl
-            label="Alignment"
-            options={[
-              { value: 'top', label: 'Top' },
-              { value: 'center', label: 'Center' },
-              { value: 'bottom', label: 'Bottom' }
-            ]}
-            value={style.mockupAlignment}
-            onChange={(value) => updateStyle('mockupAlignment', value as MockupAlignment)}
-          />
-        )}
-
-        {style.showMockup && (
-          <Slider
-            label={`Scale${isEditingTranslation && getPerLangStyle().mockupScale !== undefined ? ' (custom)' : ''}`}
-            min={30}
-            max={200}
-            value={Math.round((isEditingTranslation ? (getPerLangStyle().mockupScale ?? style.mockupScale ?? 1.0) : (style.mockupScale ?? 1.0)) * 100)}
-            onChange={(value) => {
-              const newScale = value / 100;
-              if (isEditingTranslation) {
-                updatePerLangStyle({ mockupScale: newScale });
-              } else {
-                updateStyle('mockupScale', newScale);
-              }
-            }}
-            unit="%"
-          />
-        )}
+        <Slider
+          label={`Scale${isEditingTranslation && getPerLangStyle().mockupScale !== undefined ? ' (custom)' : ''}`}
+          min={30}
+          max={200}
+          value={Math.round((isEditingTranslation ? (getPerLangStyle().mockupScale ?? style.mockupScale ?? 1.0) : (style.mockupScale ?? 1.0)) * 100)}
+          onChange={(value) => {
+            const newScale = value / 100;
+            if (isEditingTranslation) {
+              updatePerLangStyle({ mockupScale: newScale });
+            } else {
+              updateStyle('mockupScale', newScale);
+            }
+          }}
+          unit="%"
+        />
       </div>
 
-      {/* Rotation Control */}
-      {style.showMockup && (
-        <div style={{ marginTop: '12px' }}>
-          <Slider
-            label="Rotation"
-            min={-45}
-            max={45}
-            value={style.mockupRotation ?? 0}
-            onChange={(value) => updateStyle('mockupRotation', value)}
-            unit="°"
-          />
-          {style.mockupRotation !== 0 && (
-            <button
-              onClick={() => updateStyle('mockupRotation', 0)}
-              style={{
-                padding: '6px 12px',
-                fontSize: '11px',
-                fontWeight: 500,
-                border: `1px solid ${colors.borderLight}`,
-                borderRadius: '8px',
-                backgroundColor: colors.background,
-                color: colors.textSecondary,
-                cursor: 'pointer',
-                marginTop: '8px'
-              }}
-            >
-              Reset Rotation
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Mockup Continuation - Split across screens */}
-      {style.showMockup && screenshots.length > 1 && (
+      {/* Screenshot in Mockup selector */}
+      {style.showMockup && screenshots.length > 1 && selectedScreenshot && (
         <div style={{ marginTop: '16px' }}>
           <span style={{ ...cssStyles.fieldLabel, display: 'block', marginBottom: '8px' }}>
-            Mockup Position
+            Screenshot in Mockup
           </span>
           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            {[
-              { value: 'none', label: 'Center', icon: '⬜' },
-              { value: 'left-start', label: 'Right →', icon: '▶' },
-              { value: 'right-start', label: '← Left', icon: '◀' }
-            ].map((opt) => {
-              const currentContinuation = selectedScreenshot?.mockupContinuation ?? style.mockupContinuation ?? 'none';
-              const isActive = currentContinuation === opt.value;
-              return (
-                <button
-                  key={opt.value}
-                  onClick={() => {
-                    // Update per-screenshot mockupContinuation
-                    if (selectedScreenshot) {
-                      const newScreenshots = screenshots.map((s, i) =>
-                        i === selectedIndex
-                          ? { ...s, mockupContinuation: opt.value as MockupContinuation }
-                          : s
-                      );
-                      onScreenshotsChange(newScreenshots);
-                    }
-                  }}
-                  style={{
-                    padding: '8px 14px',
-                    fontSize: '12px',
-                    fontWeight: 500,
-                    border: `2px solid ${isActive ? colors.primary : colors.borderLight}`,
-                    borderRadius: '8px',
-                    backgroundColor: isActive ? colors.primaryLight : colors.white,
-                    color: isActive ? colors.primary : colors.textSecondary,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
+            {screenshots.map((s, idx) => (
+              <button
+                key={s.id}
+                onClick={() => {
+                  const newScreenshots = screenshots.map((ss, i) =>
+                    i === selectedIndex
+                      ? { ...ss, linkedMockupIndex: idx === selectedIndex ? undefined : idx }
+                      : ss
+                  );
+                  onScreenshotsChange(newScreenshots);
+                }}
+                style={{
+                  width: '36px',
+                  height: '60px',
+                  borderRadius: '6px',
+                  border: `2px solid ${(selectedScreenshot.linkedMockupIndex === idx || (selectedScreenshot.linkedMockupIndex === undefined && idx === selectedIndex)) ? colors.primary : colors.borderLight}`,
+                  padding: '2px',
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  backgroundColor: colors.white,
+                  transition: 'all 0.2s'
+                }}
+                title={`Use screenshot ${idx + 1} in mockup`}
+              >
+                {s.preview ? (
+                  <img
+                    src={s.preview}
+                    alt={`Screen ${idx + 1}`}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }}
+                  />
+                ) : (
+                  <div style={{
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: colors.background,
+                    borderRadius: '4px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px'
-                  }}
-                >
-                  <span>{opt.icon}</span> {opt.label}
-                </button>
-              );
-            })}
+                    justifyContent: 'center',
+                    fontSize: '10px',
+                    color: colors.textSecondary
+                  }}>
+                    {idx + 1}
+                  </div>
+                )}
+              </button>
+            ))}
           </div>
           <p style={{ fontSize: '11px', color: colors.textSecondary, marginTop: '6px' }}>
-            Position mockup for screen {selectedIndex + 1}
+            Select which screenshot to show inside the mockup
           </p>
-
-          {/* Linked Screenshot for continuation */}
-          {selectedScreenshot && (
-            <div style={{ marginTop: '12px' }}>
-              <span style={{ ...cssStyles.fieldLabel, display: 'block', marginBottom: '8px' }}>
-                Screenshot in Mockup
-              </span>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                {screenshots.map((s, idx) => (
-                  <button
-                    key={s.id}
-                    onClick={() => {
-                      const newScreenshots = screenshots.map((ss, i) =>
-                        i === selectedIndex
-                          ? { ...ss, linkedMockupIndex: idx === selectedIndex ? undefined : idx }
-                          : ss
-                      );
-                      onScreenshotsChange(newScreenshots);
-                    }}
-                    style={{
-                      width: '36px',
-                      height: '60px',
-                      borderRadius: '6px',
-                      border: `2px solid ${(selectedScreenshot.linkedMockupIndex === idx || (selectedScreenshot.linkedMockupIndex === undefined && idx === selectedIndex)) ? colors.primary : colors.borderLight}`,
-                      padding: '2px',
-                      cursor: 'pointer',
-                      overflow: 'hidden',
-                      backgroundColor: colors.white,
-                      transition: 'all 0.2s'
-                    }}
-                    title={`Use screenshot ${idx + 1} in mockup`}
-                  >
-                    {s.preview ? (
-                      <img
-                        src={s.preview}
-                        alt={`Screen ${idx + 1}`}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }}
-                      />
-                    ) : (
-                      <div style={{
-                        width: '100%',
-                        height: '100%',
-                        backgroundColor: colors.background,
-                        borderRadius: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '10px',
-                        color: colors.textSecondary
-                      }}>
-                        {idx + 1}
-                      </div>
-                    )}
-                  </button>
-                ))}
-              </div>
-              <p style={{ fontSize: '11px', color: colors.textSecondary, marginTop: '6px' }}>
-                Select which screenshot to show inside the mockup
-              </p>
-            </div>
-          )}
         </div>
       )}
 
-      {/* Background Section */}
+      {/* Theme Section - Colors, Patterns, Templates */}
       <div style={cssStyles.sectionTitle as React.CSSProperties}>
-        <span>🎨</span> Background
+        <span>🎨</span> Theme
         {selectedIndex > 0 && (
           <span style={{ fontWeight: 400, fontSize: '11px', color: colors.primary }}>
             Screen {selectedIndex + 1}
           </span>
         )}
+      </div>
+
+      {/* Templates - Full presets with colors, fonts, patterns */}
+      <div style={{ marginBottom: '16px' }}>
+        <div style={{ marginTop: '8px' }}>
+          {THEME_PRESET_GROUPS.map((group) => (
+            <div key={group.id} style={{ marginBottom: '10px' }}>
+              <span style={{ fontSize: '10px', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                {group.label}
+              </span>
+              <div style={{ display: 'flex', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
+                {group.presets.map((presetId) => {
+                  const preset = THEME_PRESETS.find(p => p.id === presetId);
+                  if (!preset) return null;
+
+                  const hasAlternating = preset.alternatingColors && preset.alternatingColors.length > 0;
+
+                  // For multi-color templates, show a split preview
+                  let background: string;
+                  if (hasAlternating && preset.alternatingColors) {
+                    const c1 = preset.gradient.enabled ? preset.gradient.color1 : preset.backgroundColor;
+                    const c2 = preset.alternatingColors[0].gradient.enabled
+                      ? preset.alternatingColors[0].gradient.color1
+                      : preset.alternatingColors[0].backgroundColor;
+                    const c3 = preset.alternatingColors.length > 1
+                      ? (preset.alternatingColors[1].gradient.enabled
+                          ? preset.alternatingColors[1].gradient.color1
+                          : preset.alternatingColors[1].backgroundColor)
+                      : c1;
+                    background = `linear-gradient(135deg, ${c1} 33%, ${c2} 33%, ${c2} 66%, ${c3} 66%)`;
+                  } else {
+                    background = preset.gradient.enabled
+                      ? `linear-gradient(${preset.gradient.angle}deg, ${preset.gradient.color1}, ${preset.gradient.color2})`
+                      : preset.backgroundColor;
+                  }
+
+                  return (
+                    <button
+                      key={preset.id}
+                      onClick={() => applyThemePreset(preset)}
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        border: '2px solid rgba(0,0,0,0.08)',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.3)',
+                        cursor: 'pointer',
+                        background,
+                        transition: 'transform 0.15s, box-shadow 0.15s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '10px',
+                        color: preset.textColor,
+                        fontFamily: preset.fontFamily.split(',')[0],
+                        fontWeight: 600,
+                        textShadow: preset.textColor === '#ffffff' ? '0 1px 2px rgba(0,0,0,0.3)' : 'none',
+                        position: 'relative'
+                      }}
+                      title={`${preset.name} (${preset.fontFamily.split(',')[0]})${hasAlternating ? ' - alternating colors' : ''}`}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'scale(1.15)';
+                        e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2), inset 0 0 0 1px rgba(255,255,255,0.3)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.3)';
+                      }}
+                    >
+                      Aa
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {hasOverride && selectedIndex > 0 && (
@@ -690,6 +670,7 @@ export const StyleEditor: React.FC<Props> = ({
         </button>
       )}
 
+      {/* Background Color/Gradient */}
       <Toggle
         label="Use Gradient"
         checked={effectiveGradient.enabled}
@@ -737,35 +718,72 @@ export const StyleEditor: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Templates Section */}
+      {/* Background Pattern */}
       <div style={{ marginTop: '16px' }}>
-        <span style={cssStyles.fieldLabel}>Templates</span>
-        <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
-          {TEMPLATES.map((template) => {
-            const background = template.gradient.enabled
-              ? `linear-gradient(${template.gradient.angle}deg, ${template.gradient.color1}, ${template.gradient.color2})`
-              : template.backgroundColor;
+        <span style={cssStyles.fieldLabel}>Background Pattern</span>
+        <div style={{ display: 'flex', gap: '6px', marginTop: '8px', flexWrap: 'wrap' }}>
+          {PATTERN_OPTIONS.map((opt) => {
+            const isActive = (style.pattern?.type || 'none') === opt.value;
             return (
               <button
-                key={template.id}
-                onClick={() => applyTemplate(template)}
+                key={opt.value}
+                onClick={() => updatePattern({ type: opt.value as BackgroundPatternType })}
                 style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  border: '2px solid rgba(0,0,0,0.08)',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.12), inset 0 0 0 2px #fff',
+                  padding: '8px 14px',
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  border: `2px solid ${isActive ? colors.primary : colors.borderLight}`,
+                  borderRadius: '8px',
+                  backgroundColor: isActive ? colors.primaryLight : colors.white,
+                  color: isActive ? colors.primary : colors.textSecondary,
                   cursor: 'pointer',
-                  background,
-                  transition: 'transform 0.2s'
+                  transition: 'all 0.2s'
                 }}
-                title={template.name}
-                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-              />
+              >
+                {opt.label}
+              </button>
             );
           })}
         </div>
+
+        {/* Pattern Settings */}
+        {style.pattern && style.pattern.type !== 'none' && (
+          <div style={{ marginTop: '12px' }}>
+            <div style={cssStyles.grid}>
+              <ColorPicker
+                label="Pattern Color"
+                value={style.pattern.color}
+                onChange={(color) => updatePattern({ color })}
+              />
+              <Slider
+                label="Opacity"
+                min={1}
+                max={50}
+                value={Math.round((style.pattern.opacity || 0.1) * 100)}
+                onChange={(value) => updatePattern({ opacity: value / 100 })}
+                unit="%"
+              />
+            </div>
+            <div style={{ ...cssStyles.grid, marginTop: '8px' }}>
+              <Slider
+                label="Size"
+                min={1}
+                max={20}
+                value={style.pattern.size || 4}
+                onChange={(value) => updatePattern({ size: value })}
+                unit="px"
+              />
+              <Slider
+                label="Spacing"
+                min={10}
+                max={80}
+                value={style.pattern.spacing || 24}
+                onChange={(value) => updatePattern({ spacing: value })}
+                unit="px"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Text Section */}
@@ -861,26 +879,6 @@ export const StyleEditor: React.FC<Props> = ({
       >
         <span>↔️</span> Center Horizontally
       </button>
-
-      <div style={cssStyles.grid}>
-        <Slider
-          label="Padding Top"
-          min={20}
-          max={200}
-          value={style.paddingTop}
-          onChange={(value) => updateStyle('paddingTop', value)}
-          unit="px"
-        />
-
-        <Slider
-          label="Padding Bottom"
-          min={20}
-          max={200}
-          value={style.paddingBottom}
-          onChange={(value) => updateStyle('paddingBottom', value)}
-          unit="px"
-        />
-      </div>
 
       {/* Decorations Section */}
       {selectedScreenshot && (

@@ -27,7 +27,8 @@ const getEffectiveStyle = (style: StyleConfig, override?: ScreenshotStyleOverrid
     ...style,
     textColor: override.textColor ?? style.textColor,
     backgroundColor: override.backgroundColor ?? style.backgroundColor,
-    gradient: override.gradient ?? style.gradient
+    gradient: override.gradient ?? style.gradient,
+    highlightColor: override.highlightColor ?? style.highlightColor
   };
 };
 
@@ -1428,7 +1429,8 @@ export const generateScreenshotImage = async (
   const { screenshot, text, style: baseStyle, deviceSize, styleOverride, mockupScreenshot, mockupContinuation, mockupSettings } = options;
   const style = getEffectiveStyle(baseStyle, styleOverride);
   // Use mockupScreenshot if provided (for continuation), otherwise use screenshot
-  const screenshotForMockup = mockupScreenshot !== undefined ? mockupScreenshot : screenshot;
+  // Use nullish coalescing to properly fall back when mockupScreenshot is null
+  const screenshotForMockup = mockupScreenshot ?? screenshot;
   const dimensions = DEVICE_SIZES[deviceSize];
 
   const canvas = document.createElement('canvas');
@@ -1615,7 +1617,8 @@ export const generatePreviewCanvas = async (
   const { screenshot, text, style: baseStyle, deviceSize, styleOverride, mockupScreenshot, mockupContinuation, mockupSettings } = options;
   const style = getEffectiveStyle(baseStyle, styleOverride);
   const dimensions = DEVICE_SIZES[deviceSize];
-  const screenshotForMockup = mockupScreenshot !== undefined ? mockupScreenshot : screenshot;
+  // Use nullish coalescing to properly fall back when mockupScreenshot is null
+  const screenshotForMockup = mockupScreenshot ?? screenshot;
 
   // Scale down for preview
   const scale = Math.min(400 / dimensions.width, 600 / dimensions.height);

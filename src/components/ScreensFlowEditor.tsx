@@ -13,6 +13,7 @@ interface Props {
   deviceSize: DeviceSize;
   translationData?: TranslationData | null;
   selectedLanguage?: string;
+  onTranslationChange?: (data: TranslationData) => void;
 }
 
 const DEFAULT_MOCKUP_SETTINGS: ScreenshotMockupSettings = {
@@ -302,7 +303,6 @@ const LinkedPairCanvas: React.FC<{
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<HTMLImageElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
@@ -332,26 +332,15 @@ const LinkedPairCanvas: React.FC<{
     return screen?.text || '';
   };
 
-  // Load image once
+  // Draw canvas - same pattern as SingleScreenPreview
   useEffect(() => {
-    if (screen1.preview) {
-      const img = new Image();
-      img.onload = () => {
-        imageRef.current = img;
-        // Trigger redraw
-        drawCanvas();
-      };
-      img.src = screen1.preview;
-    }
-  }, [screen1.preview]);
-
-  // Draw function
-  const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    let isCancelled = false;
 
     const previewHeight = 420;
     const aspectRatio = dimensions.width / dimensions.height;
@@ -376,44 +365,52 @@ const LinkedPairCanvas: React.FC<{
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Draw mockup
-    const img = imageRef.current;
-    if (img && style.showMockup) {
-      const mockupCenterX = singleScreenWidth * (0.5 + localOffsetX / 100);
-      const mockupCenterY = previewHeight * (0.5 + localOffsetY / 100);
-      const mockupScale = settings1.scale || 1.0;
-      const mockupHeight = previewHeight * 0.7 * mockupScale;
-      const mockupWidth = mockupHeight * 0.49;
-      const frameColor = style.mockupColor === 'white' ? '#F5F5F7' :
-                        style.mockupColor === 'natural' ? '#E3D5C8' : '#1D1D1F';
+    // Pre-calculate mockup dimensions (capture current values before async image load)
+    const currentMockupScale = screen1.mockupSettings?.scale ?? style.mockupScale ?? 1.0;
+    const mockupCenterX = singleScreenWidth * (0.5 + localOffsetX / 100);
+    const mockupCenterY = previewHeight * (0.5 + localOffsetY / 100);
+    const mockupHeight = previewHeight * 0.7 * currentMockupScale;
+    const mockupWidth = mockupHeight * 0.49;
+    const frameColor = style.mockupColor === 'white' ? '#F5F5F7' :
+                      style.mockupColor === 'natural' ? '#E3D5C8' : '#1D1D1F';
+    const currentRotation = localRotation;
+    const currentMockupStyle = style.mockupStyle || 'realistic';
 
-      ctx.save();
-      ctx.translate(mockupCenterX, mockupCenterY);
-      ctx.rotate((localRotation * Math.PI) / 180);
+    // Draw mockup - create image inside effect like SingleScreenPreview
+    if (screen1.preview && style.showMockup) {
+      const img = new Image();
+      img.onload = () => {
+        if (isCancelled) return; // Don't draw if effect was cleaned up
 
-      drawMockupFrame(ctx, style.mockupStyle || 'realistic', mockupWidth, mockupHeight, frameColor, img);
+        ctx.save();
+        ctx.translate(mockupCenterX, mockupCenterY);
+        ctx.rotate((currentRotation * Math.PI) / 180);
 
-      ctx.restore();
+        drawMockupFrame(ctx, currentMockupStyle, mockupWidth, mockupHeight, frameColor, img);
+
+        ctx.restore();
+
+        // Draw text with mockup info for auto-sizing
+        const mockupInfo = {
+          centerY: mockupCenterY,
+          height: mockupHeight,
+          width: mockupWidth,
+          rotation: currentRotation
+        };
+        drawText(ctx, getDisplayText(screen1, index1), 0, previewHeight, singleScreenWidth, style, screen1.styleOverride, mockupInfo);
+        drawText(ctx, getDisplayText(screen2, index2), singleScreenWidth, previewHeight, singleScreenWidth, style, screen2.styleOverride, mockupInfo);
+      };
+      img.src = screen1.preview;
+    } else {
+      // No mockup - just draw text
+      drawText(ctx, getDisplayText(screen1, index1), 0, previewHeight, singleScreenWidth, style, screen1.styleOverride, undefined);
+      drawText(ctx, getDisplayText(screen2, index2), singleScreenWidth, previewHeight, singleScreenWidth, style, screen2.styleOverride, undefined);
     }
 
-    // Draw text with mockup info for auto-sizing
-    const mockupInfo = img && style.showMockup ? {
-      centerY: previewHeight * (0.5 + localOffsetY / 100),
-      height: previewHeight * 0.7 * (settings1.scale || 1.0),
-      width: previewHeight * 0.7 * (settings1.scale || 1.0) * 0.49,
-      rotation: localRotation
-    } : undefined;
-
-    // For screen1, mockup is positioned relative to singleScreenWidth, so centerY is the same
-    // For screen2, mockup spans across both screens, so it's relative to screen1's space
-    drawText(ctx, getDisplayText(screen1, index1), 0, previewHeight, singleScreenWidth, style, screen1.styleOverride, mockupInfo);
-    drawText(ctx, getDisplayText(screen2, index2), singleScreenWidth, previewHeight, singleScreenWidth, style, screen2.styleOverride, mockupInfo);
-  }, [dimensions, style, screen1, screen2, localOffsetX, localOffsetY, localRotation, settings1.scale, index1, index2, translationData, selectedLanguage]);
-
-  // Redraw on changes
-  useEffect(() => {
-    drawCanvas();
-  }, [drawCanvas]);
+    return () => {
+      isCancelled = true;
+    };
+  }, [dimensions, style, style.mockupScale, screen1, screen2, localOffsetX, localOffsetY, localRotation, index1, index2, translationData, selectedLanguage]);
 
   // Handle drag
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -666,6 +663,98 @@ function drawBackground(
     ctx.fillStyle = bgColor;
   }
   ctx.fillRect(x, y, width, height);
+
+  // Draw pattern if present
+  if (style.pattern && style.pattern.type !== 'none') {
+    drawPreviewPattern(ctx, x, y, width, height, style.pattern);
+  }
+}
+
+// Draw pattern for preview (simplified for performance)
+function drawPreviewPattern(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  pattern: StyleConfig['pattern']
+) {
+  if (!pattern || pattern.type === 'none') return;
+
+  const { type, color, opacity, size, spacing } = pattern;
+  const scale = 0.15; // Preview scale factor
+  const scaledSize = Math.max(1, size * scale);
+  const scaledSpacing = spacing * scale;
+
+  ctx.save();
+  ctx.globalAlpha = opacity;
+  ctx.translate(x, y);
+
+  switch (type) {
+    case 'dots':
+      ctx.fillStyle = color;
+      for (let px = scaledSpacing / 2; px < width; px += scaledSpacing) {
+        for (let py = scaledSpacing / 2; py < height; py += scaledSpacing) {
+          ctx.beginPath();
+          ctx.arc(px, py, scaledSize / 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      break;
+
+    case 'grid':
+      ctx.strokeStyle = color;
+      ctx.lineWidth = scaledSize;
+      for (let px = 0; px <= width; px += scaledSpacing) {
+        ctx.beginPath();
+        ctx.moveTo(px, 0);
+        ctx.lineTo(px, height);
+        ctx.stroke();
+      }
+      for (let py = 0; py <= height; py += scaledSpacing) {
+        ctx.beginPath();
+        ctx.moveTo(0, py);
+        ctx.lineTo(width, py);
+        ctx.stroke();
+      }
+      break;
+
+    case 'diagonal-lines':
+      ctx.strokeStyle = color;
+      ctx.lineWidth = scaledSize;
+      for (let i = -height; i < width + height; i += scaledSpacing) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i + height, height);
+        ctx.stroke();
+      }
+      break;
+
+    case 'circles':
+      ctx.strokeStyle = color;
+      ctx.lineWidth = scaledSize;
+      for (let px = scaledSpacing; px < width; px += scaledSpacing * 2) {
+        for (let py = scaledSpacing; py < height; py += scaledSpacing * 2) {
+          ctx.beginPath();
+          ctx.arc(px, py, scaledSpacing / 2, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+      break;
+
+    case 'squares':
+      ctx.strokeStyle = color;
+      ctx.lineWidth = scaledSize;
+      const squareSize = scaledSpacing * 0.6;
+      for (let px = scaledSpacing / 2; px < width; px += scaledSpacing) {
+        for (let py = scaledSpacing / 2; py < height; py += scaledSpacing) {
+          ctx.strokeRect(px - squareSize / 2, py - squareSize / 2, squareSize, squareSize);
+        }
+      }
+      break;
+  }
+
+  ctx.restore();
 }
 
 // Calculate rotated bounding box top position
@@ -999,7 +1088,7 @@ const SingleScreenPreview: React.FC<{
       img.onload = () => {
         const mockupCenterX = previewWidth * (0.5 + settings.offsetX / 100);
         const mockupCenterY = previewHeight * (0.5 + settings.offsetY / 100);
-        const mockupHeight = previewHeight * 0.7 * (settings.scale || 1);
+        const mockupHeight = previewHeight * 0.7 * (screenshot.mockupSettings?.scale ?? style.mockupScale ?? 1);
         const mockupWidth = mockupHeight * 0.49;
         const frameColor = style.mockupColor === 'white' ? '#F5F5F7' :
                           style.mockupColor === 'natural' ? '#E3D5C8' : '#1D1D1F';
@@ -1025,7 +1114,7 @@ const SingleScreenPreview: React.FC<{
     } else {
       drawText(ctx, getDisplayText(), 0, previewHeight, previewWidth, style, screenshot.styleOverride, undefined);
     }
-  }, [screenshot, style, deviceSize, settings, translationData, selectedLanguage, allScreenshots]);
+  }, [screenshot, style, style.mockupScale, deviceSize, settings, translationData, selectedLanguage, allScreenshots]);
 
   // Handle drag
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -1395,7 +1484,8 @@ export const ScreensFlowEditor: React.FC<Props> = ({
   onStyleChange,
   deviceSize,
   translationData,
-  selectedLanguage = 'all'
+  selectedLanguage = 'all',
+  onTranslationChange
 }) => {
   const [dragMode, setDragMode] = useState<DragMode>('mockup');
   const maxScreenshots = 10;
@@ -1458,6 +1548,10 @@ export const ScreensFlowEditor: React.FC<Props> = ({
     if (index >= screenshots.length - 1) return;
 
     const screen1Settings = screenshots[index].mockupSettings || DEFAULT_MOCKUP_SETTINGS;
+    // Don't copy scale - let it fall back to style.mockupScale
+    const { scale: _s1, ...screen1SettingsWithoutScale } = screen1Settings;
+    const screen2Settings = screenshots[index + 1].mockupSettings || DEFAULT_MOCKUP_SETTINGS;
+    const { scale: _s2, ...screen2SettingsWithoutScale } = screen2Settings;
 
     // When linking screen1 and screen2:
     // - screen2 uses screen1's screenshot in the mockup (continuation)
@@ -1473,7 +1567,7 @@ export const ScreensFlowEditor: React.FC<Props> = ({
         return {
           ...s,
           mockupSettings: {
-            ...screen1Settings,
+            ...screen1SettingsWithoutScale,
             linkedToNext: true,
             offsetX: 50 // Start at divider
           }
@@ -1487,7 +1581,7 @@ export const ScreensFlowEditor: React.FC<Props> = ({
           preview: '',
           linkedMockupIndex: index,
           mockupSettings: {
-            ...(s.mockupSettings || DEFAULT_MOCKUP_SETTINGS),
+            ...screen2SettingsWithoutScale,
             offsetX: -50,
             rotation: screen1Settings.rotation
           }
@@ -1533,6 +1627,30 @@ export const ScreensFlowEditor: React.FC<Props> = ({
     });
 
     onScreenshotsChange(newScreenshots);
+  };
+
+  // Text editing helpers
+  const isEditingTranslation = selectedLanguage !== 'all' && translationData;
+
+  const handleTextChange = (id: string, text: string) => {
+    onScreenshotsChange(
+      screenshots.map(s => s.id === id ? { ...s, text } : s)
+    );
+  };
+
+  const handleTranslatedTextChange = (index: number, text: string) => {
+    if (!translationData || !onTranslationChange || selectedLanguage === 'all') return;
+    const newHeadlines = { ...translationData.headlines };
+    newHeadlines[selectedLanguage] = [...(newHeadlines[selectedLanguage] || [])];
+    newHeadlines[selectedLanguage][index] = text;
+    onTranslationChange({ ...translationData, headlines: newHeadlines });
+  };
+
+  const getTextValue = (screenshot: Screenshot, index: number): string => {
+    if (isEditingTranslation) {
+      return translationData.headlines[selectedLanguage]?.[index] || screenshot.text;
+    }
+    return screenshot.text;
   };
 
   // Build render list - group linked pairs
@@ -1631,6 +1749,45 @@ export const ScreensFlowEditor: React.FC<Props> = ({
           Drag {dragMode === 'mockup' ? 'mockups' : 'text'} to position • Click ○ to link screens
         </span>
 
+        {/* Align to first button - only aligns Y position, keeps rotation */}
+        <button
+          onClick={() => {
+            if (screenshots.length < 2) return;
+            const firstSettings = screenshots[0].mockupSettings || DEFAULT_MOCKUP_SETTINGS;
+            const newScreenshots = screenshots.map((s, i) => {
+              if (i === 0) return s;
+              // Skip linked screens (they share settings with previous)
+              if (s.linkedMockupIndex !== undefined) return s;
+
+              // Only update offsetY, preserve everything else including not setting scale
+              const currentSettings = s.mockupSettings;
+              return {
+                ...s,
+                mockupSettings: {
+                  offsetX: currentSettings?.offsetX ?? 0,
+                  offsetY: firstSettings.offsetY,
+                  rotation: currentSettings?.rotation ?? 0,
+                  linkedToNext: currentSettings?.linkedToNext
+                  // Don't set scale - let it fall back to style.mockupScale
+                }
+              };
+            });
+            onScreenshotsChange(newScreenshots);
+          }}
+          style={{
+            padding: '6px 12px',
+            fontSize: '11px',
+            fontWeight: 500,
+            border: '1px solid #0071e3',
+            borderRadius: '6px',
+            backgroundColor: '#f0f7ff',
+            color: '#0071e3',
+            cursor: 'pointer'
+          }}
+        >
+          Align to First
+        </button>
+
         {/* Reset button */}
         <button
           onClick={() => {
@@ -1666,23 +1823,60 @@ export const ScreensFlowEditor: React.FC<Props> = ({
         {renderItems.map((item) => {
           if (item.type === 'pair') {
             return (
-              <div key={`pair-${item.index1}`} style={{ position: 'relative' }}>
-                <LinkedPairCanvas
-                  screen1={screenshots[item.index1]}
-                  screen2={screenshots[item.index2]}
-                  index1={item.index1}
-                  index2={item.index2}
-                  selectedIndex={selectedIndex}
-                  style={style}
-                  onStyleChange={onStyleChange}
-                  deviceSize={deviceSize}
-                  onSelectIndex={onSelectIndex}
-                  onBothSettingsChange={(s1, s2) => updateBothSettings(item.index1, item.index2, s1, s2)}
-                  onUnlink={() => unlinkScreens(item.index1)}
-                  translationData={translationData}
-                  selectedLanguage={selectedLanguage}
-                  dragMode={dragMode}
-                />
+              <div key={`pair-${item.index1}-scale-${style.mockupScale}`} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ position: 'relative' }}>
+                  <LinkedPairCanvas
+                    screen1={screenshots[item.index1]}
+                    screen2={screenshots[item.index2]}
+                    index1={item.index1}
+                    index2={item.index2}
+                    selectedIndex={selectedIndex}
+                    style={style}
+                    onStyleChange={onStyleChange}
+                    deviceSize={deviceSize}
+                    onSelectIndex={onSelectIndex}
+                    onBothSettingsChange={(s1, s2) => updateBothSettings(item.index1, item.index2, s1, s2)}
+                    onUnlink={() => unlinkScreens(item.index1)}
+                    translationData={translationData}
+                    selectedLanguage={selectedLanguage}
+                    dragMode={dragMode}
+                  />
+                </div>
+                {/* Text inputs for linked pair */}
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {[item.index1, item.index2].map((idx) => (
+                    <input
+                      key={idx}
+                      type="text"
+                      value={getTextValue(screenshots[idx], idx)}
+                      onChange={(e) => {
+                        if (isEditingTranslation) {
+                          handleTranslatedTextChange(idx, e.target.value);
+                        } else {
+                          handleTextChange(screenshots[idx].id, e.target.value);
+                        }
+                      }}
+                      placeholder={`Screen ${idx + 1} headline`}
+                      style={{
+                        flex: 1,
+                        padding: '8px 10px',
+                        fontSize: '12px',
+                        border: '1px solid #e0e0e5',
+                        borderRadius: '8px',
+                        outline: 'none',
+                        minWidth: 0
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = '#0071e3';
+                        e.target.style.boxShadow = '0 0 0 2px rgba(0, 113, 227, 0.1)';
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderColor = '#e0e0e5';
+                        e.target.style.boxShadow = 'none';
+                      }}
+                    />
+                  ))}
+                </div>
               </div>
             );
           } else {
@@ -1691,50 +1885,82 @@ export const ScreensFlowEditor: React.FC<Props> = ({
             if (isLastLinkedScreen) return null; // Skip - already rendered in pair
 
             return (
-              <div key={screen.id} style={{ position: 'relative' }}>
-                {/* Delete button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveScreenshot(screen.id);
+              <div key={screen.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ position: 'relative' }}>
+                  {/* Delete button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveScreenshot(screen.id);
+                    }}
+                    style={{
+                      position: 'absolute',
+                      top: '-8px',
+                      right: '-8px',
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      border: 'none',
+                      backgroundColor: '#ff3b30',
+                      color: '#fff',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 10,
+                      boxShadow: '0 2px 6px rgba(255,59,48,0.4)'
+                    }}
+                    title="Remove screenshot"
+                  >
+                    ×
+                  </button>
+                  <SingleScreenPreview
+                    screenshot={screen}
+                    index={item.index}
+                    isSelected={item.index === selectedIndex}
+                    style={style}
+                    deviceSize={deviceSize}
+                    onClick={() => onSelectIndex(item.index)}
+                    onSettingsChange={(settings) => updateSettings(item.index, settings)}
+                    onStyleChange={onStyleChange}
+                    onLinkToNext={() => linkScreens(item.index)}
+                    showLinkButton={item.index < screenshots.length - 1}
+                    translationData={translationData}
+                    selectedLanguage={selectedLanguage}
+                    allScreenshots={screenshots}
+                    dragMode={dragMode}
+                  />
+                </div>
+                {/* Text input below preview */}
+                <input
+                  type="text"
+                  value={getTextValue(screen, item.index)}
+                  onChange={(e) => {
+                    if (isEditingTranslation) {
+                      handleTranslatedTextChange(item.index, e.target.value);
+                    } else {
+                      handleTextChange(screen.id, e.target.value);
+                    }
                   }}
+                  placeholder={`Screen ${item.index + 1} headline`}
                   style={{
-                    position: 'absolute',
-                    top: '-8px',
-                    right: '-8px',
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    border: 'none',
-                    backgroundColor: '#ff3b30',
-                    color: '#fff',
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 10,
-                    boxShadow: '0 2px 6px rgba(255,59,48,0.4)'
+                    width: '100%',
+                    padding: '8px 10px',
+                    fontSize: '12px',
+                    border: '1px solid #e0e0e5',
+                    borderRadius: '8px',
+                    outline: 'none',
+                    boxSizing: 'border-box'
                   }}
-                  title="Remove screenshot"
-                >
-                  ×
-                </button>
-                <SingleScreenPreview
-                  screenshot={screen}
-                  index={item.index}
-                  isSelected={item.index === selectedIndex}
-                  style={style}
-                  deviceSize={deviceSize}
-                  onClick={() => onSelectIndex(item.index)}
-                  onSettingsChange={(settings) => updateSettings(item.index, settings)}
-                  onStyleChange={onStyleChange}
-                  onLinkToNext={() => linkScreens(item.index)}
-                  showLinkButton={item.index < screenshots.length - 1}
-                  translationData={translationData}
-                  selectedLanguage={selectedLanguage}
-                  allScreenshots={screenshots}
-                  dragMode={dragMode}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#0071e3';
+                    e.target.style.boxShadow = '0 0 0 2px rgba(0, 113, 227, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#e0e0e5';
+                    e.target.style.boxShadow = 'none';
+                  }}
                 />
               </div>
             );
