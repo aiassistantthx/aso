@@ -199,6 +199,54 @@ export const metadataProjects = {
     }),
 };
 
+// Wizard
+export const wizard = {
+  list: () => request<WizardProjectListItem[]>('/api/wizard'),
+
+  get: (id: string) => request<WizardProjectFull>(`/api/wizard/${id}`),
+
+  create: () =>
+    request<WizardProjectFull>('/api/wizard', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+
+  update: (id: string, data: Record<string, unknown>) =>
+    request<WizardProjectFull>(`/api/wizard/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    request<void>(`/api/wizard/${id}`, { method: 'DELETE' }),
+
+  uploadScreenshot: async (id: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return request<{ screenshotUrl: string; project: WizardProjectFull }>(
+      `/api/wizard/${id}/screenshots`,
+      { method: 'POST', body: formData },
+    );
+  },
+
+  removeScreenshot: (id: string, index: number) =>
+    request<WizardProjectFull>(`/api/wizard/${id}/screenshots/${index}`, {
+      method: 'DELETE',
+    }),
+
+  generateAll: (id: string) =>
+    request<WizardProjectFull>(`/api/wizard/${id}/generate-all`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+
+  translate: (id: string) =>
+    request<WizardProjectFull>(`/api/wizard/${id}/translate`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+};
+
 // Stripe
 export const stripe = {
   checkout: () =>
@@ -281,4 +329,41 @@ export interface ScreenshotRecord {
   decorations: unknown;
   styleOverride: unknown;
   mockupSettings: unknown;
+}
+
+export interface WizardProjectListItem {
+  id: string;
+  appName: string;
+  status: string;
+  currentStep: number;
+  tone: string;
+  updatedAt: string;
+}
+
+export interface WizardProjectFull {
+  id: string;
+  userId: string;
+  appName: string;
+  briefDescription: string;
+  targetKeywords: string;
+  uploadedScreenshots: string[] | null;
+  generateScreenshots: boolean;
+  generateIcon: boolean;
+  generateMetadata: boolean;
+  tone: string;
+  selectedTemplateId: string | null;
+  sourceLanguage: string;
+  targetLanguages: string[];
+  generatedHeadlines: string[] | null;
+  editedHeadlines: string[] | null;
+  generatedMetadata: Record<string, string> | null;
+  editedMetadata: Record<string, string> | null;
+  generatedIconUrl: string | null;
+  translatedHeadlines: Record<string, string[]> | null;
+  translatedMetadata: Record<string, Record<string, string>> | null;
+  styleConfig: Record<string, unknown> | null;
+  currentStep: number;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
 }

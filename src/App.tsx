@@ -6,6 +6,7 @@ import { Editor } from './components/Editor';
 import { Landing } from './components/Landing';
 import { ProfilePage } from './components/ProfilePage';
 import { MetadataPage } from './components/MetadataPage';
+import { WizardPage } from './components/WizardPage';
 import { projects as projectsApi, auth as authApi } from './services/api';
 
 type Route =
@@ -16,7 +17,9 @@ type Route =
   | { page: 'editor'; projectId: string }
   | { page: 'profile' }
   | { page: 'metadata' }
-  | { page: 'metadata-editor'; projectId: string };
+  | { page: 'metadata-editor'; projectId: string }
+  | { page: 'wizard' }
+  | { page: 'wizard-editor'; projectId: string };
 
 const defaultStyle = {
   backgroundColor: '#667eea',
@@ -131,6 +134,13 @@ function AppRouter() {
         if (projectId) {
           setRoute({ page: 'metadata-editor', projectId });
         }
+      } else if (path === '/wizard') {
+        setRoute({ page: 'wizard' });
+      } else if (path.startsWith('/wizard/')) {
+        const projectId = path.replace('/wizard/', '');
+        if (projectId) {
+          setRoute({ page: 'wizard-editor', projectId });
+        }
       } else if (path.startsWith('/editor/')) {
         const projectId = path.replace('/editor/', '');
         if (projectId) {
@@ -155,7 +165,7 @@ function AppRouter() {
         navigate('dashboard');
       }
     } else {
-      if (route.page === 'dashboard' || route.page === 'editor' || route.page === 'profile' || route.page === 'metadata' || route.page === 'metadata-editor') {
+      if (route.page === 'dashboard' || route.page === 'editor' || route.page === 'profile' || route.page === 'metadata' || route.page === 'metadata-editor' || route.page === 'wizard' || route.page === 'wizard-editor') {
         navigate('landing');
       }
     }
@@ -183,6 +193,12 @@ function AppRouter() {
     } else if (page === 'metadata') {
       path = '/metadata';
       newRoute = { page: 'metadata' };
+    } else if (page === 'wizard') {
+      path = '/wizard';
+      newRoute = { page: 'wizard' };
+    } else if (page === 'wizard-editor' && projectId) {
+      path = `/wizard/${projectId}`;
+      newRoute = { page: 'wizard-editor', projectId };
     } else if (page === 'metadata-editor' && projectId) {
       path = `/metadata/${projectId}`;
       newRoute = { page: 'metadata-editor', projectId };
@@ -265,6 +281,7 @@ function AppRouter() {
           onNewProject={handleNewProject}
           onOpenProfile={() => navigate('profile')}
           onOpenMetadata={() => navigate('metadata')}
+          onOpenWizard={() => navigate('wizard')}
         />
       );
 
@@ -289,6 +306,23 @@ function AppRouter() {
           projectId={route.projectId}
           onBack={() => navigate('metadata')}
           onOpenProject={(id) => navigate('metadata-editor', id)}
+        />
+      );
+
+    case 'wizard':
+      return (
+        <WizardPage
+          onBack={() => navigate('dashboard')}
+          onOpenProject={(id) => navigate('wizard-editor', id)}
+        />
+      );
+
+    case 'wizard-editor':
+      return (
+        <WizardPage
+          projectId={route.projectId}
+          onBack={() => navigate('dashboard')}
+          onOpenProject={(id) => navigate('wizard-editor', id)}
         />
       );
 

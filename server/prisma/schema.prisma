@@ -8,14 +8,15 @@ datasource db {
 }
 
 model User {
-  id               String        @id @default(cuid())
-  email            String        @unique
+  id               String           @id @default(cuid())
+  email            String           @unique
   passwordHash     String
   name             String?
-  stripeCustomerId String?       @unique
-  createdAt        DateTime      @default(now())
+  stripeCustomerId String?          @unique
+  createdAt        DateTime         @default(now())
   projects         Project[]
   metadataProjects MetadataProject[]
+  wizardProjects   WizardProject[]
   subscription     Subscription?
 }
 
@@ -78,4 +79,33 @@ model Screenshot {
   decorations    Json?
   styleOverride  Json?
   mockupSettings Json?
+}
+
+model WizardProject {
+  id                  String   @id @default(cuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id])
+  appName             String   @default("")
+  briefDescription    String   @default("")
+  targetKeywords      String   @default("")
+  uploadedScreenshots Json?
+  generateScreenshots Boolean  @default(true)
+  generateIcon        Boolean  @default(true)
+  generateMetadata    Boolean  @default(true)
+  tone                String   @default("bright")
+  selectedTemplateId  String?
+  sourceLanguage      String   @default("en-US")
+  targetLanguages     String[] @default([])
+  generatedHeadlines  Json?
+  editedHeadlines     Json?
+  generatedMetadata   Json?
+  editedMetadata      Json?
+  generatedIconUrl    String?
+  translatedHeadlines Json?
+  translatedMetadata  Json?
+  styleConfig         Json?
+  currentStep         Int      @default(1)
+  status              String   @default("draft")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }

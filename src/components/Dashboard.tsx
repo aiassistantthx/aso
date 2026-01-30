@@ -7,6 +7,7 @@ interface Props {
   onNewProject: () => void;
   onOpenProfile: () => void;
   onOpenMetadata?: () => void;
+  onOpenWizard?: () => void;
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -223,7 +224,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
 };
 
-export const Dashboard: React.FC<Props> = ({ onOpenProject, onNewProject, onOpenProfile, onOpenMetadata }) => {
+export const Dashboard: React.FC<Props> = ({ onOpenProject, onNewProject, onOpenProfile, onOpenMetadata, onOpenWizard }) => {
   const { user, logout } = useAuth();
   const [projectList, setProjectList] = useState<ProjectListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -334,6 +335,16 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNewProject, onOpen
             {plan === 'FREE' && ` / 3 max`}
           </span>
           <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              style={{
+                ...styles.newButton,
+                background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+                boxShadow: '0 4px 14px rgba(139, 92, 246, 0.35)',
+              }}
+              onClick={onOpenWizard}
+            >
+              Auto Generate
+            </button>
             <button
               style={{
                 ...styles.newButton,
