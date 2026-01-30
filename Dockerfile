@@ -6,6 +6,7 @@ COPY server/package.json ./server/
 RUN npm install
 COPY tsconfig.json tsconfig.node.json vite.config.ts index.html ./
 COPY src/ ./src/
+COPY public/ ./public/
 RUN npm run build
 
 # Stage 2: Build server
@@ -16,7 +17,7 @@ COPY server/package.json ./server/
 RUN npm install
 COPY server/ ./server/
 RUN cd server && npx prisma generate
-RUN npm run build:server
+RUN cd server && ../node_modules/.bin/tsup src/index.ts --format esm --dts
 
 # Stage 3: Production
 FROM node:20-alpine AS production
