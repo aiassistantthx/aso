@@ -1,31 +1,33 @@
 # Stage 1: Build frontend
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app
-COPY package.json package-lock.json* ./
+ENV NODE_ENV=development
+COPY package.json package-lock.json ./
 COPY server/package.json ./server/
-RUN npm install
+RUN npm ci
 COPY tsconfig.json tsconfig.node.json vite.config.ts index.html ./
 COPY src/ ./src/
 COPY public/ ./public/
-RUN npm run build
+RUN NODE_ENV=production npm run build
 
 # Stage 2: Build server
 FROM node:20-alpine AS server-builder
 WORKDIR /app
-COPY package.json package-lock.json* ./
+ENV NODE_ENV=development
+COPY package.json package-lock.json ./
 COPY server/package.json ./server/
-RUN npm install
+RUN npm ci
 COPY server/ ./server/
 RUN cd server && npx prisma generate
-RUN cd server && ../node_modules/.bin/tsup src/index.ts --format esm --dts
+RUN cd server && npx tsup src/index.ts --format esm --dts
 
 # Stage 3: Production
 FROM node:20-alpine AS production
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
+COPY package.json package-lock.json ./
 COPY server/package.json ./server/
-RUN npm install --omit=dev
+RUN npm ci --omit=dev
 
 COPY server/prisma/ ./server/prisma/
 RUN cd server && npx prisma generate
