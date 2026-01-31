@@ -14,7 +14,7 @@ type Route =
   | { page: 'login' }
   | { page: 'register' }
   | { page: 'dashboard' }
-  | { page: 'editor'; projectId: string }
+  | { page: 'editor'; projectId: string; fromWizardId?: string }
   | { page: 'profile' }
   | { page: 'metadata' }
   | { page: 'metadata-editor'; projectId: string }
@@ -318,7 +318,10 @@ function AppRouter() {
         <WizardPage
           onBack={() => navigate('dashboard')}
           onOpenProject={(id) => navigate('wizard-editor', id)}
-          onOpenEditor={(id) => navigate('editor', id)}
+          onOpenEditor={(id) => {
+            setRoute({ page: 'editor', projectId: id, fromWizardId: undefined });
+            window.history.pushState({}, '', `/editor/${id}`);
+          }}
         />
       );
 
@@ -328,7 +331,10 @@ function AppRouter() {
           projectId={route.projectId}
           onBack={() => navigate('dashboard')}
           onOpenProject={(id) => navigate('wizard-editor', id)}
-          onOpenEditor={(id) => navigate('editor', id)}
+          onOpenEditor={(id) => {
+            setRoute({ page: 'editor', projectId: id, fromWizardId: route.projectId });
+            window.history.pushState({}, '', `/editor/${id}`);
+          }}
         />
       );
 
@@ -336,7 +342,13 @@ function AppRouter() {
       return (
         <Editor
           projectId={route.projectId}
-          onBack={() => navigate('dashboard')}
+          onBack={() => {
+            if (route.fromWizardId) {
+              navigate('wizard-editor', route.fromWizardId);
+            } else {
+              navigate('dashboard');
+            }
+          }}
         />
       );
 

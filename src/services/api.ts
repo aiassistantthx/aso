@@ -249,10 +249,10 @@ export const wizard = {
       body: JSON.stringify({}),
     }),
 
-  toProject: (id: string) =>
+  toProject: (id: string, styleConfig?: Record<string, unknown>) =>
     request<ProjectFull>(`/api/wizard/${id}/to-project`, {
       method: 'POST',
-      body: JSON.stringify({}),
+      body: JSON.stringify({ styleConfig }),
     }),
 };
 

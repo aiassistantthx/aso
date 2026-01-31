@@ -251,8 +251,39 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
   const handleOpenInEditor = async () => {
     if (!project || !onOpenEditor) return;
     setError(null);
+
+    // Resolve template into concrete style config
+    const templateId = project.selectedTemplateId;
+    const themePreset = templateId ? THEME_PRESETS.find(t => t.id === templateId) : null;
+    const resolvedStyle: Record<string, unknown> = themePreset ? {
+      backgroundColor: themePreset.backgroundColor,
+      gradient: themePreset.gradient,
+      textColor: themePreset.textColor,
+      fontFamily: themePreset.fontFamily,
+      fontSize: themePreset.fontSize,
+      textPosition: 'top',
+      textAlign: themePreset.textAlign || 'center',
+      paddingTop: 80,
+      paddingBottom: 60,
+      showMockup: true,
+      mockupColor: themePreset.mockupColor,
+      mockupStyle: 'flat',
+      mockupVisibility: '2/3',
+      mockupAlignment: 'bottom',
+      mockupOffset: { x: 0, y: 0 },
+      textOffset: { x: 0, y: 0 },
+      mockupScale: themePreset.mockupScale || 1.0,
+      mockupRotation: 0,
+      mockupContinuation: 'none',
+      highlightColor: themePreset.highlightColor,
+      highlightPadding: 12,
+      highlightBorderRadius: 8,
+      pattern: themePreset.pattern,
+      alternatingColors: themePreset.alternatingColors,
+    } : {};
+
     try {
-      const newProject = await wizardApi.toProject(project.id);
+      const newProject = await wizardApi.toProject(project.id, resolvedStyle);
       onOpenEditor(newProject.id);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to create editor project');

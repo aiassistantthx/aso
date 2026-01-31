@@ -485,12 +485,12 @@ No text or letters. Square format.`,
       return reply.status(404).send({ error: 'Wizard project not found' });
     }
 
+    const body = request.body as Record<string, unknown> | null;
     const screenshots = (wizardProject.uploadedScreenshots as string[] | null) || [];
     const headlines = (wizardProject.editedHeadlines as string[] | null) || [];
 
-    // Build style config from selected template
-    const templateId = wizardProject.selectedTemplateId;
-    const styleConfig: Record<string, unknown> = {
+    // Use style config from request body (resolved from template on frontend), or fallback
+    const styleConfig: Record<string, unknown> = (body?.styleConfig as Record<string, unknown>) || {
       backgroundColor: '#667eea',
       gradient: { enabled: true, color1: '#667eea', color2: '#764ba2', angle: 135 },
       textColor: '#ffffff',
@@ -513,7 +513,6 @@ No text or letters. Square format.`,
       highlightColor: '#FFE135',
       highlightPadding: 12,
       highlightBorderRadius: 8,
-      templateId,
     };
 
     // Create the regular project
@@ -527,13 +526,27 @@ No text or letters. Square format.`,
       },
     });
 
-    // Create screenshot records with uploaded images and headlines
+    // Copy screenshot files from wizard dir to project dir
+    const projectUploadDir = path.join(process.cwd(), 'uploads', request.user.id, project.id);
+    if (!fs.existsSync(projectUploadDir)) {
+      fs.mkdirSync(projectUploadDir, { recursive: true });
+    }
+
     for (let i = 0; i < screenshots.length; i++) {
+      const srcPath = path.join(process.cwd(), screenshots[i]);
+      const fileName = path.basename(screenshots[i]);
+      const destPath = path.join(projectUploadDir, fileName);
+
+      // Copy file to new project directory
+      if (fs.existsSync(srcPath)) {
+        fs.copyFileSync(srcPath, destPath);
+      }
+
       await fastify.prisma.screenshot.create({
         data: {
           projectId: project.id,
           order: i,
-          imagePath: screenshots[i],
+          imagePath: fileName,
           text: headlines[i] || '',
         },
       });
