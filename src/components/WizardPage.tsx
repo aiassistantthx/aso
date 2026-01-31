@@ -65,6 +65,10 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
   // Translation state
   const [translating, setTranslating] = useState(false);
 
+  // Upload state
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
+
   // Export state
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
@@ -178,14 +182,18 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
   const handleScreenshotUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!project || !e.target.files) return;
     const files = Array.from(e.target.files);
-    for (const file of files) {
+    setUploading(true);
+    setUploadProgress({ current: 0, total: files.length });
+    for (let i = 0; i < files.length; i++) {
+      setUploadProgress({ current: i + 1, total: files.length });
       try {
-        const result = await wizardApi.uploadScreenshot(project.id, file);
+        const result = await wizardApi.uploadScreenshot(project.id, files[i]);
         setProject(result.project);
       } catch {
         setError('Failed to upload screenshot');
       }
     }
+    setUploading(false);
     e.target.value = '';
   };
 
@@ -668,7 +676,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
                 </div>
               ))}
 
-              {(project.uploadedScreenshots || []).length < 8 && (
+              {(project.uploadedScreenshots || []).length < 8 && !uploading && (
                 <label style={{
                   borderRadius: '12px', border: '2px dashed #d1d1d6',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -688,16 +696,38 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
               )}
             </div>
 
-            <p style={{ fontSize: '13px', color: '#86868b' }}>
-              {(project.uploadedScreenshots || []).length}/8 screenshots uploaded
-              {(project.uploadedScreenshots || []).length < 3 && ' (minimum 3)'}
-            </p>
+            {uploading ? (
+              <div style={{ marginBottom: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+                  <div style={{ flex: 1, height: '6px', backgroundColor: '#e5e5ea', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div style={{
+                      width: `${Math.round((uploadProgress.current / uploadProgress.total) * 100)}%`,
+                      height: '100%',
+                      backgroundColor: '#0071e3',
+                      borderRadius: '3px',
+                      transition: 'width 0.3s',
+                    }} />
+                  </div>
+                  <span style={{ fontSize: '13px', color: '#86868b', minWidth: '40px' }}>
+                    {uploadProgress.current}/{uploadProgress.total}
+                  </span>
+                </div>
+                <p style={{ fontSize: '13px', color: '#0071e3', fontWeight: 500 }}>
+                  Uploading screenshot {uploadProgress.current} of {uploadProgress.total}...
+                </p>
+              </div>
+            ) : (
+              <p style={{ fontSize: '13px', color: '#86868b' }}>
+                {(project.uploadedScreenshots || []).length}/8 screenshots uploaded
+                {(project.uploadedScreenshots || []).length < 3 && ' (minimum 3)'}
+              </p>
+            )}
 
             <div style={pageStyles.stepActions}>
-              <button style={pageStyles.secondaryButton} onClick={prevStep}>Back</button>
+              <button style={pageStyles.secondaryButton} onClick={prevStep} disabled={uploading}>Back</button>
               <button
-                style={{ ...pageStyles.primaryButton, opacity: canProceed(2) ? 1 : 0.5 }}
-                disabled={!canProceed(2)}
+                style={{ ...pageStyles.primaryButton, opacity: canProceed(2) && !uploading ? 1 : 0.5 }}
+                disabled={!canProceed(2) || uploading}
                 onClick={nextStep}
               >
                 Next
