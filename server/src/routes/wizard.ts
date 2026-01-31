@@ -165,7 +165,7 @@ export default async function wizardRoutes(fastify: FastifyInstance) {
     }
 
     await fastify.prisma.wizardProject.delete({ where: { id } });
-    return reply.status(204).send();
+    return reply.send({ ok: true });
   });
 
   // Upload screenshot
@@ -275,6 +275,8 @@ Generate ${count} compelling short headlines for "${project.appName}".
 App description: "${project.briefDescription}"
 Target keywords: "${project.targetKeywords}"
 
+IMPORTANT: Generate all headlines in English (en-US), regardless of the language of the app name or description provided.
+
 Rules:
 - Each headline: 3-8 words, highlight 1-2 key words with [brackets]
 - Cover different features/benefits in sequence
@@ -323,6 +325,8 @@ Rules:
 
 App Name: "${project.appName}"
 Brief Description: "${project.briefDescription}"${keywordsLine}
+
+IMPORTANT: Generate all metadata in English (en-US), regardless of the language of the app name or description provided.
 
 Return a JSON object with these fields: ${fieldsDescription}
 
@@ -467,6 +471,81 @@ No text or letters. Square format.`,
     });
 
     return updated;
+  });
+
+  // Convert wizard project to regular project for manual editing
+  fastify.post('/api/wizard/:id/to-project', {
+    onRequest: [fastify.authenticate],
+  }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const wizardProject = await fastify.prisma.wizardProject.findFirst({
+      where: { id, userId: request.user.id },
+    });
+    if (!wizardProject) {
+      return reply.status(404).send({ error: 'Wizard project not found' });
+    }
+
+    const screenshots = (wizardProject.uploadedScreenshots as string[] | null) || [];
+    const headlines = (wizardProject.editedHeadlines as string[] | null) || [];
+
+    // Build style config from selected template
+    const templateId = wizardProject.selectedTemplateId;
+    const styleConfig: Record<string, unknown> = {
+      backgroundColor: '#667eea',
+      gradient: { enabled: true, color1: '#667eea', color2: '#764ba2', angle: 135 },
+      textColor: '#ffffff',
+      fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif',
+      fontSize: 72,
+      textPosition: 'top',
+      textAlign: 'center',
+      paddingTop: 80,
+      paddingBottom: 60,
+      showMockup: true,
+      mockupColor: 'black',
+      mockupStyle: 'flat',
+      mockupVisibility: '2/3',
+      mockupAlignment: 'bottom',
+      mockupOffset: { x: 0, y: 0 },
+      textOffset: { x: 0, y: 0 },
+      mockupScale: 1.0,
+      mockupRotation: 0,
+      mockupContinuation: 'none',
+      highlightColor: '#FFE135',
+      highlightPadding: 12,
+      highlightBorderRadius: 8,
+      templateId,
+    };
+
+    // Create the regular project
+    const project = await fastify.prisma.project.create({
+      data: {
+        userId: request.user.id,
+        name: wizardProject.appName || 'Wizard Project',
+        styleConfig: styleConfig as Prisma.InputJsonValue,
+        sourceLanguage: wizardProject.sourceLanguage,
+        targetLanguages: wizardProject.targetLanguages,
+      },
+    });
+
+    // Create screenshot records with uploaded images and headlines
+    for (let i = 0; i < screenshots.length; i++) {
+      await fastify.prisma.screenshot.create({
+        data: {
+          projectId: project.id,
+          order: i,
+          imagePath: screenshots[i],
+          text: headlines[i] || '',
+        },
+      });
+    }
+
+    // Fetch the full project with screenshots
+    const fullProject = await fastify.prisma.project.findUnique({
+      where: { id: project.id },
+      include: { screenshots: { orderBy: { order: 'asc' } } },
+    });
+
+    return reply.status(201).send(fullProject);
   });
 
   // Translate headlines + metadata

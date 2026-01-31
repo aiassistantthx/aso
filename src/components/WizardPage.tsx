@@ -12,6 +12,7 @@ interface Props {
   projectId?: string;
   onBack: () => void;
   onOpenProject: (id: string) => void;
+  onOpenEditor?: (projectId: string) => void;
 }
 
 const STEPS = [
@@ -42,7 +43,7 @@ const IOS_FIELD_LABELS: Record<string, string> = {
   keywords: 'Keywords',
 };
 
-export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject }) => {
+export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, onOpenEditor }) => {
   const { user } = useAuth();
   const plan = user?.plan ?? 'FREE';
 
@@ -144,8 +145,8 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject }
     try {
       await wizardApi.delete(id);
       setProjectList(prev => prev.filter(p => p.id !== id));
-    } catch {
-      // ignore
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Failed to delete project');
     }
   };
 
@@ -238,6 +239,18 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject }
     }
   };
 
+  // Open in manual editor
+  const handleOpenInEditor = async () => {
+    if (!project || !onOpenEditor) return;
+    setError(null);
+    try {
+      const newProject = await wizardApi.toProject(project.id);
+      onOpenEditor(newProject.id);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Failed to create editor project');
+    }
+  };
+
   // Generate canvas previews
   useEffect(() => {
     if (!project || step !== 7) return;
@@ -264,8 +277,8 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject }
       showMockup: true,
       mockupColor: themePreset.mockupColor,
       mockupStyle: 'flat',
-      mockupVisibility: 'full',
-      mockupAlignment: 'center',
+      mockupVisibility: '2/3',
+      mockupAlignment: 'bottom',
       mockupOffset: { x: 0, y: 0 },
       textOffset: { x: 0, y: 0 },
       mockupScale: themePreset.mockupScale || 1.0,
@@ -342,8 +355,8 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject }
         showMockup: true,
         mockupColor: themePreset.mockupColor,
         mockupStyle: 'flat',
-        mockupVisibility: 'full',
-        mockupAlignment: 'center',
+        mockupVisibility: '2/3',
+        mockupAlignment: 'bottom',
         mockupOffset: { x: 0, y: 0 },
         textOffset: { x: 0, y: 0 },
         mockupScale: themePreset.mockupScale || 1.0,
@@ -812,18 +825,15 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject }
             <p style={pageStyles.stepDesc}>Select source language and target languages for translation</p>
 
             <label style={pageStyles.label}>Source Language</label>
-            <select
-              style={pageStyles.input}
-              value={project.sourceLanguage}
-              onChange={e => {
-                setProject({ ...project, sourceLanguage: e.target.value });
-                saveField({ sourceLanguage: e.target.value });
-              }}
-            >
-              {APP_STORE_LANGUAGES.map(l => (
-                <option key={l.code} value={l.code}>{l.name} ({l.nativeName})</option>
-              ))}
-            </select>
+            <div style={{
+              ...pageStyles.input,
+              backgroundColor: '#f0f0f5',
+              color: '#86868b',
+              cursor: 'not-allowed',
+              marginBottom: '8px',
+            }}>
+              English (U.S.) — all content is generated in English first
+            </div>
 
             <label style={pageStyles.label}>
               Target Languages
@@ -1031,7 +1041,21 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject }
             )}
 
             <div style={pageStyles.stepActions}>
-              <button style={pageStyles.secondaryButton} onClick={() => goToStep(6)}>Regenerate</button>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button style={pageStyles.secondaryButton} onClick={() => goToStep(6)}>Regenerate</button>
+                {onOpenEditor && (
+                  <button
+                    style={{
+                      ...pageStyles.secondaryButton,
+                      borderColor: '#8B5CF6',
+                      color: '#8B5CF6',
+                    }}
+                    onClick={handleOpenInEditor}
+                  >
+                    Edit in Editor
+                  </button>
+                )}
+              </div>
               <button style={pageStyles.primaryButton} onClick={nextStep}>
                 Continue to Translation
               </button>

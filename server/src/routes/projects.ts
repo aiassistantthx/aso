@@ -139,7 +139,7 @@ export default async function projectRoutes(fastify: FastifyInstance) {
       fs.rmSync(uploadDir, { recursive: true });
     }
 
-    return reply.status(204).send();
+    return reply.send({ ok: true });
   });
 
   // Autosave

@@ -7,7 +7,7 @@ import { Landing } from './components/Landing';
 import { ProfilePage } from './components/ProfilePage';
 import { MetadataPage } from './components/MetadataPage';
 import { WizardPage } from './components/WizardPage';
-import { projects as projectsApi, auth as authApi } from './services/api';
+import { projects as projectsApi, auth as authApi, ApiError } from './services/api';
 
 type Route =
   | { page: 'landing' }
@@ -223,7 +223,11 @@ function AppRouter() {
       const project = await projectsApi.create(name.trim(), defaultStyle);
       navigate('editor', project.id);
     } catch (err) {
-      console.error('Failed to create project:', err);
+      if (err instanceof ApiError && err.status === 403) {
+        window.alert(err.message || 'Plan limit reached. Upgrade to Pro for unlimited projects.');
+      } else {
+        console.error('Failed to create project:', err);
+      }
     }
   }, [navigate]);
 
@@ -314,6 +318,7 @@ function AppRouter() {
         <WizardPage
           onBack={() => navigate('dashboard')}
           onOpenProject={(id) => navigate('wizard-editor', id)}
+          onOpenEditor={(id) => navigate('editor', id)}
         />
       );
 
@@ -323,6 +328,7 @@ function AppRouter() {
           projectId={route.projectId}
           onBack={() => navigate('dashboard')}
           onOpenProject={(id) => navigate('wizard-editor', id)}
+          onOpenEditor={(id) => navigate('editor', id)}
         />
       );
 

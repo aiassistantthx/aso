@@ -42,7 +42,7 @@ async function request<T>(
   const data = await response.json();
 
   if (!response.ok) {
-    throw new ApiError(response.status, data.error || 'Request failed', data.limit);
+    throw new ApiError(response.status, data.message || data.error || 'Request failed', data.limit);
   }
 
   return data as T;
@@ -90,7 +90,10 @@ export const auth = {
   hasToken: () => !!getToken(),
 
   togglePlan: () =>
-    request<{ plan: 'FREE' | 'PRO' }>('/api/auth/toggle-plan', { method: 'POST' }),
+    request<{ plan: 'FREE' | 'PRO' }>('/api/auth/toggle-plan', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
 };
 
 // Projects
@@ -112,7 +115,7 @@ export const projects = {
     }),
 
   delete: (id: string) =>
-    request<void>(`/api/projects/${id}`, { method: 'DELETE' }),
+    request<{ ok: boolean }>(`/api/projects/${id}`, { method: 'DELETE' }),
 
   autosave: (id: string, data: Record<string, unknown>) =>
     request<{ ok: boolean; updatedAt: string }>(`/api/projects/${id}/autosave`, {
@@ -218,7 +221,7 @@ export const wizard = {
     }),
 
   delete: (id: string) =>
-    request<void>(`/api/wizard/${id}`, { method: 'DELETE' }),
+    request<{ ok: boolean }>(`/api/wizard/${id}`, { method: 'DELETE' }),
 
   uploadScreenshot: async (id: string, file: File) => {
     const formData = new FormData();
@@ -242,6 +245,12 @@ export const wizard = {
 
   translate: (id: string) =>
     request<WizardProjectFull>(`/api/wizard/${id}/translate`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+
+  toProject: (id: string) =>
+    request<ProjectFull>(`/api/wizard/${id}/to-project`, {
       method: 'POST',
       body: JSON.stringify({}),
     }),
