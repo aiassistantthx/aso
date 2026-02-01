@@ -25,8 +25,8 @@ async function request<T>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  // Only set Content-Type for non-FormData requests
-  if (!(options.body instanceof FormData)) {
+  // Only set Content-Type when there's a body and it's not FormData
+  if (options.body && !(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
   }
 

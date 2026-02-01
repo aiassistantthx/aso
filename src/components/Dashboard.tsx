@@ -267,7 +267,7 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNewProject, onOpen
       await projectsApi.delete(id);
       setProjectList((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
-      console.error('Failed to delete project:', err);
+      window.alert(err instanceof Error ? err.message : 'Failed to delete project');
     }
   };
 
