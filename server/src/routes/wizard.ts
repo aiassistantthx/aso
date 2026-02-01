@@ -266,6 +266,7 @@ export default async function wizardRoutes(fastify: FastifyInstance) {
 
     const screenshots = (project.uploadedScreenshots as string[] | null) || [];
     const results: Record<string, unknown> = {};
+    const errors: string[] = [];
 
     // 1. Generate headlines if screenshots service is enabled
     if (project.generateScreenshots && screenshots.length > 0) {
@@ -298,12 +299,16 @@ Rules:
         const parsed = JSON.parse(content) as { headlines: string[] };
         const headlines = parsed.headlines || [];
 
-        results.generatedHeadlines = headlines;
-        results.editedHeadlines = headlines;
+        if (headlines.length > 0) {
+          results.generatedHeadlines = headlines;
+          results.editedHeadlines = headlines;
+        } else {
+          errors.push('Headlines generation returned empty results');
+        }
       } catch (error) {
         fastify.log.error(error, 'Headlines generation error');
-        results.generatedHeadlines = [];
-        results.editedHeadlines = [];
+        errors.push(`Headlines generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        // Don't overwrite existing headlines on failure
       }
 
       // Select template based on tone
@@ -401,6 +406,7 @@ Rules:
         results.editedMetadata = metadata;
       } catch (error) {
         fastify.log.error(error, 'Metadata generation error');
+        errors.push(`Metadata generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
 
@@ -440,37 +446,42 @@ No text or letters. Square format.`,
         }
       } catch (error) {
         fastify.log.error(error, 'Icon generation error');
+        errors.push(`Icon generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
 
-    // Update project with all results
+    // Only update fields that were successfully generated
+    const updateData: Record<string, unknown> = {
+      status: 'generated',
+      currentStep: 7,
+    };
+
+    if (results.generatedHeadlines !== undefined) {
+      updateData.generatedHeadlines = results.generatedHeadlines as Prisma.InputJsonValue;
+      updateData.editedHeadlines = results.editedHeadlines as Prisma.InputJsonValue;
+    }
+    if (results.generatedMetadata !== undefined) {
+      updateData.generatedMetadata = results.generatedMetadata as Prisma.InputJsonValue;
+      updateData.editedMetadata = results.editedMetadata as Prisma.InputJsonValue;
+    }
+    if (results.generatedIconUrl !== undefined) {
+      updateData.generatedIconUrl = results.generatedIconUrl as string;
+    }
+    if (results.selectedTemplateId !== undefined) {
+      updateData.selectedTemplateId = results.selectedTemplateId as string;
+    }
+
     const updated = await fastify.prisma.wizardProject.update({
       where: { id },
-      data: {
-        ...(results.generatedHeadlines !== undefined && {
-          generatedHeadlines: results.generatedHeadlines as Prisma.InputJsonValue,
-        }),
-        ...(results.editedHeadlines !== undefined && {
-          editedHeadlines: results.editedHeadlines as Prisma.InputJsonValue,
-        }),
-        ...(results.generatedMetadata !== undefined && {
-          generatedMetadata: results.generatedMetadata as Prisma.InputJsonValue,
-        }),
-        ...(results.editedMetadata !== undefined && {
-          editedMetadata: results.editedMetadata as Prisma.InputJsonValue,
-        }),
-        ...(results.generatedIconUrl !== undefined && {
-          generatedIconUrl: results.generatedIconUrl as string,
-        }),
-        ...(results.selectedTemplateId !== undefined && {
-          selectedTemplateId: results.selectedTemplateId as string,
-        }),
-        status: 'generated',
-        currentStep: 7,
-      },
+      data: updateData,
     });
 
-    return updated;
+    // Return project with any generation errors so frontend can display them
+    const response: Record<string, unknown> = { ...updated };
+    if (errors.length > 0) {
+      response.generationErrors = errors;
+    }
+    return response;
   });
 
   // Convert wizard project to regular project for manual editing

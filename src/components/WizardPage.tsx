@@ -216,6 +216,11 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
 
     try {
       const updated = await wizardApi.generateAll(project.id);
+      // Check for partial generation errors
+      const genErrors = (updated as unknown as Record<string, unknown>).generationErrors as string[] | undefined;
+      if (genErrors && genErrors.length > 0) {
+        setError('Some generation steps failed: ' + genErrors.join('; '));
+      }
       setProject(updated);
       setStep(7);
     } catch (err) {
