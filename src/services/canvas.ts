@@ -38,7 +38,16 @@ let mockupImageCache: HTMLImageElement | null = null;
 const loadImage = (src: string): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    // Only set crossOrigin for cross-origin URLs (e.g. external DALL-E images)
+    // Same-origin /uploads/ paths don't need it and it can cause CORS failures
+    try {
+      const url = new URL(src, window.location.origin);
+      if (url.origin !== window.location.origin) {
+        img.crossOrigin = 'anonymous';
+      }
+    } catch {
+      // relative URL — same origin, no crossOrigin needed
+    }
     img.onload = () => resolve(img);
     img.onerror = reject;
     img.src = src;

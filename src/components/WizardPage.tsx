@@ -290,14 +290,24 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
     }
   };
 
+  // Preview loading state
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+
   // Generate canvas previews
   useEffect(() => {
     if (!project || step !== 7) return;
-    if (!project.editedHeadlines || !project.uploadedScreenshots) return;
+    if (!project.editedHeadlines?.length || !project.uploadedScreenshots?.length) {
+      setPreviewCanvases([]);
+      return;
+    }
 
     const templateId = project.selectedTemplateId;
     const themePreset = templateId ? THEME_PRESETS.find(t => t.id === templateId) : null;
-    if (!themePreset) return;
+    if (!themePreset) {
+      setPreviewError(`Template "${templateId}" not found`);
+      return;
+    }
 
     const screenshots = project.uploadedScreenshots;
     const headlines = project.editedHeadlines;
@@ -330,6 +340,8 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
     };
 
     const generatePreviews = async () => {
+      setPreviewLoading(true);
+      setPreviewError(null);
       const canvases: HTMLCanvasElement[] = [];
       for (let i = 0; i < Math.min(screenshots.length, headlines.length); i++) {
         const effectiveStyle = { ...style };
@@ -353,11 +365,15 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
             deviceSize,
           });
           canvases.push(canvas);
-        } catch {
-          // skip failed previews
+        } catch (err) {
+          console.error(`Preview ${i} failed:`, err);
         }
       }
+      if (canvases.length === 0 && screenshots.length > 0) {
+        setPreviewError('Failed to generate previews. Your screenshots are still saved.');
+      }
       setPreviewCanvases(canvases);
+      setPreviewLoading(false);
     };
 
     generatePreviews();
@@ -394,9 +410,9 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
         showMockup: true,
         mockupColor: themePreset.mockupColor,
         mockupStyle: 'flat',
-        mockupVisibility: '2/3',
+        mockupVisibility: 'full',
         mockupAlignment: 'bottom',
-        mockupOffset: { x: 0, y: 0 },
+        mockupOffset: { x: 0, y: 60 },
         textOffset: { x: 0, y: 0 },
         mockupScale: themePreset.mockupScale || 1.0,
         mockupRotation: 0,
@@ -1004,42 +1020,75 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
             <p style={pageStyles.stepDesc}>Review and edit generated content</p>
 
             {/* Screenshot previews */}
-            {project.generateScreenshots && project.editedHeadlines && (
+            {project.generateScreenshots && (
               <div style={{ marginBottom: '32px' }}>
                 <h3 style={pageStyles.sectionTitle}>Screenshots</h3>
-                <div
-                  ref={previewContainerRef}
-                  style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '12px' }}
-                >
-                  {previewCanvases.map((canvas, i) => (
-                    <div key={i} style={{ flexShrink: 0, width: '180px' }}>
-                      <img
-                        src={canvas.toDataURL()}
-                        alt={`Preview ${i + 1}`}
-                        style={{ width: '100%', borderRadius: '12px', border: '1px solid #e5e5ea' }}
-                      />
-                    </div>
-                  ))}
-                </div>
 
-                <div style={{ marginTop: '16px' }}>
-                  <label style={pageStyles.label}>Headlines (edit below)</label>
-                  {(project.editedHeadlines || []).map((headline, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                      <span style={{ fontSize: '13px', color: '#86868b', minWidth: '24px' }}>{i + 1}.</span>
-                      <input
-                        style={{ ...pageStyles.input, marginBottom: 0 }}
-                        value={headline}
-                        onChange={e => {
-                          const newHeadlines = [...(project.editedHeadlines || [])];
-                          newHeadlines[i] = e.target.value;
-                          setProject({ ...project, editedHeadlines: newHeadlines });
-                        }}
-                        onBlur={() => saveField({ editedHeadlines: project.editedHeadlines })}
-                      />
+                {previewLoading ? (
+                  <div style={{ textAlign: 'center', padding: '32px 0' }}>
+                    <div style={pageStyles.spinner} />
+                    <p style={{ marginTop: '12px', fontSize: '14px', color: '#86868b' }}>Generating previews...</p>
+                  </div>
+                ) : previewCanvases.length > 0 ? (
+                  <div
+                    ref={previewContainerRef}
+                    style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '12px' }}
+                  >
+                    {previewCanvases.map((canvas, i) => (
+                      <div key={i} style={{ flexShrink: 0, width: '180px' }}>
+                        <img
+                          src={canvas.toDataURL()}
+                          alt={`Preview ${i + 1}`}
+                          style={{ width: '100%', borderRadius: '12px', border: '1px solid #e5e5ea' }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (project.uploadedScreenshots?.length ?? 0) > 0 ? (
+                  <div>
+                    {previewError && (
+                      <p style={{ fontSize: '13px', color: '#f59e0b', marginBottom: '12px' }}>{previewError}</p>
+                    )}
+                    <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '12px' }}>
+                      {(project.uploadedScreenshots || []).map((url, i) => (
+                        <div key={i} style={{ flexShrink: 0, width: '120px' }}>
+                          <img
+                            src={url}
+                            alt={`Screenshot ${i + 1}`}
+                            style={{ width: '100%', borderRadius: '10px', border: '1px solid #e5e5ea' }}
+                          />
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ) : (
+                  <p style={{ fontSize: '14px', color: '#86868b' }}>No screenshots uploaded.</p>
+                )}
+
+                {(project.editedHeadlines?.length ?? 0) > 0 ? (
+                  <div style={{ marginTop: '16px' }}>
+                    <label style={pageStyles.label}>Headlines (edit below)</label>
+                    {(project.editedHeadlines || []).map((headline, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '13px', color: '#86868b', minWidth: '24px' }}>{i + 1}.</span>
+                        <input
+                          style={{ ...pageStyles.input, marginBottom: 0 }}
+                          value={headline}
+                          onChange={e => {
+                            const newHeadlines = [...(project.editedHeadlines || [])];
+                            newHeadlines[i] = e.target.value;
+                            setProject({ ...project, editedHeadlines: newHeadlines });
+                          }}
+                          onBlur={() => saveField({ editedHeadlines: project.editedHeadlines })}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#fef3cd', borderRadius: '12px', fontSize: '14px', color: '#856404' }}>
+                    No headlines were generated. Go back to Step 6 and try generating again.
+                  </div>
+                )}
               </div>
             )}
 
