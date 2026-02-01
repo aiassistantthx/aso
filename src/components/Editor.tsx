@@ -196,39 +196,38 @@ export const Editor: React.FC<Props> = ({ projectId, onBack }) => {
           setTranslationData(project.translationData as unknown as TranslationData);
         }
 
-        // Convert DB screenshots to frontend format
-        const loadedScreenshots: Screenshot[] = await Promise.all(
-          project.screenshots.map(async (s) => {
-            let preview = '';
-            if (s.imagePath) {
-              const imageUrl = `/uploads/${project.userId}/${projectId}/${s.imagePath}`;
-              // Load image as base64 for canvas rendering
-              try {
-                const response = await fetch(imageUrl);
-                const blob = await response.blob();
-                preview = await new Promise<string>((resolve) => {
-                  const reader = new FileReader();
-                  reader.onloadend = () => resolve(reader.result as string);
-                  reader.readAsDataURL(blob);
-                });
-              } catch {
-                preview = '';
-              }
-            }
-            return {
-              id: s.id,
-              file: null,
-              preview,
-              text: s.text || '',
-              decorations: s.decorations as Screenshot['decorations'],
-              styleOverride: s.styleOverride as Screenshot['styleOverride'],
-              mockupSettings: s.mockupSettings as Screenshot['mockupSettings'],
-            };
-          }),
-        );
+        // Convert DB screenshots to frontend format — show immediately with URL previews
+        const initialScreenshots: Screenshot[] = project.screenshots.map((s) => ({
+          id: s.id,
+          file: null,
+          preview: s.imagePath ? `/uploads/${project.userId}/${projectId}/${s.imagePath}` : '',
+          text: s.text || '',
+          decorations: s.decorations as Screenshot['decorations'],
+          styleOverride: s.styleOverride as Screenshot['styleOverride'],
+          mockupSettings: s.mockupSettings as Screenshot['mockupSettings'],
+        }));
 
-        setScreenshots(loadedScreenshots);
+        setScreenshots(initialScreenshots);
         setLoaded(true);
+
+        // Then load base64 versions in background for canvas rendering
+        for (let i = 0; i < initialScreenshots.length; i++) {
+          const s = project.screenshots[i];
+          if (!s.imagePath) continue;
+          const imageUrl = `/uploads/${project.userId}/${projectId}/${s.imagePath}`;
+          try {
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            const base64 = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.readAsDataURL(blob);
+            });
+            setScreenshots(prev => prev.map((sc, idx) => idx === i ? { ...sc, preview: base64 } : sc));
+          } catch {
+            // Keep the URL-based preview as fallback
+          }
+        }
       } catch (err) {
         console.error('Failed to load project:', err);
         onBack();
