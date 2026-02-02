@@ -611,9 +611,10 @@ No text or letters. Square format.`,
     const translatedHeadlines: Record<string, string[]> = {};
     const translatedMetadata: Record<string, Record<string, string>> = {};
 
-    for (const lang of project.targetLanguages) {
-      if (lang === project.sourceLanguage) continue;
+    const langsToTranslate = project.targetLanguages.filter(l => l !== project.sourceLanguage);
 
+    // Translate a single language (headlines + metadata)
+    const translateLang = async (lang: string) => {
       // Translate headlines
       if (editedHeadlines && editedHeadlines.length > 0) {
         try {
@@ -743,6 +744,13 @@ Rules:
           translatedMetadata[lang] = { ...editedMetadata };
         }
       }
+    };
+
+    // Run translations in parallel batches of 5
+    const BATCH_SIZE = 5;
+    for (let i = 0; i < langsToTranslate.length; i += BATCH_SIZE) {
+      const batch = langsToTranslate.slice(i, i + BATCH_SIZE);
+      await Promise.all(batch.map(translateLang));
     }
 
     const updated = await fastify.prisma.wizardProject.update({
