@@ -360,6 +360,7 @@ export interface WizardProjectFull {
   generateIcon: boolean;
   generateMetadata: boolean;
   tone: string;
+  layoutPreset: string;
   selectedTemplateId: string | null;
   sourceLanguage: string;
   targetLanguages: string[];

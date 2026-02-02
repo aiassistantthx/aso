@@ -93,6 +93,7 @@ model WizardProject {
   generateIcon        Boolean  @default(true)
   generateMetadata    Boolean  @default(true)
   tone                String   @default("bright")
+  layoutPreset        String   @default("bottom")
   selectedTemplateId  String?
   sourceLanguage      String   @default("en-US")
   targetLanguages     String[] @default([])

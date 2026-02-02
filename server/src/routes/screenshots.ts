@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import fs from 'fs';
 import path from 'path';
 import { pipeline } from 'stream/promises';
+import { UPLOADS_DIR } from '../config.js';
 
 export default async function screenshotRoutes(fastify: FastifyInstance) {
   // Upload screenshot
@@ -25,7 +26,7 @@ export default async function screenshotRoutes(fastify: FastifyInstance) {
     }
 
     // Create upload directory
-    const uploadDir = path.join(process.cwd(), 'uploads', request.user.id, projectId);
+    const uploadDir = path.join(UPLOADS_DIR, request.user.id, projectId);
     fs.mkdirSync(uploadDir, { recursive: true });
 
     // Generate filename
@@ -118,7 +119,7 @@ export default async function screenshotRoutes(fastify: FastifyInstance) {
 
     // Delete file
     if (screenshot.imagePath) {
-      const filepath = path.join(process.cwd(), 'uploads', request.user.id, projectId, screenshot.imagePath);
+      const filepath = path.join(UPLOADS_DIR, request.user.id, projectId, screenshot.imagePath);
       if (fs.existsSync(filepath)) {
         fs.unlinkSync(filepath);
       }

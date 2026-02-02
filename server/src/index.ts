@@ -17,6 +17,7 @@ import translateRoutes from './routes/translate.js';
 import stripeRoutes from './routes/stripe.js';
 import metadataRoutes from './routes/metadata.js';
 import wizardRoutes from './routes/wizard.js';
+import { UPLOADS_DIR } from './config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -59,7 +60,7 @@ async function start() {
   await fastify.register(wizardRoutes);
 
   // Serve uploaded files
-  const uploadsDir = path.join(process.cwd(), 'uploads');
+  const uploadsDir = UPLOADS_DIR;
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
   }

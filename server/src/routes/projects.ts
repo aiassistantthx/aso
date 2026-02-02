@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { Prisma } from '@prisma/client';
 import { checkProjectLimit } from '../middleware/planLimits.js';
+import { UPLOADS_DIR } from '../config.js';
 
 export default async function projectRoutes(fastify: FastifyInstance) {
   // List user's projects
@@ -134,7 +135,7 @@ export default async function projectRoutes(fastify: FastifyInstance) {
     // Clean up uploaded files
     const fs = await import('fs');
     const path = await import('path');
-    const uploadDir = path.join(process.cwd(), 'uploads', request.user.id, id);
+    const uploadDir = path.join(UPLOADS_DIR, request.user.id, id);
     if (fs.existsSync(uploadDir)) {
       fs.rmSync(uploadDir, { recursive: true });
     }

@@ -4,6 +4,7 @@ import OpenAI from 'openai';
 import path from 'path';
 import fs from 'fs';
 import { checkWizardProjectLimit, getPlanLimits } from '../middleware/planLimits.js';
+import { UPLOADS_DIR } from '../config.js';
 
 const IOS_LIMITS: Record<string, number> = {
   appName: 30,
@@ -119,6 +120,7 @@ export default async function wizardRoutes(fastify: FastifyInstance) {
         generateIcon: body.generateIcon as boolean | undefined,
         generateMetadata: body.generateMetadata as boolean | undefined,
         tone: body.tone as string | undefined,
+        layoutPreset: body.layoutPreset as string | undefined,
         selectedTemplateId: body.selectedTemplateId as string | undefined,
         sourceLanguage: body.sourceLanguage as string | undefined,
         targetLanguages: body.targetLanguages as string[] | undefined,
@@ -149,7 +151,7 @@ export default async function wizardRoutes(fastify: FastifyInstance) {
     const screenshots = project.uploadedScreenshots as string[] | null;
     if (screenshots) {
       for (const filePath of screenshots) {
-        const fullPath = path.join(process.cwd(), filePath);
+        const fullPath = path.join(UPLOADS_DIR, filePath.replace(/^\/uploads\/?/, ''));
         if (fs.existsSync(fullPath)) {
           fs.unlinkSync(fullPath);
         }
@@ -158,7 +160,7 @@ export default async function wizardRoutes(fastify: FastifyInstance) {
 
     // Clean up generated icon
     if (project.generatedIconUrl && project.generatedIconUrl.startsWith('/uploads/')) {
-      const iconPath = path.join(process.cwd(), project.generatedIconUrl);
+      const iconPath = path.join(UPLOADS_DIR, project.generatedIconUrl.replace(/^\/uploads\/?/, ''));
       if (fs.existsSync(iconPath)) {
         fs.unlinkSync(iconPath);
       }
@@ -185,7 +187,7 @@ export default async function wizardRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({ error: 'No file uploaded' });
     }
 
-    const uploadDir = path.join(process.cwd(), 'uploads', request.user.id, 'wizard', id);
+    const uploadDir = path.join(UPLOADS_DIR, request.user.id, 'wizard', id);
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -231,7 +233,7 @@ export default async function wizardRoutes(fastify: FastifyInstance) {
     }
 
     // Delete file
-    const filePath = path.join(process.cwd(), currentScreenshots[idx]);
+    const filePath = path.join(UPLOADS_DIR, currentScreenshots[idx].replace(/^\/uploads\/?/, ''));
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
@@ -429,7 +431,7 @@ No text or letters. Square format.`,
         const imageUrl = iconResponse.data?.[0]?.url;
         if (imageUrl) {
           // Download and save the icon
-          const iconDir = path.join(process.cwd(), 'uploads', request.user.id, 'wizard', id);
+          const iconDir = path.join(UPLOADS_DIR, request.user.id, 'wizard', id);
           if (!fs.existsSync(iconDir)) {
             fs.mkdirSync(iconDir, { recursive: true });
           }
@@ -538,13 +540,13 @@ No text or letters. Square format.`,
     });
 
     // Copy screenshot files from wizard dir to project dir
-    const projectUploadDir = path.join(process.cwd(), 'uploads', request.user.id, project.id);
+    const projectUploadDir = path.join(UPLOADS_DIR, request.user.id, project.id);
     if (!fs.existsSync(projectUploadDir)) {
       fs.mkdirSync(projectUploadDir, { recursive: true });
     }
 
     for (let i = 0; i < screenshots.length; i++) {
-      const srcPath = path.join(process.cwd(), screenshots[i]);
+      const srcPath = path.join(UPLOADS_DIR, screenshots[i].replace(/^\/uploads\/?/, ''));
       const fileName = path.basename(screenshots[i]);
       const destPath = path.join(projectUploadDir, fileName);
 

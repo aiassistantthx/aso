@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { wizard as wizardApi, WizardProjectFull, WizardProjectListItem, ApiError } from '../services/api';
 import { useAuth } from '../services/authContext';
-import { TONE_PRESETS } from '../constants/tonePresets';
+import { TONE_PRESETS, LAYOUT_PRESETS } from '../constants/tonePresets';
 import { APP_STORE_LANGUAGES, getLanguageName } from '../constants/languages';
-import { THEME_PRESETS } from '../constants/templates';
+import { THEME_PRESETS, THEME_PRESET_GROUPS } from '../constants/templates';
 import { generatePreviewCanvas, generateScreenshotImage } from '../services/canvas';
 import { StyleConfig, DeviceSize } from '../types';
 import JSZip from 'jszip';
@@ -260,26 +260,28 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
     // Resolve template into concrete style config
     const templateId = project.selectedTemplateId;
     const themePreset = templateId ? THEME_PRESETS.find(t => t.id === templateId) : null;
+    const editorLayoutPreset = LAYOUT_PRESETS.find(l => l.id === project.layoutPreset) || LAYOUT_PRESETS[0];
+    const editorLayoutStyle = editorLayoutPreset.getStyle(0);
     const resolvedStyle: Record<string, unknown> = themePreset ? {
       backgroundColor: themePreset.backgroundColor,
       gradient: themePreset.gradient,
       textColor: themePreset.textColor,
       fontFamily: themePreset.fontFamily,
       fontSize: themePreset.fontSize,
-      textPosition: 'top',
+      textPosition: editorLayoutStyle.textPosition,
       textAlign: themePreset.textAlign || 'center',
       paddingTop: 80,
       paddingBottom: 60,
       showMockup: true,
       mockupColor: themePreset.mockupColor,
       mockupStyle: 'flat',
-      mockupVisibility: 'full',
-      mockupAlignment: 'bottom',
-      mockupOffset: { x: 0, y: 60 },
+      mockupVisibility: editorLayoutStyle.mockupVisibility,
+      mockupAlignment: editorLayoutStyle.mockupAlignment,
+      mockupOffset: editorLayoutStyle.mockupOffset,
       textOffset: { x: 0, y: 0 },
       mockupScale: themePreset.mockupScale || 1.0,
       mockupRotation: 0,
-      mockupContinuation: 'none',
+      mockupContinuation: editorLayoutStyle.mockupContinuation || 'none',
       highlightColor: themePreset.highlightColor,
       highlightPadding: 12,
       highlightBorderRadius: 8,
@@ -348,6 +350,8 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
       setPreviewLoading(true);
       setPreviewError(null);
       const canvases: HTMLCanvasElement[] = [];
+      const layoutPreset = LAYOUT_PRESETS.find(l => l.id === project.layoutPreset) || LAYOUT_PRESETS[0];
+
       for (let i = 0; i < Math.min(screenshots.length, headlines.length); i++) {
         const effectiveStyle = { ...style };
 
@@ -359,6 +363,16 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
           effectiveStyle.gradient = alt.gradient;
           if (alt.textColor) effectiveStyle.textColor = alt.textColor;
           if (alt.highlightColor) effectiveStyle.highlightColor = alt.highlightColor;
+        }
+
+        // Apply layout preset
+        const layoutStyle = layoutPreset.getStyle(i);
+        effectiveStyle.textPosition = layoutStyle.textPosition;
+        effectiveStyle.mockupAlignment = layoutStyle.mockupAlignment;
+        effectiveStyle.mockupVisibility = layoutStyle.mockupVisibility;
+        effectiveStyle.mockupOffset = layoutStyle.mockupOffset;
+        if (layoutStyle.mockupContinuation) {
+          effectiveStyle.mockupContinuation = layoutStyle.mockupContinuation;
         }
 
         try {
@@ -428,6 +442,8 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
         pattern: themePreset.pattern,
       } : null as unknown as StyleConfig;
 
+      const layoutPreset = LAYOUT_PRESETS.find(l => l.id === project.layoutPreset) || LAYOUT_PRESETS[0];
+
       for (const lang of allLangs) {
         const isSource = lang === project.sourceLanguage;
         const langHeadlines = isSource
@@ -450,6 +466,16 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
               effectiveStyle.gradient = alt.gradient;
               if (alt.textColor) effectiveStyle.textColor = alt.textColor;
               if (alt.highlightColor) effectiveStyle.highlightColor = alt.highlightColor;
+            }
+
+            // Apply layout preset
+            const layoutStyle = layoutPreset.getStyle(i);
+            effectiveStyle.textPosition = layoutStyle.textPosition;
+            effectiveStyle.mockupAlignment = layoutStyle.mockupAlignment;
+            effectiveStyle.mockupVisibility = layoutStyle.mockupVisibility;
+            effectiveStyle.mockupOffset = layoutStyle.mockupOffset;
+            if (layoutStyle.mockupContinuation) {
+              effectiveStyle.mockupContinuation = layoutStyle.mockupContinuation;
             }
 
             try {
@@ -887,6 +913,69 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
               ))}
             </div>
 
+            {/* Layout Presets */}
+            <h3 style={{ ...pageStyles.sectionTitle, marginTop: '32px' }}>Layout</h3>
+            <p style={{ fontSize: '13px', color: '#86868b', marginBottom: '16px' }}>Choose how mockups are positioned on screenshots</p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+              {LAYOUT_PRESETS.map(layout => (
+                <div
+                  key={layout.id}
+                  style={{
+                    padding: '20px',
+                    borderRadius: '16px',
+                    border: `2px solid ${project.layoutPreset === layout.id ? '#0071e3' : '#e5e5ea'}`,
+                    backgroundColor: project.layoutPreset === layout.id ? '#f0f7ff' : '#fff',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                  onClick={() => {
+                    setProject({ ...project, layoutPreset: layout.id });
+                    saveField({ layoutPreset: layout.id });
+                  }}
+                >
+                  <div style={{ marginBottom: '12px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {layout.id === 'bottom' && (
+                      <svg width="48" height="56" viewBox="0 0 48 56" fill="none">
+                        <rect x="4" y="2" width="40" height="52" rx="4" stroke="#d1d1d6" strokeWidth="1.5" fill="none"/>
+                        <rect x="10" y="8" width="28" height="4" rx="2" fill="#0071e3" opacity="0.6"/>
+                        <rect x="14" y="24" width="20" height="28" rx="3" stroke="#0071e3" strokeWidth="1.5" fill="#e0f0ff"/>
+                      </svg>
+                    )}
+                    {layout.id === 'center' && (
+                      <svg width="48" height="56" viewBox="0 0 48 56" fill="none">
+                        <rect x="4" y="2" width="40" height="52" rx="4" stroke="#d1d1d6" strokeWidth="1.5" fill="none"/>
+                        <rect x="10" y="6" width="28" height="4" rx="2" fill="#0071e3" opacity="0.6"/>
+                        <rect x="14" y="16" width="20" height="30" rx="3" stroke="#0071e3" strokeWidth="1.5" fill="#e0f0ff"/>
+                      </svg>
+                    )}
+                    {layout.id === 'alternating' && (
+                      <svg width="80" height="56" viewBox="0 0 80 56" fill="none">
+                        <rect x="2" y="2" width="34" height="52" rx="4" stroke="#d1d1d6" strokeWidth="1.5" fill="none"/>
+                        <rect x="8" y="6" width="22" height="4" rx="2" fill="#0071e3" opacity="0.6"/>
+                        <rect x="10" y="24" width="18" height="26" rx="3" stroke="#0071e3" strokeWidth="1.5" fill="#e0f0ff"/>
+                        <rect x="44" y="2" width="34" height="52" rx="4" stroke="#d1d1d6" strokeWidth="1.5" fill="none"/>
+                        <rect x="50" y="46" width="22" height="4" rx="2" fill="#0071e3" opacity="0.6"/>
+                        <rect x="52" y="4" width="18" height="26" rx="3" stroke="#0071e3" strokeWidth="1.5" fill="#e0f0ff"/>
+                      </svg>
+                    )}
+                    {layout.id === 'spanning' && (
+                      <svg width="80" height="56" viewBox="0 0 80 56" fill="none">
+                        <rect x="2" y="2" width="34" height="52" rx="4" stroke="#d1d1d6" strokeWidth="1.5" fill="none"/>
+                        <rect x="8" y="6" width="22" height="4" rx="2" fill="#0071e3" opacity="0.6"/>
+                        <rect x="20" y="20" width="20" height="32" rx="3" stroke="#0071e3" strokeWidth="1.5" fill="#e0f0ff" strokeDasharray="3 2"/>
+                        <rect x="44" y="2" width="34" height="52" rx="4" stroke="#d1d1d6" strokeWidth="1.5" fill="none"/>
+                        <rect x="50" y="6" width="22" height="4" rx="2" fill="#0071e3" opacity="0.6"/>
+                        <rect x="40" y="20" width="20" height="32" rx="3" stroke="#0071e3" strokeWidth="1.5" fill="#e0f0ff" strokeDasharray="3 2"/>
+                      </svg>
+                    )}
+                  </div>
+                  <div style={{ fontWeight: 600, color: '#1d1d1f', marginBottom: '4px' }}>{layout.name}</div>
+                  <div style={{ fontSize: '13px', color: '#86868b' }}>{layout.description}</div>
+                </div>
+              ))}
+            </div>
+
             <div style={pageStyles.stepActions}>
               <button style={pageStyles.secondaryButton} onClick={prevStep}>Back</button>
               <button
@@ -1023,6 +1112,50 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
           <div style={pageStyles.stepContent}>
             <h2 style={pageStyles.stepTitle}>Review & Edit</h2>
             <p style={pageStyles.stepDesc}>Review and edit generated content</p>
+
+            {/* Color Theme Picker */}
+            {project.generateScreenshots && (
+              <div style={{ marginBottom: '32px' }}>
+                <h3 style={pageStyles.sectionTitle}>Color Theme</h3>
+                {THEME_PRESET_GROUPS.map(group => (
+                  <div key={group.id} style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#86868b', textTransform: 'uppercase', marginBottom: '8px' }}>
+                      {group.label}
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {group.presets.map(presetId => {
+                        const preset = THEME_PRESETS.find(t => t.id === presetId);
+                        if (!preset) return null;
+                        const isSelected = project.selectedTemplateId === presetId;
+                        const bg = preset.gradient?.enabled
+                          ? `linear-gradient(${preset.gradient.angle || 135}deg, ${preset.gradient.color1}, ${preset.gradient.color2})`
+                          : preset.backgroundColor;
+                        return (
+                          <div
+                            key={presetId}
+                            title={preset.name}
+                            style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '8px',
+                              background: bg,
+                              border: isSelected ? '3px solid #0071e3' : '2px solid rgba(0,0,0,0.1)',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s',
+                              boxShadow: isSelected ? '0 0 0 2px #fff, 0 0 0 4px #0071e3' : 'none',
+                            }}
+                            onClick={() => {
+                              setProject({ ...project, selectedTemplateId: presetId });
+                              saveField({ selectedTemplateId: presetId });
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Screenshot previews */}
             {project.generateScreenshots && (

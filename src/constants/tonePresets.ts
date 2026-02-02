@@ -47,3 +47,66 @@ export const TONE_ADJECTIVES: Record<string, string> = {
 export const getTonePreset = (id: string): TonePreset | undefined => {
   return TONE_PRESETS.find(t => t.id === id);
 };
+
+export interface LayoutPresetStyle {
+  textPosition: 'top' | 'bottom';
+  mockupAlignment: 'top' | 'center' | 'bottom';
+  mockupVisibility: 'full';
+  mockupOffset: { x: number; y: number };
+  mockupContinuation?: 'left-start' | 'left-end';
+}
+
+export interface LayoutPreset {
+  id: string;
+  name: string;
+  description: string;
+  getStyle: (index: number) => LayoutPresetStyle;
+}
+
+export const LAYOUT_PRESETS: LayoutPreset[] = [
+  {
+    id: 'bottom',
+    name: 'Bottom',
+    description: 'Text on top, mockup at the bottom',
+    getStyle: (_index: number) => ({
+      textPosition: 'top' as const,
+      mockupAlignment: 'bottom' as const,
+      mockupVisibility: 'full' as const,
+      mockupOffset: { x: 0, y: 60 },
+    }),
+  },
+  {
+    id: 'center',
+    name: 'Center',
+    description: 'Mockup centered, text on top',
+    getStyle: (_index: number) => ({
+      textPosition: 'top' as const,
+      mockupAlignment: 'center' as const,
+      mockupVisibility: 'full' as const,
+      mockupOffset: { x: 0, y: 0 },
+    }),
+  },
+  {
+    id: 'alternating',
+    name: 'Alternating',
+    description: 'Mockup alternates bottom/top per screenshot',
+    getStyle: (index: number) => ({
+      textPosition: (index % 2 === 0 ? 'top' : 'bottom') as 'top' | 'bottom',
+      mockupAlignment: (index % 2 === 0 ? 'bottom' : 'top') as 'bottom' | 'top',
+      mockupVisibility: 'full' as const,
+      mockupOffset: { x: 0, y: index % 2 === 0 ? 60 : -60 },
+    }),
+  },
+  {
+    id: 'spanning',
+    name: 'Spanning',
+    description: 'One mockup spans two consecutive screenshots',
+    getStyle: (index: number) => ({
+      textPosition: 'top' as const,
+      mockupAlignment: 'bottom' as const,
+      mockupVisibility: 'full' as const,
+      mockupOffset: { x: 0, y: 60 },
+      mockupContinuation: (index % 2 === 0 ? 'left-start' : 'left-end') as 'left-start' | 'left-end',
+    }),
+  },
+];
