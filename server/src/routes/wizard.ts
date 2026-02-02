@@ -127,6 +127,7 @@ export default async function wizardRoutes(fastify: FastifyInstance) {
         editedHeadlines: body.editedHeadlines as Prisma.InputJsonValue | undefined,
         editedMetadata: body.editedMetadata as Prisma.InputJsonValue | undefined,
         styleConfig: body.styleConfig as Prisma.InputJsonValue | undefined,
+        screenshotEditorData: body.screenshotEditorData as Prisma.InputJsonValue | undefined,
         currentStep: body.currentStep as number | undefined,
         status: body.status as string | undefined,
       },

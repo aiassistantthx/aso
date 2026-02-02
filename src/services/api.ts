@@ -372,6 +372,12 @@ export interface WizardProjectFull {
   translatedHeadlines: Record<string, string[]> | null;
   translatedMetadata: Record<string, Record<string, string>> | null;
   styleConfig: Record<string, unknown> | null;
+  screenshotEditorData: Array<{
+    decorations?: unknown;
+    styleOverride?: unknown;
+    mockupSettings?: unknown;
+    linkedMockupIndex?: number;
+  }> | null;
   currentStep: number;
   status: string;
   createdAt: string;
