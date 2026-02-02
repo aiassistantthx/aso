@@ -959,6 +959,13 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
                         <rect x="52" y="4" width="18" height="26" rx="3" stroke="#0071e3" strokeWidth="1.5" fill="#e0f0ff"/>
                       </svg>
                     )}
+                    {layout.id === 'outofbox' && (
+                      <svg width="48" height="56" viewBox="0 0 48 56" fill="none">
+                        <rect x="4" y="2" width="40" height="52" rx="4" stroke="#d1d1d6" strokeWidth="1.5" fill="none"/>
+                        <rect x="10" y="8" width="28" height="4" rx="2" fill="#0071e3" opacity="0.6"/>
+                        <rect x="12" y="22" width="24" height="40" rx="3" stroke="#0071e3" strokeWidth="1.5" fill="#e0f0ff"/>
+                      </svg>
+                    )}
                     {layout.id === 'spanning' && (
                       <svg width="80" height="56" viewBox="0 0 80 56" fill="none">
                         <rect x="2" y="2" width="34" height="52" rx="4" stroke="#d1d1d6" strokeWidth="1.5" fill="none"/>

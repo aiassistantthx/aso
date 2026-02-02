@@ -98,6 +98,17 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     }),
   },
   {
+    id: 'outofbox',
+    name: 'Out of Box',
+    description: 'Mockup extends beyond the bottom edge',
+    getStyle: (_index: number) => ({
+      textPosition: 'top' as const,
+      mockupAlignment: 'bottom' as const,
+      mockupVisibility: 'full' as const,
+      mockupOffset: { x: 0, y: 200 },
+    }),
+  },
+  {
     id: 'spanning',
     name: 'Spanning',
     description: 'One mockup spans two consecutive screenshots',
