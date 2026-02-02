@@ -249,7 +249,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
       case 2: return (project.uploadedScreenshots || []).length >= 3;
       case 3: return project.generateScreenshots || project.generateIcon || project.generateMetadata;
       case 4: return !!project.tone;
-      case 5: return project.targetLanguages.length > 0;
+      case 5: return true;
       default: return true;
     }
   };
@@ -1282,10 +1282,37 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
               English (U.S.) — all content is generated in English first
             </div>
 
-            <label style={pageStyles.label}>
-              Target Languages
-              {plan === 'FREE' && <span style={{ fontSize: '12px', color: '#86868b', marginLeft: '8px' }}>(max 2 on Free plan)</span>}
-            </label>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <label style={{ ...pageStyles.label, marginBottom: 0 }}>
+                Target Languages
+                {plan === 'FREE' && <span style={{ fontSize: '12px', color: '#86868b', marginLeft: '8px' }}>(max 2 on Free plan)</span>}
+              </label>
+              {plan === 'PRO' && (() => {
+                const available = APP_STORE_LANGUAGES.filter(l => l.code !== project.sourceLanguage);
+                const allSelected = available.every(l => project.targetLanguages.includes(l.code));
+                return (
+                  <button
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #e5e5ea',
+                      backgroundColor: '#fff',
+                      color: '#0071e3',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => {
+                      const newTargets = allSelected ? [] : available.map(l => l.code);
+                      setProject({ ...project, targetLanguages: newTargets });
+                      saveField({ targetLanguages: newTargets });
+                    }}
+                  >
+                    {allSelected ? 'Deselect All' : 'Select All'}
+                  </button>
+                );
+              })()}
+            </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px' }}>
               {APP_STORE_LANGUAGES
                 .filter(l => l.code !== project.sourceLanguage)
@@ -1323,13 +1350,23 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
 
             <div style={pageStyles.stepActions}>
               <button style={pageStyles.secondaryButton} onClick={prevStep}>Back</button>
-              <button
-                style={{ ...pageStyles.primaryButton, opacity: canProceed(5) ? 1 : 0.5 }}
-                disabled={!canProceed(5)}
-                onClick={nextStep}
-              >
-                Next
-              </button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                {project.targetLanguages.length === 0 && (
+                  <button
+                    style={pageStyles.secondaryButton}
+                    onClick={nextStep}
+                  >
+                    Skip — English only
+                  </button>
+                )}
+                <button
+                  style={{ ...pageStyles.primaryButton, opacity: project.targetLanguages.length > 0 ? 1 : 0.5 }}
+                  disabled={project.targetLanguages.length === 0}
+                  onClick={nextStep}
+                >
+                  Next
+                </button>
+              </div>
             </div>
           </div>
         )}
