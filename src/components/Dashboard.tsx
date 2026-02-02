@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { projects as projectsApi, ProjectListItem } from '../services/api';
 import { useAuth } from '../services/authContext';
+import { AppHeader } from './AppHeader';
 
 interface Props {
   onOpenProject: (id: string) => void;
   onNewProject: () => void;
-  onOpenProfile: () => void;
-  onOpenMetadata?: () => void;
-  onOpenWizard?: () => void;
+  onNavigate: (page: string, id?: string) => void;
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -224,8 +223,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
 };
 
-export const Dashboard: React.FC<Props> = ({ onOpenProject, onNewProject, onOpenProfile, onOpenMetadata, onOpenWizard }) => {
-  const { user, logout } = useAuth();
+export const Dashboard: React.FC<Props> = ({ onOpenProject, onNewProject, onNavigate }) => {
+  const { user } = useAuth();
   const [projectList, setProjectList] = useState<ProjectListItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -283,45 +282,7 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNewProject, onOpen
 
   return (
     <div style={styles.container}>
-      <header style={styles.header as React.CSSProperties}>
-        <div style={styles.headerContent as React.CSSProperties}>
-          <div style={styles.logoContainer as React.CSSProperties}>
-            <div style={styles.logoIcon as React.CSSProperties}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="4" width="18" height="16" rx="3" stroke="white" strokeWidth="2" />
-                <rect x="7" y="8" width="10" height="8" rx="1" fill="white" opacity="0.5" />
-              </svg>
-            </div>
-            <span style={styles.logo}>Screenshot Studio</span>
-          </div>
-
-          <div style={styles.headerRight as React.CSSProperties}>
-            <span
-              style={{
-                ...styles.planBadge,
-                backgroundColor: plan === 'PRO' ? '#e8f9ed' : '#f0f7ff',
-                color: plan === 'PRO' ? '#248a3d' : '#0071e3',
-              }}
-            >
-              {plan}
-            </span>
-            <div style={styles.userMenu as React.CSSProperties}>
-              <span
-                style={{ ...styles.userName, cursor: 'pointer', textDecoration: 'none' }}
-                onClick={onOpenProfile}
-                onMouseEnter={(e) => { e.currentTarget.style.color = '#0071e3'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = '#1d1d1f'; }}
-              >{user?.name || user?.email}</span>
-              <button
-                style={styles.logoutButton}
-                onClick={logout}
-              >
-                Sign Out
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <AppHeader currentPage="dashboard" onNavigate={onNavigate} />
 
       <div style={styles.content}>
         <h1 style={styles.pageTitle}>Projects</h1>
@@ -341,7 +302,7 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNewProject, onOpen
                 background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
                 boxShadow: '0 4px 14px rgba(139, 92, 246, 0.35)',
               }}
-              onClick={onOpenWizard}
+              onClick={() => onNavigate('wizard')}
             >
               Auto Generate
             </button>
@@ -351,7 +312,7 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNewProject, onOpen
                 background: 'linear-gradient(135deg, #34c759 0%, #30d158 100%)',
                 boxShadow: '0 4px 14px rgba(52, 199, 89, 0.35)',
               }}
-              onClick={onOpenMetadata}
+              onClick={() => onNavigate('metadata')}
             >
               ASO Texts
             </button>

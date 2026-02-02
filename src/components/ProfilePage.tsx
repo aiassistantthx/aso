@@ -1,8 +1,9 @@
 import React from 'react';
 import { useAuth } from '../services/authContext';
+import { AppHeader } from './AppHeader';
 
 interface Props {
-  onBack: () => void;
+  onNavigate: (page: string, id?: string) => void;
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -103,7 +104,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
 };
 
-export const ProfilePage: React.FC<Props> = ({ onBack }) => {
+export const ProfilePage: React.FC<Props> = ({ onNavigate }) => {
   const { user, logout } = useAuth();
 
   if (!user) return null;
@@ -112,15 +113,7 @@ export const ProfilePage: React.FC<Props> = ({ onBack }) => {
 
   return (
     <div style={styles.container}>
-      <header style={styles.header as React.CSSProperties}>
-        <div style={styles.headerContent as React.CSSProperties}>
-          <button style={styles.backButton} onClick={onBack}>
-            ← Back
-          </button>
-          <span style={styles.headerTitle}>Profile</span>
-          <div style={{ width: '70px' }} />
-        </div>
-      </header>
+      <AppHeader currentPage="profile" onNavigate={onNavigate} />
 
       <div style={styles.content}>
         <div style={styles.card}>
@@ -160,7 +153,6 @@ export const ProfilePage: React.FC<Props> = ({ onBack }) => {
             style={styles.logoutButton}
             onClick={() => {
               logout();
-              onBack();
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = '#fff5f5';

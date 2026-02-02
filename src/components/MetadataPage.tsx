@@ -7,11 +7,13 @@ import {
 } from '../services/api';
 import { getFieldsForPlatform, getCharColor, FieldDef } from '../constants/metadataLimits';
 import { useAuth } from '../services/authContext';
+import { AppHeader } from './AppHeader';
 
 interface Props {
   projectId?: string;
   onBack: () => void;
   onOpenProject: (id: string) => void;
+  onNavigate: (page: string, id?: string) => void;
 }
 
 type Step = 'input' | 'review' | 'translations';
@@ -39,7 +41,7 @@ const LANGUAGES = [
   { code: 'uk-UA', label: 'Ukrainian' },
 ];
 
-export const MetadataPage: React.FC<Props> = ({ projectId, onBack, onOpenProject }) => {
+export const MetadataPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, onNavigate }) => {
   const { user } = useAuth();
   const plan = user?.plan ?? 'FREE';
 
@@ -264,14 +266,7 @@ export const MetadataPage: React.FC<Props> = ({ projectId, onBack, onOpenProject
   if (!projectId) {
     return (
       <div style={s.container}>
-        <header style={s.header}>
-          <div style={s.headerContent}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <button style={s.backBtn} onClick={onBack}>&larr;</button>
-              <span style={s.logo}>ASO Texts</span>
-            </div>
-          </div>
-        </header>
+        <AppHeader currentPage="metadata" onNavigate={onNavigate} />
         <div style={s.content}>
           <h1 style={s.pageTitle}>Metadata Projects</h1>
           <p style={s.pageSubtitle}>Generate and localize App Store & Google Play metadata with AI</p>
@@ -350,13 +345,13 @@ export const MetadataPage: React.FC<Props> = ({ projectId, onBack, onOpenProject
 
   return (
     <div style={s.container}>
-      <header style={s.header}>
-        <div style={s.headerContent}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+      <AppHeader
+        currentPage="metadata"
+        onNavigate={onNavigate}
+        rightContent={
+          <>
             <button style={s.backBtn} onClick={onBack}>&larr;</button>
-            <span style={s.logo}>{project?.name || 'Metadata Editor'}</span>
-          </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
+            <span style={{ fontSize: '15px', fontWeight: 600, color: '#1d1d1f' }}>{project?.name || 'Metadata Editor'}</span>
             {step === 'review' && (
               <>
                 <button style={s.secondaryBtn} onClick={() => setStep('input')}>Back to Input</button>
@@ -370,9 +365,9 @@ export const MetadataPage: React.FC<Props> = ({ projectId, onBack, onOpenProject
                 <button style={s.primaryBtn} onClick={handleExportJSON}>Export JSON</button>
               </>
             )}
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       <div style={s.content}>
         {error && <div style={s.errorBanner}>{error}<button style={{ marginLeft: '12px', background: 'none', border: 'none', color: '#ff3b30', cursor: 'pointer', fontWeight: 600 }} onClick={() => setError(null)}>x</button></div>}

@@ -283,24 +283,23 @@ function AppRouter() {
         <Dashboard
           onOpenProject={(id) => navigate('editor', id)}
           onNewProject={handleNewProject}
-          onOpenProfile={() => navigate('profile')}
-          onOpenMetadata={() => navigate('metadata')}
-          onOpenWizard={() => navigate('wizard')}
+          onNavigate={(page, id) => navigate(page, id)}
         />
       );
 
     case 'profile':
       return (
         <ProfilePage
-          onBack={() => navigate('dashboard')}
+          onNavigate={(page, id) => navigate(page, id)}
         />
       );
 
     case 'metadata':
       return (
         <MetadataPage
-          onBack={() => navigate('dashboard')}
+          onBack={() => navigate('metadata')}
           onOpenProject={(id) => navigate('metadata-editor', id)}
+          onNavigate={(page, id) => navigate(page, id)}
         />
       );
 
@@ -310,18 +309,16 @@ function AppRouter() {
           projectId={route.projectId}
           onBack={() => navigate('metadata')}
           onOpenProject={(id) => navigate('metadata-editor', id)}
+          onNavigate={(page, id) => navigate(page, id)}
         />
       );
 
     case 'wizard':
       return (
         <WizardPage
-          onBack={() => navigate('dashboard')}
+          onBack={() => navigate('wizard')}
           onOpenProject={(id) => navigate('wizard-editor', id)}
-          onOpenEditor={(id) => {
-            setRoute({ page: 'editor', projectId: id, fromWizardId: undefined });
-            window.history.pushState({}, '', `/editor/${id}`);
-          }}
+          onNavigate={(page, id) => navigate(page, id)}
         />
       );
 
@@ -329,12 +326,9 @@ function AppRouter() {
       return (
         <WizardPage
           projectId={route.projectId}
-          onBack={() => navigate('dashboard')}
+          onBack={() => navigate('wizard')}
           onOpenProject={(id) => navigate('wizard-editor', id)}
-          onOpenEditor={(id) => {
-            setRoute({ page: 'editor', projectId: id, fromWizardId: route.projectId });
-            window.history.pushState({}, '', `/editor/${id}`);
-          }}
+          onNavigate={(page, id) => navigate(page, id)}
         />
       );
 
@@ -349,6 +343,7 @@ function AppRouter() {
               navigate('dashboard');
             }
           }}
+          onNavigate={(page, id) => navigate(page, id)}
         />
       );
 

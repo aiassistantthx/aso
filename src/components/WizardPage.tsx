@@ -1,18 +1,21 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { wizard as wizardApi, WizardProjectFull, WizardProjectListItem, ApiError } from '../services/api';
 import { useAuth } from '../services/authContext';
+import { AppHeader } from './AppHeader';
 import { TONE_PRESETS, LAYOUT_PRESETS } from '../constants/tonePresets';
 import { APP_STORE_LANGUAGES, getLanguageName } from '../constants/languages';
 import { THEME_PRESETS, THEME_PRESET_GROUPS } from '../constants/templates';
 import { generatePreviewCanvas, generateScreenshotImage } from '../services/canvas';
-import { StyleConfig, DeviceSize } from '../types';
+import { StyleConfig, DeviceSize, Screenshot, Decoration, ScreenshotStyleOverride, ScreenshotMockupSettings } from '../types';
+import { ScreensFlowEditor } from './ScreensFlowEditor';
+import { StyleEditor } from './StyleEditor';
 import JSZip from 'jszip';
 
 interface Props {
   projectId?: string;
   onBack: () => void;
   onOpenProject: (id: string) => void;
-  onOpenEditor?: (projectId: string) => void;
+  onNavigate: (page: string, id?: string) => void;
 }
 
 const STEPS = [
@@ -43,7 +46,68 @@ const IOS_FIELD_LABELS: Record<string, string> = {
   keywords: 'Keywords',
 };
 
-export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, onOpenEditor }) => {
+// Helper: resolve StyleConfig from wizard project data
+function resolveStyleConfig(project: WizardProjectFull): StyleConfig | null {
+  // If user already edited in editor and saved a styleConfig, use it directly
+  if (project.styleConfig) {
+    return project.styleConfig as unknown as StyleConfig;
+  }
+
+  // Otherwise resolve from template + layout preset
+  const templateId = project.selectedTemplateId;
+  const themePreset = templateId ? THEME_PRESETS.find(t => t.id === templateId) : null;
+  if (!themePreset) return null;
+
+  const editorLayoutPreset = LAYOUT_PRESETS.find(l => l.id === project.layoutPreset) || LAYOUT_PRESETS[0];
+  const editorLayoutStyle = editorLayoutPreset.getStyle(0);
+
+  return {
+    backgroundColor: themePreset.backgroundColor,
+    gradient: themePreset.gradient,
+    textColor: themePreset.textColor,
+    fontFamily: themePreset.fontFamily,
+    fontSize: themePreset.fontSize,
+    textPosition: editorLayoutStyle.textPosition,
+    textAlign: themePreset.textAlign || 'center',
+    paddingTop: 80,
+    paddingBottom: 60,
+    showMockup: true,
+    mockupColor: themePreset.mockupColor,
+    mockupStyle: 'flat',
+    mockupVisibility: editorLayoutStyle.mockupVisibility,
+    mockupAlignment: editorLayoutStyle.mockupAlignment,
+    mockupOffset: editorLayoutStyle.mockupOffset,
+    textOffset: { x: 0, y: 0 },
+    mockupScale: themePreset.mockupScale || 1.0,
+    mockupRotation: 0,
+    mockupContinuation: editorLayoutStyle.mockupContinuation || 'none',
+    highlightColor: themePreset.highlightColor,
+    highlightPadding: 12,
+    highlightBorderRadius: 8,
+    pattern: themePreset.pattern,
+    alternatingColors: themePreset.alternatingColors,
+  } as StyleConfig;
+}
+
+// Helper: build Screenshot[] from wizard project data
+function buildEditorScreenshots(project: WizardProjectFull): Screenshot[] {
+  const urls = project.uploadedScreenshots || [];
+  const headlines = project.editedHeadlines || [];
+  const editorData = project.screenshotEditorData || [];
+
+  return urls.map((url, i) => ({
+    id: `wizard-${i}`,
+    file: null,
+    preview: url,
+    text: headlines[i] || '',
+    decorations: editorData[i]?.decorations as Decoration[] | undefined,
+    styleOverride: editorData[i]?.styleOverride as ScreenshotStyleOverride | undefined,
+    mockupSettings: editorData[i]?.mockupSettings as ScreenshotMockupSettings | undefined,
+    linkedMockupIndex: editorData[i]?.linkedMockupIndex,
+  }));
+}
+
+export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, onNavigate }) => {
   const { user } = useAuth();
   const plan = user?.plan ?? 'FREE';
 
@@ -57,6 +121,14 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(1);
+
+  // Step 7 embedded editor state
+  const [step7Tab, setStep7Tab] = useState<'review' | 'editor'>('review');
+  const [editorScreenshots, setEditorScreenshots] = useState<Screenshot[]>([]);
+  const [editorStyle, setEditorStyle] = useState<StyleConfig | null>(null);
+  const [editorSelectedIndex, setEditorSelectedIndex] = useState(0);
+  const [editorInitialized, setEditorInitialized] = useState(false);
+  const editorSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Generation state
   const [generating, setGenerating] = useState(false);
@@ -79,6 +151,10 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
 
   // Translation tab
   const [activeLang, setActiveLang] = useState<string>('');
+
+  // Translated screenshot previews
+  const [translatedPreviews, setTranslatedPreviews] = useState<HTMLCanvasElement[]>([]);
+  const [translatedPreviewLoading, setTranslatedPreviewLoading] = useState(false);
 
   // Load project list
   const loadList = useCallback(async () => {
@@ -157,7 +233,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
   // Navigate steps
   const goToStep = (s: number) => {
     setStep(s);
-    if (project) {
+    if (project && s > (project.currentStep || 1)) {
       saveField({ currentStep: s });
     }
   };
@@ -231,6 +307,117 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
     }
   };
 
+  // Initialize embedded editor when switching to Editor tab
+  const initializeEditor = useCallback(() => {
+    if (!project || editorInitialized) return;
+    const screenshots = buildEditorScreenshots(project);
+    const style = resolveStyleConfig(project);
+    if (!style) return;
+    setEditorScreenshots(screenshots);
+    setEditorStyle(style);
+    setEditorSelectedIndex(0);
+    setEditorInitialized(true);
+  }, [project, editorInitialized]);
+
+  // Reset editor when project changes significantly (e.g. regeneration)
+  const prevProjectRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!project) return;
+    const key = `${project.selectedTemplateId}-${project.generatedHeadlines?.length}-${project.uploadedScreenshots?.length}`;
+    if (prevProjectRef.current !== null && prevProjectRef.current !== key) {
+      setEditorInitialized(false);
+      setStep7Tab('review');
+    }
+    prevProjectRef.current = key;
+  }, [project?.selectedTemplateId, project?.generatedHeadlines?.length, project?.uploadedScreenshots?.length]);
+
+  // Debounced autosave from editor changes
+  const scheduleEditorSave = useCallback((data: Record<string, unknown>) => {
+    if (!project) return;
+    if (editorSaveTimerRef.current) clearTimeout(editorSaveTimerRef.current);
+    editorSaveTimerRef.current = setTimeout(async () => {
+      try {
+        const updated = await wizardApi.update(project.id, data);
+        setProject(updated);
+      } catch {
+        // silent fail for autosave
+      }
+    }, 2000);
+  }, [project]);
+
+  // Handle screenshot changes from embedded editor
+  const handleEditorScreenshotsChange = useCallback(async (newScreenshots: Screenshot[]) => {
+    if (!project) return;
+    const currentUrls = project.uploadedScreenshots || [];
+
+    // Detect new screenshots (file !== null)
+    const newFiles = newScreenshots.filter(s => s.file !== null);
+    if (newFiles.length > 0) {
+      // Upload new files
+      for (const s of newFiles) {
+        if (!s.file) continue;
+        try {
+          const result = await wizardApi.uploadScreenshot(project.id, s.file);
+          // Replace blob URL with server URL in the screenshots array
+          const idx = newScreenshots.indexOf(s);
+          if (idx >= 0) {
+            newScreenshots[idx] = {
+              ...newScreenshots[idx],
+              file: null,
+              preview: result.screenshotUrl,
+            };
+          }
+          setProject(result.project);
+        } catch {
+          setError('Failed to upload screenshot');
+        }
+      }
+    }
+
+    // Detect removed screenshots
+    if (newScreenshots.length < currentUrls.length) {
+      // Find removed indices by comparing preview URLs
+      const newUrls = newScreenshots.map(s => s.preview);
+      for (let i = currentUrls.length - 1; i >= 0; i--) {
+        if (!newUrls.includes(currentUrls[i])) {
+          try {
+            const updated = await wizardApi.removeScreenshot(project.id, i);
+            setProject(updated);
+          } catch {
+            setError('Failed to remove screenshot');
+          }
+        }
+      }
+    }
+
+    setEditorScreenshots(newScreenshots);
+
+    // Extract data to save
+    const editedHeadlines = newScreenshots.map(s => s.text);
+    const screenshotEditorData = newScreenshots.map(s => ({
+      decorations: s.decorations,
+      styleOverride: s.styleOverride,
+      mockupSettings: s.mockupSettings,
+      linkedMockupIndex: s.linkedMockupIndex,
+    }));
+
+    // Update local project state immediately
+    setProject(prev => prev ? {
+      ...prev,
+      editedHeadlines,
+      screenshotEditorData,
+    } : prev);
+
+    scheduleEditorSave({ editedHeadlines, screenshotEditorData });
+  }, [project, scheduleEditorSave]);
+
+  // Handle style changes from embedded editor
+  const handleEditorStyleChange = useCallback((newStyle: StyleConfig) => {
+    setEditorStyle(newStyle);
+    setProject(prev => prev ? { ...prev, styleConfig: newStyle as unknown as Record<string, unknown> } : prev);
+    scheduleEditorSave({ styleConfig: newStyle });
+  }, [scheduleEditorSave]);
+
   // Translation
   const handleTranslate = async () => {
     if (!project) return;
@@ -244,56 +431,10 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
         const firstTarget = updated.targetLanguages.find(l => l !== updated.sourceLanguage);
         if (firstTarget) setActiveLang(firstTarget);
       }
-      setStep(9);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Translation failed');
     } finally {
       setTranslating(false);
-    }
-  };
-
-  // Open in manual editor
-  const handleOpenInEditor = async () => {
-    if (!project || !onOpenEditor) return;
-    setError(null);
-
-    // Resolve template into concrete style config
-    const templateId = project.selectedTemplateId;
-    const themePreset = templateId ? THEME_PRESETS.find(t => t.id === templateId) : null;
-    const editorLayoutPreset = LAYOUT_PRESETS.find(l => l.id === project.layoutPreset) || LAYOUT_PRESETS[0];
-    const editorLayoutStyle = editorLayoutPreset.getStyle(0);
-    const resolvedStyle: Record<string, unknown> = themePreset ? {
-      backgroundColor: themePreset.backgroundColor,
-      gradient: themePreset.gradient,
-      textColor: themePreset.textColor,
-      fontFamily: themePreset.fontFamily,
-      fontSize: themePreset.fontSize,
-      textPosition: editorLayoutStyle.textPosition,
-      textAlign: themePreset.textAlign || 'center',
-      paddingTop: 80,
-      paddingBottom: 60,
-      showMockup: true,
-      mockupColor: themePreset.mockupColor,
-      mockupStyle: 'flat',
-      mockupVisibility: editorLayoutStyle.mockupVisibility,
-      mockupAlignment: editorLayoutStyle.mockupAlignment,
-      mockupOffset: editorLayoutStyle.mockupOffset,
-      textOffset: { x: 0, y: 0 },
-      mockupScale: themePreset.mockupScale || 1.0,
-      mockupRotation: 0,
-      mockupContinuation: editorLayoutStyle.mockupContinuation || 'none',
-      highlightColor: themePreset.highlightColor,
-      highlightPadding: 12,
-      highlightBorderRadius: 8,
-      pattern: themePreset.pattern,
-      alternatingColors: themePreset.alternatingColors,
-    } : {};
-
-    try {
-      const newProject = await wizardApi.toProject(project.id, resolvedStyle);
-      onOpenEditor(newProject.id);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to create editor project');
     }
   };
 
@@ -309,15 +450,131 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
       return;
     }
 
+    // Prefer saved styleConfig from editor; fall back to template resolution
+    const savedStyle = project.styleConfig ? project.styleConfig as unknown as StyleConfig : null;
+
     const templateId = project.selectedTemplateId;
     const themePreset = templateId ? THEME_PRESETS.find(t => t.id === templateId) : null;
-    if (!themePreset) {
+    if (!savedStyle && !themePreset) {
       setPreviewError(`Template "${templateId}" not found`);
       return;
     }
 
     const screenshots = project.uploadedScreenshots;
     const headlines = project.editedHeadlines;
+    const deviceSize: DeviceSize = '6.9';
+    const editorData = project.screenshotEditorData || [];
+
+    const style: StyleConfig = savedStyle || {
+      backgroundColor: themePreset!.backgroundColor,
+      gradient: themePreset!.gradient,
+      textColor: themePreset!.textColor,
+      fontFamily: themePreset!.fontFamily,
+      fontSize: themePreset!.fontSize,
+      textPosition: 'top',
+      textAlign: themePreset!.textAlign || 'center',
+      paddingTop: 80,
+      paddingBottom: 60,
+      showMockup: true,
+      mockupColor: themePreset!.mockupColor,
+      mockupStyle: 'flat',
+      mockupVisibility: 'full',
+      mockupAlignment: 'bottom',
+      mockupOffset: { x: 0, y: 60 },
+      textOffset: { x: 0, y: 0 },
+      mockupScale: themePreset!.mockupScale || 1.0,
+      mockupRotation: 0,
+      mockupContinuation: 'none',
+      highlightColor: themePreset!.highlightColor,
+      highlightPadding: 12,
+      highlightBorderRadius: 8,
+      pattern: themePreset!.pattern,
+    };
+
+    const generatePreviews = async () => {
+      setPreviewLoading(true);
+      setPreviewError(null);
+      const canvases: HTMLCanvasElement[] = [];
+      const layoutPreset = LAYOUT_PRESETS.find(l => l.id === project.layoutPreset) || LAYOUT_PRESETS[0];
+
+      for (let i = 0; i < Math.min(screenshots.length, headlines.length); i++) {
+        const effectiveStyle = { ...style };
+
+        // Apply per-screenshot style overrides from editor data
+        if (editorData[i]?.styleOverride) {
+          const override = editorData[i].styleOverride as Record<string, unknown>;
+          if (override.backgroundColor) effectiveStyle.backgroundColor = override.backgroundColor as string;
+          if (override.textColor) effectiveStyle.textColor = override.textColor as string;
+          if (override.highlightColor) effectiveStyle.highlightColor = override.highlightColor as string;
+          if (override.gradient) effectiveStyle.gradient = override.gradient as StyleConfig['gradient'];
+        }
+
+        // Apply alternating colors only when not using saved editor styleConfig
+        if (!savedStyle && themePreset?.alternatingColors && i > 0 && !editorData[i]?.styleOverride) {
+          const altIdx = (i - 1) % themePreset.alternatingColors.length;
+          const alt = themePreset.alternatingColors[altIdx];
+          effectiveStyle.backgroundColor = alt.backgroundColor;
+          effectiveStyle.gradient = alt.gradient;
+          if (alt.textColor) effectiveStyle.textColor = alt.textColor;
+          if (alt.highlightColor) effectiveStyle.highlightColor = alt.highlightColor;
+        }
+
+        // Apply layout preset only when not using saved editor styleConfig
+        if (!savedStyle) {
+          const layoutStyle = layoutPreset.getStyle(i);
+          effectiveStyle.textPosition = layoutStyle.textPosition;
+          effectiveStyle.mockupAlignment = layoutStyle.mockupAlignment;
+          effectiveStyle.mockupVisibility = layoutStyle.mockupVisibility;
+          effectiveStyle.mockupOffset = layoutStyle.mockupOffset;
+          if (layoutStyle.mockupContinuation) {
+            effectiveStyle.mockupContinuation = layoutStyle.mockupContinuation;
+          }
+        }
+
+        try {
+          const canvas = document.createElement('canvas');
+          await generatePreviewCanvas(canvas, {
+            screenshot: screenshots[i],
+            text: headlines[i],
+            style: effectiveStyle,
+            deviceSize,
+          });
+          canvases.push(canvas);
+        } catch (err) {
+          console.error(`Preview ${i} failed:`, err);
+        }
+      }
+      if (canvases.length === 0 && screenshots.length > 0) {
+        setPreviewError('Failed to generate previews. Your screenshots are still saved.');
+      }
+      setPreviewCanvases(canvases);
+      setPreviewLoading(false);
+    };
+
+    generatePreviews();
+  }, [project, step]);
+
+  // Generate translated screenshot previews
+  useEffect(() => {
+    if (!project || step !== 8) return;
+    if (!activeLang || !project.translatedHeadlines?.[activeLang]) {
+      setTranslatedPreviews([]);
+      return;
+    }
+    if (!project.uploadedScreenshots?.length) {
+      setTranslatedPreviews([]);
+      return;
+    }
+
+    const templateId = project.selectedTemplateId;
+    const themePreset = templateId ? THEME_PRESETS.find(t => t.id === templateId) : null;
+    if (!themePreset) {
+      setTranslatedPreviews([]);
+      return;
+    }
+
+    const screenshots = project.uploadedScreenshots;
+    const headlines = project.translatedHeadlines[activeLang];
     const deviceSize: DeviceSize = '6.9';
 
     const style: StyleConfig = {
@@ -346,16 +603,14 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
       pattern: themePreset.pattern,
     };
 
-    const generatePreviews = async () => {
-      setPreviewLoading(true);
-      setPreviewError(null);
+    const generateTranslatedPreviews = async () => {
+      setTranslatedPreviewLoading(true);
       const canvases: HTMLCanvasElement[] = [];
       const layoutPreset = LAYOUT_PRESETS.find(l => l.id === project.layoutPreset) || LAYOUT_PRESETS[0];
 
       for (let i = 0; i < Math.min(screenshots.length, headlines.length); i++) {
         const effectiveStyle = { ...style };
 
-        // Apply alternating colors
         if (themePreset.alternatingColors && i > 0) {
           const altIdx = (i - 1) % themePreset.alternatingColors.length;
           const alt = themePreset.alternatingColors[altIdx];
@@ -365,7 +620,6 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
           if (alt.highlightColor) effectiveStyle.highlightColor = alt.highlightColor;
         }
 
-        // Apply layout preset
         const layoutStyle = layoutPreset.getStyle(i);
         effectiveStyle.textPosition = layoutStyle.textPosition;
         effectiveStyle.mockupAlignment = layoutStyle.mockupAlignment;
@@ -385,18 +639,15 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
           });
           canvases.push(canvas);
         } catch (err) {
-          console.error(`Preview ${i} failed:`, err);
+          console.error(`Translated preview ${i} failed:`, err);
         }
       }
-      if (canvases.length === 0 && screenshots.length > 0) {
-        setPreviewError('Failed to generate previews. Your screenshots are still saved.');
-      }
-      setPreviewCanvases(canvases);
-      setPreviewLoading(false);
+      setTranslatedPreviews(canvases);
+      setTranslatedPreviewLoading(false);
     };
 
-    generatePreviews();
-  }, [project, step]);
+    generateTranslatedPreviews();
+  }, [project?.translatedHeadlines, activeLang, step, project?.selectedTemplateId, project?.layoutPreset, project?.uploadedScreenshots]);
 
   // Export ZIP
   const handleExport = async () => {
@@ -410,13 +661,15 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
       const headlines = project.editedHeadlines || [];
       const templateId = project.selectedTemplateId;
       const themePreset = templateId ? THEME_PRESETS.find(t => t.id === templateId) : null;
+      const savedStyle = project.styleConfig ? project.styleConfig as unknown as StyleConfig : null;
+      const editorData = project.screenshotEditorData || [];
 
       // Collect all languages
       const allLangs = [project.sourceLanguage, ...project.targetLanguages.filter(l => l !== project.sourceLanguage)];
       const totalSteps = allLangs.length * screenshots.length + (project.generatedIconUrl ? 1 : 0);
       let completedSteps = 0;
 
-      const baseStyle: StyleConfig = themePreset ? {
+      const baseStyle: StyleConfig = savedStyle || (themePreset ? {
         backgroundColor: themePreset.backgroundColor,
         gradient: themePreset.gradient,
         textColor: themePreset.textColor,
@@ -440,7 +693,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
         highlightPadding: 12,
         highlightBorderRadius: 8,
         pattern: themePreset.pattern,
-      } : null as unknown as StyleConfig;
+      } : null as unknown as StyleConfig);
 
       const layoutPreset = LAYOUT_PRESETS.find(l => l.id === project.layoutPreset) || LAYOUT_PRESETS[0];
 
@@ -459,7 +712,17 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
             if (!baseStyle) continue;
 
             const effectiveStyle = { ...baseStyle };
-            if (themePreset?.alternatingColors && i > 0) {
+
+            // Apply per-screenshot style overrides from editor data
+            if (editorData[i]?.styleOverride) {
+              const override = editorData[i].styleOverride as Record<string, unknown>;
+              if (override.backgroundColor) effectiveStyle.backgroundColor = override.backgroundColor as string;
+              if (override.textColor) effectiveStyle.textColor = override.textColor as string;
+              if (override.highlightColor) effectiveStyle.highlightColor = override.highlightColor as string;
+              if (override.gradient) effectiveStyle.gradient = override.gradient as StyleConfig['gradient'];
+            }
+
+            if (!savedStyle && themePreset?.alternatingColors && i > 0 && !editorData[i]?.styleOverride) {
               const altIdx = (i - 1) % themePreset.alternatingColors.length;
               const alt = themePreset.alternatingColors[altIdx];
               effectiveStyle.backgroundColor = alt.backgroundColor;
@@ -468,14 +731,16 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
               if (alt.highlightColor) effectiveStyle.highlightColor = alt.highlightColor;
             }
 
-            // Apply layout preset
-            const layoutStyle = layoutPreset.getStyle(i);
-            effectiveStyle.textPosition = layoutStyle.textPosition;
-            effectiveStyle.mockupAlignment = layoutStyle.mockupAlignment;
-            effectiveStyle.mockupVisibility = layoutStyle.mockupVisibility;
-            effectiveStyle.mockupOffset = layoutStyle.mockupOffset;
-            if (layoutStyle.mockupContinuation) {
-              effectiveStyle.mockupContinuation = layoutStyle.mockupContinuation;
+            // Apply layout preset only when not using saved editor styleConfig
+            if (!savedStyle) {
+              const layoutStyle = layoutPreset.getStyle(i);
+              effectiveStyle.textPosition = layoutStyle.textPosition;
+              effectiveStyle.mockupAlignment = layoutStyle.mockupAlignment;
+              effectiveStyle.mockupVisibility = layoutStyle.mockupVisibility;
+              effectiveStyle.mockupOffset = layoutStyle.mockupOffset;
+              if (layoutStyle.mockupContinuation) {
+                effectiveStyle.mockupContinuation = layoutStyle.mockupContinuation;
+              }
             }
 
             try {
@@ -540,15 +805,15 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
   if (!projectId) {
     return (
       <div style={pageStyles.container}>
-        <header style={pageStyles.header}>
-          <div style={pageStyles.headerContent}>
-            <button style={pageStyles.backButton} onClick={onBack}>Back</button>
-            <span style={pageStyles.headerTitle}>ASO Wizard</span>
+        <AppHeader
+          currentPage="wizard"
+          onNavigate={onNavigate}
+          rightContent={
             <button style={pageStyles.createButton} onClick={handleCreate}>
               + New Wizard
             </button>
-          </div>
-        </header>
+          }
+        />
         <div style={pageStyles.content}>
           {error && <div style={pageStyles.errorBanner}>{error}</div>}
           {listLoading ? (
@@ -627,15 +892,19 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
 
   return (
     <div style={pageStyles.container}>
-      <header style={pageStyles.header}>
-        <div style={pageStyles.headerContent}>
-          <button style={pageStyles.backButton} onClick={onBack}>Back</button>
-          <span style={pageStyles.headerTitle}>
-            {project.appName || 'ASO Wizard'}
-          </span>
-          {saving && <span style={{ fontSize: '12px', color: '#86868b' }}>Saving...</span>}
-        </div>
-      </header>
+      <AppHeader
+        currentPage="wizard"
+        onNavigate={onNavigate}
+        rightContent={
+          <>
+            <button style={pageStyles.backButton} onClick={onBack}>Back</button>
+            <span style={{ fontSize: '15px', fontWeight: 600, color: '#1d1d1f' }}>
+              {project.appName || 'ASO Wizard'}
+            </span>
+            {saving && <span style={{ fontSize: '12px', color: '#86868b' }}>Saving...</span>}
+          </>
+        }
+      />
 
       {/* Step indicator */}
       <div style={pageStyles.stepBar}>
@@ -670,7 +939,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
         ))}
       </div>
 
-      <div style={pageStyles.content}>
+      <div style={step === 7 && step7Tab === 'editor' ? { ...pageStyles.content, maxWidth: '100%' } : pageStyles.content}>
         {error && (
           <div style={pageStyles.errorBanner}>
             {error}
@@ -1114,202 +1383,256 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
           </div>
         )}
 
-        {/* Step 7: Review */}
+        {/* Step 7: Review & Editor */}
         {step === 7 && (
-          <div style={pageStyles.stepContent}>
+          <div style={step7Tab === 'editor' ? { ...pageStyles.stepContent, maxWidth: '100%', padding: '16px' } : pageStyles.stepContent}>
             <h2 style={pageStyles.stepTitle}>Review & Edit</h2>
-            <p style={pageStyles.stepDesc}>Review and edit generated content</p>
+            <p style={pageStyles.stepDesc}>Review generated content or fine-tune in the editor</p>
 
-            {/* Color Theme Picker */}
-            {project.generateScreenshots && (
-              <div style={{ marginBottom: '32px' }}>
-                <h3 style={pageStyles.sectionTitle}>Color Theme</h3>
-                {THEME_PRESET_GROUPS.map(group => (
-                  <div key={group.id} style={{ marginBottom: '16px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#86868b', textTransform: 'uppercase', marginBottom: '8px' }}>
-                      {group.label}
-                    </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                      {group.presets.map(presetId => {
-                        const preset = THEME_PRESETS.find(t => t.id === presetId);
-                        if (!preset) return null;
-                        const isSelected = project.selectedTemplateId === presetId;
-                        const bg = preset.gradient?.enabled
-                          ? `linear-gradient(${preset.gradient.angle || 135}deg, ${preset.gradient.color1}, ${preset.gradient.color2})`
-                          : preset.backgroundColor;
-                        return (
-                          <div
-                            key={presetId}
-                            title={preset.name}
-                            style={{
-                              width: '32px',
-                              height: '32px',
-                              borderRadius: '8px',
-                              background: bg,
-                              border: isSelected ? '3px solid #0071e3' : '2px solid rgba(0,0,0,0.1)',
-                              cursor: 'pointer',
-                              transition: 'all 0.15s',
-                              boxShadow: isSelected ? '0 0 0 2px #fff, 0 0 0 4px #0071e3' : 'none',
-                            }}
-                            onClick={() => {
-                              setProject({ ...project, selectedTemplateId: presetId });
-                              saveField({ selectedTemplateId: presetId });
-                            }}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Tab bar */}
+            <div style={{ display: 'flex', gap: '0', marginBottom: '24px', borderBottom: '1px solid #e5e5ea' }}>
+              {(['review', 'editor'] as const).map(tab => (
+                <button
+                  key={tab}
+                  style={{
+                    padding: '10px 24px',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    border: 'none',
+                    borderBottom: step7Tab === tab ? '2px solid #0071e3' : '2px solid transparent',
+                    backgroundColor: 'transparent',
+                    color: step7Tab === tab ? '#0071e3' : '#86868b',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    textTransform: 'capitalize',
+                  }}
+                  onClick={() => {
+                    setStep7Tab(tab);
+                    if (tab === 'editor') initializeEditor();
+                  }}
+                >
+                  {tab === 'review' ? 'Review' : 'Editor'}
+                </button>
+              ))}
+            </div>
 
-            {/* Screenshot previews */}
-            {project.generateScreenshots && (
-              <div style={{ marginBottom: '32px' }}>
-                <h3 style={pageStyles.sectionTitle}>Screenshots</h3>
-
-                {previewLoading ? (
-                  <div style={{ textAlign: 'center', padding: '32px 0' }}>
-                    <div style={pageStyles.spinner} />
-                    <p style={{ marginTop: '12px', fontSize: '14px', color: '#86868b' }}>Generating previews...</p>
-                  </div>
-                ) : previewCanvases.length > 0 ? (
-                  <div
-                    ref={previewContainerRef}
-                    style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '12px' }}
-                  >
-                    {previewCanvases.map((canvas, i) => (
-                      <div key={i} style={{ flexShrink: 0, width: '180px' }}>
-                        <img
-                          src={canvas.toDataURL()}
-                          alt={`Preview ${i + 1}`}
-                          style={{ width: '100%', borderRadius: '12px', border: '1px solid #e5e5ea' }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ) : (project.uploadedScreenshots?.length ?? 0) > 0 ? (
-                  <div>
-                    {previewError && (
-                      <p style={{ fontSize: '13px', color: '#f59e0b', marginBottom: '12px' }}>{previewError}</p>
-                    )}
-                    <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '12px' }}>
-                      {(project.uploadedScreenshots || []).map((url, i) => (
-                        <div key={i} style={{ flexShrink: 0, width: '120px' }}>
-                          <img
-                            src={url}
-                            alt={`Screenshot ${i + 1}`}
-                            style={{ width: '100%', borderRadius: '10px', border: '1px solid #e5e5ea' }}
-                          />
+            {/* Review tab */}
+            {step7Tab === 'review' && (
+              <>
+                {/* Color Theme Picker */}
+                {project.generateScreenshots && (
+                  <div style={{ marginBottom: '32px' }}>
+                    <h3 style={pageStyles.sectionTitle}>Color Theme</h3>
+                    {THEME_PRESET_GROUPS.map(group => (
+                      <div key={group.id} style={{ marginBottom: '16px' }}>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#86868b', textTransform: 'uppercase', marginBottom: '8px' }}>
+                          {group.label}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <p style={{ fontSize: '14px', color: '#86868b' }}>No screenshots uploaded.</p>
-                )}
-
-                {(project.editedHeadlines?.length ?? 0) > 0 ? (
-                  <div style={{ marginTop: '16px' }}>
-                    <label style={pageStyles.label}>Headlines (edit below)</label>
-                    {(project.editedHeadlines || []).map((headline, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '13px', color: '#86868b', minWidth: '24px' }}>{i + 1}.</span>
-                        <input
-                          style={{ ...pageStyles.input, marginBottom: 0 }}
-                          value={headline}
-                          onChange={e => {
-                            const newHeadlines = [...(project.editedHeadlines || [])];
-                            newHeadlines[i] = e.target.value;
-                            setProject({ ...project, editedHeadlines: newHeadlines });
-                          }}
-                          onBlur={() => saveField({ editedHeadlines: project.editedHeadlines })}
-                        />
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                          {group.presets.map(presetId => {
+                            const preset = THEME_PRESETS.find(t => t.id === presetId);
+                            if (!preset) return null;
+                            const isSelected = project.selectedTemplateId === presetId;
+                            const bg = preset.gradient?.enabled
+                              ? `linear-gradient(${preset.gradient.angle || 135}deg, ${preset.gradient.color1}, ${preset.gradient.color2})`
+                              : preset.backgroundColor;
+                            return (
+                              <div
+                                key={presetId}
+                                title={preset.name}
+                                style={{
+                                  width: '32px',
+                                  height: '32px',
+                                  borderRadius: '8px',
+                                  background: bg,
+                                  border: isSelected ? '3px solid #0071e3' : '2px solid rgba(0,0,0,0.1)',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.15s',
+                                  boxShadow: isSelected ? '0 0 0 2px #fff, 0 0 0 4px #0071e3' : 'none',
+                                }}
+                                onClick={() => {
+                                  setProject({ ...project, selectedTemplateId: presetId, styleConfig: null });
+                                  saveField({ selectedTemplateId: presetId, styleConfig: null as unknown as undefined });
+                                  setEditorInitialized(false);
+                                }}
+                              />
+                            );
+                          })}
+                        </div>
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#fef3cd', borderRadius: '12px', fontSize: '14px', color: '#856404' }}>
-                    No headlines were generated. Go back to Step 6 and try generating again.
+                )}
+
+                {/* Screenshot previews */}
+                {project.generateScreenshots && (
+                  <div style={{ marginBottom: '32px' }}>
+                    <h3 style={pageStyles.sectionTitle}>Screenshots</h3>
+
+                    {previewLoading ? (
+                      <div style={{ textAlign: 'center', padding: '32px 0' }}>
+                        <div style={pageStyles.spinner} />
+                        <p style={{ marginTop: '12px', fontSize: '14px', color: '#86868b' }}>Generating previews...</p>
+                      </div>
+                    ) : previewCanvases.length > 0 ? (
+                      <div
+                        ref={previewContainerRef}
+                        style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '12px' }}
+                      >
+                        {previewCanvases.map((canvas, i) => (
+                          <div key={i} style={{ flexShrink: 0, width: '180px' }}>
+                            <img
+                              src={canvas.toDataURL()}
+                              alt={`Preview ${i + 1}`}
+                              style={{ width: '100%', borderRadius: '12px', border: '1px solid #e5e5ea' }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (project.uploadedScreenshots?.length ?? 0) > 0 ? (
+                      <div>
+                        {previewError && (
+                          <p style={{ fontSize: '13px', color: '#f59e0b', marginBottom: '12px' }}>{previewError}</p>
+                        )}
+                        <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '12px' }}>
+                          {(project.uploadedScreenshots || []).map((url, i) => (
+                            <div key={i} style={{ flexShrink: 0, width: '120px' }}>
+                              <img
+                                src={url}
+                                alt={`Screenshot ${i + 1}`}
+                                style={{ width: '100%', borderRadius: '10px', border: '1px solid #e5e5ea' }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <p style={{ fontSize: '14px', color: '#86868b' }}>No screenshots uploaded.</p>
+                    )}
+
+                    {(project.editedHeadlines?.length ?? 0) > 0 ? (
+                      <div style={{ marginTop: '16px' }}>
+                        <label style={pageStyles.label}>Headlines (edit below)</label>
+                        {(project.editedHeadlines || []).map((headline, i) => (
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                            <span style={{ fontSize: '13px', color: '#86868b', minWidth: '24px' }}>{i + 1}.</span>
+                            <input
+                              style={{ ...pageStyles.input, marginBottom: 0 }}
+                              value={headline}
+                              onChange={e => {
+                                const newHeadlines = [...(project.editedHeadlines || [])];
+                                newHeadlines[i] = e.target.value;
+                                setProject({ ...project, editedHeadlines: newHeadlines });
+                              }}
+                              onBlur={() => saveField({ editedHeadlines: project.editedHeadlines })}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#fef3cd', borderRadius: '12px', fontSize: '14px', color: '#856404' }}>
+                        No headlines were generated. Go back to Step 6 and try generating again.
+                      </div>
+                    )}
                   </div>
                 )}
+
+                {/* Metadata */}
+                {project.generateMetadata && project.editedMetadata && (
+                  <div style={{ marginBottom: '32px' }}>
+                    <h3 style={pageStyles.sectionTitle}>App Store Metadata</h3>
+                    {Object.entries(IOS_LIMITS).map(([field, limit]) => {
+                      const value = (project.editedMetadata as Record<string, string>)?.[field] || '';
+                      const pct = value.length / limit;
+                      return (
+                        <div key={field} style={{ marginBottom: '16px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <label style={pageStyles.label}>{IOS_FIELD_LABELS[field] || field}</label>
+                            <span style={{
+                              fontSize: '12px', fontWeight: 500,
+                              color: pct > 0.95 ? '#dc2626' : pct > 0.8 ? '#f59e0b' : '#34c759',
+                            }}>
+                              {value.length}/{limit}
+                            </span>
+                          </div>
+                          {limit > 100 ? (
+                            <textarea
+                              style={{ ...pageStyles.input, minHeight: field === 'keywords' ? '60px' : '120px', resize: 'vertical' }}
+                              value={value}
+                              onChange={e => {
+                                const newMeta = { ...(project.editedMetadata || {}), [field]: e.target.value };
+                                setProject({ ...project, editedMetadata: newMeta });
+                              }}
+                              onBlur={() => saveField({ editedMetadata: project.editedMetadata })}
+                            />
+                          ) : (
+                            <input
+                              style={pageStyles.input}
+                              value={value}
+                              maxLength={limit}
+                              onChange={e => {
+                                const newMeta = { ...(project.editedMetadata || {}), [field]: e.target.value };
+                                setProject({ ...project, editedMetadata: newMeta });
+                              }}
+                              onBlur={() => saveField({ editedMetadata: project.editedMetadata })}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Icon */}
+                {project.generateIcon && project.generatedIconUrl && (
+                  <div style={{ marginBottom: '32px' }}>
+                    <h3 style={pageStyles.sectionTitle}>App Icon</h3>
+                    <img
+                      src={project.generatedIconUrl}
+                      alt="Generated icon"
+                      style={{ width: '128px', height: '128px', borderRadius: '28px', border: '1px solid #e5e5ea' }}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Editor tab */}
+            {step7Tab === 'editor' && editorStyle && editorInitialized && (
+              <div style={{ display: 'flex', gap: '16px', minHeight: '70vh' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <ScreensFlowEditor
+                    screenshots={editorScreenshots}
+                    selectedIndex={editorSelectedIndex}
+                    onSelectIndex={setEditorSelectedIndex}
+                    onScreenshotsChange={handleEditorScreenshotsChange}
+                    style={editorStyle}
+                    onStyleChange={handleEditorStyleChange}
+                    deviceSize="6.9"
+                  />
+                </div>
+                <div style={{ width: '320px', flexShrink: 0, maxHeight: '80vh', overflowY: 'auto' }}>
+                  <StyleEditor
+                    style={editorStyle}
+                    onStyleChange={handleEditorStyleChange}
+                    deviceSize="6.9"
+                    screenshots={editorScreenshots}
+                    selectedIndex={editorSelectedIndex}
+                    onScreenshotsChange={handleEditorScreenshotsChange}
+                  />
+                </div>
               </div>
             )}
 
-            {/* Metadata */}
-            {project.generateMetadata && project.editedMetadata && (
-              <div style={{ marginBottom: '32px' }}>
-                <h3 style={pageStyles.sectionTitle}>App Store Metadata</h3>
-                {Object.entries(IOS_LIMITS).map(([field, limit]) => {
-                  const value = (project.editedMetadata as Record<string, string>)?.[field] || '';
-                  const pct = value.length / limit;
-                  return (
-                    <div key={field} style={{ marginBottom: '16px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <label style={pageStyles.label}>{IOS_FIELD_LABELS[field] || field}</label>
-                        <span style={{
-                          fontSize: '12px', fontWeight: 500,
-                          color: pct > 0.95 ? '#dc2626' : pct > 0.8 ? '#f59e0b' : '#34c759',
-                        }}>
-                          {value.length}/{limit}
-                        </span>
-                      </div>
-                      {limit > 100 ? (
-                        <textarea
-                          style={{ ...pageStyles.input, minHeight: field === 'keywords' ? '60px' : '120px', resize: 'vertical' }}
-                          value={value}
-                          onChange={e => {
-                            const newMeta = { ...(project.editedMetadata || {}), [field]: e.target.value };
-                            setProject({ ...project, editedMetadata: newMeta });
-                          }}
-                          onBlur={() => saveField({ editedMetadata: project.editedMetadata })}
-                        />
-                      ) : (
-                        <input
-                          style={pageStyles.input}
-                          value={value}
-                          maxLength={limit}
-                          onChange={e => {
-                            const newMeta = { ...(project.editedMetadata || {}), [field]: e.target.value };
-                            setProject({ ...project, editedMetadata: newMeta });
-                          }}
-                          onBlur={() => saveField({ editedMetadata: project.editedMetadata })}
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Icon */}
-            {project.generateIcon && project.generatedIconUrl && (
-              <div style={{ marginBottom: '32px' }}>
-                <h3 style={pageStyles.sectionTitle}>App Icon</h3>
-                <img
-                  src={project.generatedIconUrl}
-                  alt="Generated icon"
-                  style={{ width: '128px', height: '128px', borderRadius: '28px', border: '1px solid #e5e5ea' }}
-                />
+            {step7Tab === 'editor' && !editorInitialized && (
+              <div style={{ textAlign: 'center', padding: '60px 0', color: '#86868b' }}>
+                <p>Could not initialize editor. Make sure you have a color theme selected and screenshots uploaded.</p>
               </div>
             )}
 
             <div style={pageStyles.stepActions}>
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button style={pageStyles.secondaryButton} onClick={() => goToStep(6)}>Regenerate</button>
-                {onOpenEditor && (
-                  <button
-                    style={{
-                      ...pageStyles.secondaryButton,
-                      borderColor: '#8B5CF6',
-                      color: '#8B5CF6',
-                    }}
-                    onClick={handleOpenInEditor}
-                  >
-                    Edit in Editor
-                  </button>
-                )}
               </div>
               <button style={pageStyles.primaryButton} onClick={nextStep}>
                 Continue to Translation
@@ -1319,15 +1642,60 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
         )}
 
         {/* Step 8: Translate */}
-        {step === 8 && (
+        {step === 8 && (() => {
+          const targetLangs = project.targetLanguages.filter(l => l !== project.sourceLanguage);
+          const hasTranslations = !!(project.translatedHeadlines || project.translatedMetadata);
+          const untranslatedLangs = targetLangs.filter(l => !project.translatedHeadlines?.[l]);
+          const needsRetranslation = hasTranslations && untranslatedLangs.length > 0;
+
+          return (
           <div style={pageStyles.stepContent}>
             <h2 style={pageStyles.stepTitle}>Translate</h2>
             <p style={pageStyles.stepDesc}>
-              Translate all content to {project.targetLanguages.length} target language{project.targetLanguages.length !== 1 ? 's' : ''}:
-              {' '}{project.targetLanguages.map(l => getLanguageName(l)).join(', ')}
+              Select target languages and translate all content
             </p>
 
-            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            {/* Language selector */}
+            <label style={pageStyles.label}>
+              Target Languages
+              {plan === 'FREE' && <span style={{ fontSize: '12px', color: '#86868b', marginLeft: '8px' }}>(max 2 on Free plan)</span>}
+            </label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '24px' }}>
+              {APP_STORE_LANGUAGES
+                .filter(l => l.code !== project.sourceLanguage)
+                .map(l => {
+                  const selected = project.targetLanguages.includes(l.code);
+                  const disabled = !selected && plan === 'FREE' && project.targetLanguages.length >= 2;
+                  return (
+                    <button
+                      key={l.code}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '20px',
+                        border: `1px solid ${selected ? '#0071e3' : '#e5e5ea'}`,
+                        backgroundColor: selected ? '#e0f0ff' : disabled ? '#f5f5f7' : '#fff',
+                        color: selected ? '#0071e3' : disabled ? '#c7c7cc' : '#1d1d1f',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        cursor: disabled ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                      disabled={disabled || translating}
+                      onClick={() => {
+                        const newTargets = selected
+                          ? project.targetLanguages.filter(c => c !== l.code)
+                          : [...project.targetLanguages, l.code];
+                        setProject({ ...project, targetLanguages: newTargets });
+                        saveField({ targetLanguages: newTargets });
+                      }}
+                    >
+                      {l.name}
+                    </button>
+                  );
+                })}
+            </div>
+
+            <div style={{ textAlign: 'center', padding: '20px 0' }}>
               {translating ? (
                 <div>
                   <div style={pageStyles.spinner} />
@@ -1335,7 +1703,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
                     Translating to all target languages...
                   </p>
                 </div>
-              ) : project.translatedHeadlines || project.translatedMetadata ? (
+              ) : hasTranslations && !needsRetranslation ? (
                 <div>
                   <p style={{ fontSize: '15px', color: '#34c759', fontWeight: 600, marginBottom: '16px' }}>
                     Translation complete!
@@ -1343,8 +1711,8 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
 
                   {/* Language tabs */}
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '24px' }}>
-                    {project.targetLanguages
-                      .filter(l => l !== project.sourceLanguage)
+                    {targetLangs
+                      .filter(l => project.translatedHeadlines?.[l] || project.translatedMetadata?.[l])
                       .map(l => (
                         <button
                           key={l}
@@ -1375,6 +1743,32 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
                           ))}
                         </div>
                       )}
+
+                      {/* Translated screenshot previews */}
+                      {project.translatedHeadlines?.[activeLang] && project.uploadedScreenshots?.length && (
+                        <div style={{ marginBottom: '24px' }}>
+                          <h4 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '8px' }}>Screenshot Previews</h4>
+                          {translatedPreviewLoading ? (
+                            <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                              <div style={pageStyles.spinner} />
+                              <p style={{ marginTop: '12px', fontSize: '14px', color: '#86868b' }}>Generating previews...</p>
+                            </div>
+                          ) : translatedPreviews.length > 0 ? (
+                            <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '12px' }}>
+                              {translatedPreviews.map((canvas, i) => (
+                                <div key={`${activeLang}-${i}`} style={{ flexShrink: 0, width: '180px' }}>
+                                  <img
+                                    src={canvas.toDataURL()}
+                                    alt={`Preview ${i + 1}`}
+                                    style={{ width: '100%', borderRadius: '12px', border: '1px solid #e5e5ea' }}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      )}
+
                       {project.translatedMetadata?.[activeLang] && (
                         <div>
                           <h4 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '8px' }}>Metadata</h4>
@@ -1397,9 +1791,20 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
                 </div>
               ) : (
                 <div>
-                  <button style={pageStyles.primaryButton} onClick={handleTranslate}>
-                    Translate All
-                  </button>
+                  {needsRetranslation && (
+                    <p style={{ fontSize: '13px', color: '#f59e0b', marginBottom: '12px' }}>
+                      New languages added — translate again to include them.
+                    </p>
+                  )}
+                  {targetLangs.length === 0 ? (
+                    <p style={{ fontSize: '14px', color: '#86868b' }}>
+                      Select at least one target language above to translate.
+                    </p>
+                  ) : (
+                    <button style={pageStyles.primaryButton} onClick={handleTranslate}>
+                      Translate All
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -1409,7 +1814,8 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
               <div />
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* Step 9: Export */}
         {step === 9 && (

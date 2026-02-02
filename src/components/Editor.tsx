@@ -7,10 +7,12 @@ import { ExportButton } from './ExportButton';
 import { LanguageSidebar } from './LanguageSidebar';
 import { projects as projectsApi, screenshots as screenshotsApi, ProjectFull } from '../services/api';
 import { useAuth } from '../services/authContext';
+import { AppHeader } from './AppHeader';
 
 interface Props {
   projectId: string;
   onBack: () => void;
+  onNavigate: (page: string, id?: string) => void;
 }
 
 const defaultStyle: StyleConfig = {
@@ -154,7 +156,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
 };
 
-export const Editor: React.FC<Props> = ({ projectId, onBack }) => {
+export const Editor: React.FC<Props> = ({ projectId, onBack, onNavigate }) => {
   const { user } = useAuth();
   const [screenshots, setScreenshots] = useState<Screenshot[]>([]);
   const [styleConfig, setStyleConfig] = useState<StyleConfig>(defaultStyle);
@@ -391,9 +393,11 @@ export const Editor: React.FC<Props> = ({ projectId, onBack }) => {
   return (
     <div style={styles.app}>
       {/* Header */}
-      <header style={styles.header as React.CSSProperties}>
-        <div style={styles.headerContent as React.CSSProperties}>
-          <div style={styles.logoContainer as React.CSSProperties}>
+      <AppHeader
+        currentPage="editor"
+        onNavigate={onNavigate}
+        rightContent={
+          <>
             <button
               style={{
                 ...styles.headerButton,
@@ -416,36 +420,31 @@ export const Editor: React.FC<Props> = ({ projectId, onBack }) => {
                   }}
                   autoFocus
                   style={{
-                    fontSize: '18px',
-                    fontWeight: 700,
+                    fontSize: '15px',
+                    fontWeight: 600,
                     color: '#1d1d1f',
-                    letterSpacing: '-0.4px',
+                    letterSpacing: '-0.3px',
                     border: '1px solid #0071e3',
                     borderRadius: '8px',
                     padding: '4px 10px',
                     outline: 'none',
-                    width: '240px',
+                    width: '200px',
                     boxShadow: '0 0 0 3px rgba(0, 113, 227, 0.12)',
                   }}
                 />
               ) : (
-                <h1
-                  style={{ ...styles.logo, cursor: 'pointer' }}
+                <span
+                  style={{ fontSize: '15px', fontWeight: 600, color: '#1d1d1f', cursor: 'pointer' }}
                   onClick={startEditingName}
                   title="Click to rename"
                 >
                   {projectName || 'Untitled Project'}
-                  <span style={{ marginLeft: '8px', fontSize: '14px', color: '#86868b', fontWeight: 400 }}>
+                  <span style={{ marginLeft: '6px', fontSize: '13px', color: '#86868b', fontWeight: 400 }}>
                     &#9998;
                   </span>
-                </h1>
+                </span>
               )}
-              <p style={styles.subtitle}>
-                {user?.plan === 'PRO' ? 'Pro' : 'Free'} plan
-              </p>
             </div>
-          </div>
-          <div style={styles.headerButtons as React.CSSProperties}>
             <span style={styles.saveStatus as React.CSSProperties}>
               {saving ? 'Saving...' : 'Auto-saved'}
             </span>
@@ -455,9 +454,9 @@ export const Editor: React.FC<Props> = ({ projectId, onBack }) => {
             >
               Save
             </button>
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       {/* Upload Progress */}
       {uploadProgress && (
