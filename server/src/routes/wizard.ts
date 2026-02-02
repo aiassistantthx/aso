@@ -746,8 +746,8 @@ Rules:
       }
     };
 
-    // Run translations in parallel batches of 5
-    const BATCH_SIZE = 5;
+    // Run translations in parallel batches of 10
+    const BATCH_SIZE = 10;
     for (let i = 0; i < langsToTranslate.length; i += BATCH_SIZE) {
       const batch = langsToTranslate.slice(i, i + BATCH_SIZE);
       await Promise.all(batch.map(translateLang));
