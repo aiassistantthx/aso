@@ -282,8 +282,9 @@ Target keywords: "${project.targetKeywords}"
 IMPORTANT: Generate all headlines in English (en-US), regardless of the language of the app name or description provided.
 
 Rules:
-- Each headline: 3-8 words, highlight 1-2 key words with [brackets]
-- Cover different features/benefits in sequence
+- Each headline: 3-8 words
+- Use [brackets] to highlight key phrases — MUST include at least one action verb plus a benefit/feature (e.g. "[Track Your Progress]", "[Save Time] Instantly", "[Boost Productivity] Daily")
+- Each headline MUST be unique in meaning — cover different features, benefits, or use cases. No repetition or paraphrasing of the same idea.
 - Use power words that drive downloads
 - Return JSON: { "headlines": ["...", "..."] }`;
 
