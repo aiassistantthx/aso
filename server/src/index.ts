@@ -12,6 +12,7 @@ import authPlugin from './plugins/auth.js';
 import stripePlugin from './plugins/stripe.js';
 import polarPlugin from './plugins/polar.js';
 import { setupAdmin } from './plugins/admin.js';
+import { seedPrompts } from './utils/seedPrompts.js';
 
 import authRoutes from './routes/auth.js';
 import projectRoutes from './routes/projects.js';
@@ -38,6 +39,9 @@ async function start() {
   // Shared Prisma client for admin
   const prisma = new PrismaClient();
   await prisma.$connect();
+
+  // Seed default prompts if not present
+  await seedPrompts(prisma);
 
   // Setup AdminJS first (in its own encapsulated scope)
   await fastify.register(async (instance) => {

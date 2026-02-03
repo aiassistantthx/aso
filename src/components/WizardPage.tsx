@@ -121,11 +121,10 @@ const STEPS = [
   { num: 2, label: 'Screenshots' },
   { num: 3, label: 'Services' },
   { num: 4, label: 'Tone' },
-  { num: 5, label: 'Languages' },
-  { num: 6, label: 'Generate' },
-  { num: 7, label: 'Review' },
-  { num: 8, label: 'Translate' },
-  { num: 9, label: 'Export' },
+  { num: 5, label: 'Generate' },
+  { num: 6, label: 'Review' },
+  { num: 7, label: 'Translate' },
+  { num: 8, label: 'Export' },
 ];
 
 const IOS_LIMITS: Record<string, number> = {
@@ -257,7 +256,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
   const [step, setStep] = useState(1);
 
   // Step 7 embedded editor state
-  const [step7Tab, setStep7Tab] = useState<'review' | 'editor'>('review');
+  const [step6Tab, setStep6Tab] = useState<'review' | 'editor'>('review');
   const [editorScreenshots, setEditorScreenshots] = useState<Screenshot[]>([]);
   const [editorStyle, setEditorStyle] = useState<StyleConfig | null>(null);
   const [editorSelectedIndex, setEditorSelectedIndex] = useState(0);
@@ -401,7 +400,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
         setError('Some generation steps failed: ' + wizardData.generationErrors.join('; '));
       }
       setProject(wizardData);
-      setStep(7);
+      setStep(6);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Generation failed');
     } finally {
@@ -429,7 +428,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
     const key = `${project.selectedTemplateId}-${project.generatedHeadlines?.length}-${project.uploadedScreenshots?.length}`;
     if (prevProjectRef.current !== null && prevProjectRef.current !== key) {
       setEditorInitialized(false);
-      setStep7Tab('review');
+      setStep6Tab('review');
     }
     prevProjectRef.current = key;
   }, [project?.selectedTemplateId, project?.generatedHeadlines?.length, project?.uploadedScreenshots?.length]);
@@ -552,7 +551,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
 
   // Generate canvas previews
   useEffect(() => {
-    if (!project || step !== 7) return;
+    if (!project || step !== 6) return;
     if (!project.editedHeadlines?.length || !project.uploadedScreenshots?.length) {
       setPreviewCanvases([]);
       return;
@@ -664,7 +663,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
 
   // Generate translated screenshot previews
   useEffect(() => {
-    if (!project || step !== 8) return;
+    if (!project || step !== 7) return;
     if (!activeLang || !project.translatedHeadlines?.[activeLang]) {
       setTranslatedPreviews([]);
       return;
@@ -980,7 +979,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
         ))}
       </div>
 
-      <div style={step === 7 && step7Tab === 'editor' ? { ...pageStyles.content, maxWidth: '100%' } : pageStyles.content}>
+      <div style={step === 6 && step6Tab === 'editor' ? { ...pageStyles.content, maxWidth: '100%' } : pageStyles.content}>
         {error && (
           <div style={pageStyles.errorBanner}>
             {error}
@@ -1306,114 +1305,8 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
           </div>
         )}
 
-        {/* Step 5: Languages */}
+        {/* Step 5: Generate */}
         {step === 5 && (
-          <div style={pageStyles.stepContent}>
-            <h2 style={pageStyles.stepTitle}>Languages</h2>
-            <p style={pageStyles.stepDesc}>Select source language and target languages for translation</p>
-
-            <label style={pageStyles.label}>Source Language</label>
-            <div style={{
-              ...pageStyles.input,
-              backgroundColor: '#f0f0f5',
-              color: '#86868b',
-              cursor: 'not-allowed',
-              marginBottom: '8px',
-            }}>
-              English (U.S.) — all content is generated in English first
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <label style={{ ...pageStyles.label, marginBottom: 0 }}>
-                Target Languages
-                {plan === 'FREE' && <span style={{ fontSize: '12px', color: '#86868b', marginLeft: '8px' }}>(max 2 on Free plan)</span>}
-              </label>
-              {plan === 'PRO' && (() => {
-                const available = APP_STORE_LANGUAGES.filter(l => l.code !== project.sourceLanguage);
-                const allSelected = available.every(l => project.targetLanguages.includes(l.code));
-                return (
-                  <button
-                    style={{
-                      padding: '4px 12px',
-                      borderRadius: '8px',
-                      border: '1px solid #e5e5ea',
-                      backgroundColor: '#fff',
-                      color: '#0071e3',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => {
-                      const newTargets = allSelected ? [] : available.map(l => l.code);
-                      setProject({ ...project, targetLanguages: newTargets });
-                      saveField({ targetLanguages: newTargets });
-                    }}
-                  >
-                    {allSelected ? 'Deselect All' : 'Select All'}
-                  </button>
-                );
-              })()}
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px' }}>
-              {APP_STORE_LANGUAGES
-                .filter(l => l.code !== project.sourceLanguage)
-                .map(l => {
-                  const selected = project.targetLanguages.includes(l.code);
-                  const disabled = !selected && plan === 'FREE' && project.targetLanguages.length >= 2;
-                  return (
-                    <button
-                      key={l.code}
-                      style={{
-                        padding: '6px 14px',
-                        borderRadius: '20px',
-                        border: `1px solid ${selected ? '#0071e3' : '#e5e5ea'}`,
-                        backgroundColor: selected ? '#e0f0ff' : disabled ? '#f5f5f7' : '#fff',
-                        color: selected ? '#0071e3' : disabled ? '#c7c7cc' : '#1d1d1f',
-                        fontSize: '13px',
-                        fontWeight: 500,
-                        cursor: disabled ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.2s',
-                      }}
-                      disabled={disabled}
-                      onClick={() => {
-                        const newTargets = selected
-                          ? project.targetLanguages.filter(c => c !== l.code)
-                          : [...project.targetLanguages, l.code];
-                        setProject({ ...project, targetLanguages: newTargets });
-                        saveField({ targetLanguages: newTargets });
-                      }}
-                    >
-                      {l.name}
-                    </button>
-                  );
-                })}
-            </div>
-
-            <div style={pageStyles.stepActions}>
-              <button style={pageStyles.secondaryButton} onClick={prevStep}>Back</button>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                {project.targetLanguages.length === 0 && (
-                  <button
-                    style={pageStyles.secondaryButton}
-                    onClick={nextStep}
-                  >
-                    Skip — English only
-                  </button>
-                )}
-                <button
-                  style={{ ...pageStyles.primaryButton, opacity: project.targetLanguages.length > 0 ? 1 : 0.5 }}
-                  disabled={project.targetLanguages.length === 0}
-                  onClick={nextStep}
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Step 6: Generate */}
-        {step === 6 && (
           <div style={pageStyles.stepContent}>
             <h2 style={pageStyles.stepTitle}>Generate</h2>
             <p style={pageStyles.stepDesc}>
@@ -1461,9 +1354,9 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
           </div>
         )}
 
-        {/* Step 7: Review & Editor */}
-        {step === 7 && (
-          <div style={step7Tab === 'editor' ? { ...pageStyles.stepContent, maxWidth: '100%', padding: '16px' } : pageStyles.stepContent}>
+        {/* Step 6: Review & Editor */}
+        {step === 6 && (
+          <div style={step6Tab === 'editor' ? { ...pageStyles.stepContent, maxWidth: '100%', padding: '16px' } : pageStyles.stepContent}>
             <h2 style={pageStyles.stepTitle}>Review & Edit</h2>
             <p style={pageStyles.stepDesc}>Review generated content or fine-tune in the editor</p>
 
@@ -1477,15 +1370,15 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                     fontSize: '14px',
                     fontWeight: 600,
                     border: 'none',
-                    borderBottom: step7Tab === tab ? '2px solid #0071e3' : '2px solid transparent',
+                    borderBottom: step6Tab === tab ? '2px solid #0071e3' : '2px solid transparent',
                     backgroundColor: 'transparent',
-                    color: step7Tab === tab ? '#0071e3' : '#86868b',
+                    color: step6Tab === tab ? '#0071e3' : '#86868b',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
                     textTransform: 'capitalize',
                   }}
                   onClick={() => {
-                    setStep7Tab(tab);
+                    setStep6Tab(tab);
                     if (tab === 'editor') initializeEditor();
                   }}
                 >
@@ -1495,7 +1388,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
             </div>
 
             {/* Review tab */}
-            {step7Tab === 'review' && (
+            {step6Tab === 'review' && (
               <>
                 {/* Color Theme Picker */}
                 {project.generateScreenshots && (
@@ -1676,7 +1569,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
             )}
 
             {/* Editor tab */}
-            {step7Tab === 'editor' && editorStyle && editorInitialized && (
+            {step6Tab === 'editor' && editorStyle && editorInitialized && (
               <div style={{ display: 'flex', gap: '16px', minHeight: '70vh' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <ScreensFlowEditor
@@ -1702,7 +1595,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
               </div>
             )}
 
-            {step7Tab === 'editor' && !editorInitialized && (
+            {step6Tab === 'editor' && !editorInitialized && (
               <div style={{ textAlign: 'center', padding: '60px 0', color: '#86868b' }}>
                 <p>Could not initialize editor. Make sure you have a color theme selected and screenshots uploaded.</p>
               </div>
@@ -1719,12 +1612,14 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
           </div>
         )}
 
-        {/* Step 8: Translate */}
-        {step === 8 && (() => {
+        {/* Step 7: Translate */}
+        {step === 7 && (() => {
           const targetLangs = project.targetLanguages.filter(l => l !== project.sourceLanguage);
           const hasTranslations = !!(project.translatedHeadlines || project.translatedMetadata);
           const untranslatedLangs = targetLangs.filter(l => !project.translatedHeadlines?.[l]);
           const needsRetranslation = hasTranslations && untranslatedLangs.length > 0;
+          const availableLangs = APP_STORE_LANGUAGES.filter(l => l.code !== project.sourceLanguage);
+          const allSelected = availableLangs.every(l => project.targetLanguages.includes(l.code));
 
           return (
           <div style={pageStyles.stepContent}>
@@ -1734,10 +1629,35 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
             </p>
 
             {/* Language selector */}
-            <label style={pageStyles.label}>
-              Target Languages
-              {plan === 'FREE' && <span style={{ fontSize: '12px', color: '#86868b', marginLeft: '8px' }}>(max 2 on Free plan)</span>}
-            </label>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <label style={{ ...pageStyles.label, marginBottom: 0 }}>
+                Target Languages
+                {plan === 'FREE' && <span style={{ fontSize: '12px', color: '#86868b', marginLeft: '8px' }}>(max 2 on Free plan)</span>}
+              </label>
+              {plan === 'PRO' && (
+                <button
+                  style={{
+                    padding: '4px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #e5e5ea',
+                    backgroundColor: '#fff',
+                    color: '#0071e3',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: translating ? 'not-allowed' : 'pointer',
+                    opacity: translating ? 0.5 : 1,
+                  }}
+                  disabled={translating}
+                  onClick={() => {
+                    const newTargets = allSelected ? [] : availableLangs.map(l => l.code);
+                    setProject({ ...project, targetLanguages: newTargets });
+                    saveField({ targetLanguages: newTargets });
+                  }}
+                >
+                  {allSelected ? 'Deselect All' : 'Select All'}
+                </button>
+              )}
+            </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '24px' }}>
               {APP_STORE_LANGUAGES
                 .filter(l => l.code !== project.sourceLanguage)
@@ -1895,8 +1815,8 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
           );
         })()}
 
-        {/* Step 9: Export */}
-        {step === 9 && (
+        {/* Step 8: Export */}
+        {step === 8 && (
           <div style={pageStyles.stepContent}>
             <h2 style={pageStyles.stepTitle}>Export</h2>
             <p style={pageStyles.stepDesc}>Download your complete ASO package as a ZIP file</p>

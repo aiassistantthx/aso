@@ -177,3 +177,18 @@ model UnifiedScreenshot {
   styleOverride   Json?
   mockupSettings  Json?
 }
+
+// Admin-editable AI prompts
+model AdminPrompt {
+  id            String   @id @default(cuid())
+  key           String   @unique
+  name          String
+  description   String?
+  systemMessage String   @db.Text
+  userTemplate  String   @db.Text
+  model         String   @default("gpt-4o-mini")
+  temperature   Float    @default(0.7)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

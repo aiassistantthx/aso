@@ -5,6 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { getPlanLimits } from '../middleware/planLimits.js';
 import { UPLOADS_DIR } from '../config.js';
+import { getPrompt, renderPrompt } from '../utils/prompts.js';
 
 const IOS_LIMITS: Record<string, number> = {
   appName: 30,
@@ -406,28 +407,24 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
     // 1. Generate headlines if screenshots service is enabled
     if (project.wizardGenerateScreenshots && screenshots.length > 0) {
       const count = Math.min(8, Math.max(5, screenshots.length));
-      const headlinesPrompt = `You are an expert ASO copywriter for App Store screenshots.
-Generate ${count} compelling short headlines for "${project.appName}".
-App description: "${project.briefDescription}"
-Target keywords: "${project.targetKeywords}"
 
-IMPORTANT: Generate all headlines in English (en-US), regardless of the language of the app name or description provided.
-
-Rules:
-- Each headline: 3-8 words
-- Use [brackets] to highlight key phrases — MUST include at least one action verb plus a benefit/feature (e.g. "[Track Your Progress]", "[Save Time] Instantly", "[Boost Productivity] Daily")
-- Each headline MUST be unique in meaning — cover different features, benefits, or use cases. No repetition or paraphrasing of the same idea.
-- Use power words that drive downloads
-- Return JSON: { "headlines": ["...", "..."] }`;
+      // Load prompt from DB
+      const headlinesConfig = await getPrompt(fastify.prisma, 'headlines_generation');
+      const headlinesPrompt = renderPrompt(headlinesConfig.userTemplate, {
+        count,
+        appName: project.appName,
+        briefDescription: project.briefDescription,
+        targetKeywords: project.targetKeywords,
+      });
 
       try {
         const response = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
+          model: headlinesConfig.model,
           messages: [
-            { role: 'system', content: 'You are an ASO expert. Return only valid JSON.' },
+            { role: 'system', content: headlinesConfig.systemMessage },
             { role: 'user', content: headlinesPrompt },
           ],
-          temperature: 0.7,
+          temperature: headlinesConfig.temperature,
           response_format: { type: 'json_object' },
         });
 
@@ -461,44 +458,23 @@ Rules:
         ? `\nTarget keywords to incorporate: "${project.targetKeywords}"`
         : '';
 
-      const metadataPrompt = `You are an expert ASO (App Store Optimization) copywriter. Generate optimized App Store (iOS) metadata.
-
-App Name: "${project.appName}"
-Brief Description: "${project.briefDescription}"${keywordsLine}
-
-IMPORTANT: Generate all metadata in English (en-US), regardless of the language of the app name or description provided.
-
-Return a JSON object with these fields: ${fieldsDescription}
-
-ASO Best Practices — FOLLOW STRICTLY:
-
-1. appName (30 chars): Format as "${project.appName} - [Key Benefit Phrase]" or "${project.appName}: [Key Benefit Phrase]". The benefit phrase should read naturally, NOT be a comma-separated keyword list. Example: "Fitbit - Health & Fitness" not "Fitbit - health,fitness,tracker"
-
-2. subtitle (30 chars): Complement the title with DIFFERENT keywords. Must NOT repeat ANY word from appName. Focus on secondary features or unique value proposition.
-
-3. keywords (100 chars): Comma-separated, NO spaces after commas. Include ONLY words that are NOT already in appName or subtitle. Every word must be unique. Use singular forms. Include common misspellings and synonyms.
-
-4. ZERO WORD DUPLICATION: Every word across appName, subtitle, and keywords must be unique. Apple indexes all three fields, so repeating words wastes precious character space.
-
-5. description (4000 chars):
-   - First 3 lines are crucial (visible before "Read More") — put key value proposition and keywords here
-   - Use short paragraphs (2-3 sentences max)
-   - Include social proof if applicable
-   - End with clear call-to-action
-
-6. whatsNew (4000 chars): Mention new features, bug fixes. Can help with keyword ranking.
-
-- Respect character limits strictly
-- Return ONLY valid JSON, no markdown fences`;
+      // Load prompt from DB
+      const metadataConfig = await getPrompt(fastify.prisma, 'metadata_generation');
+      const metadataPrompt = renderPrompt(metadataConfig.userTemplate, {
+        appName: project.appName,
+        briefDescription: project.briefDescription,
+        keywordsLine,
+        fieldsDescription,
+      });
 
       try {
         const response = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
+          model: metadataConfig.model,
           messages: [
-            { role: 'system', content: 'You are an ASO expert. Return only valid JSON.' },
+            { role: 'system', content: metadataConfig.systemMessage },
             { role: 'user', content: metadataPrompt },
           ],
-          temperature: 0.7,
+          temperature: metadataConfig.temperature,
           response_format: { type: 'json_object' },
         });
 
@@ -515,27 +491,21 @@ ASO Best Practices — FOLLOW STRICTLY:
             .map(([field, limit]) => `- "${field}": currently ${metadata[field].length} chars, max ${limit}. Current value: "${metadata[field]}"`)
             .join('\n');
 
-          const fixPrompt = `These generated ASO fields exceed character limits. Rewrite ONLY these fields to fit.
-
-App name: "${project.appName}"
-${project.targetKeywords ? `Target keywords: "${project.targetKeywords}"` : ''}
-
-Fields to fix:
-${fixList}
-
-Rules:
-- Keep app name "${project.appName}" in appName
-- Incorporate keywords naturally
-- Stay marketing-friendly
-- Return ONLY valid JSON with just the fixed fields`;
+          // Load fix prompt from DB
+          const fixConfig = await getPrompt(fastify.prisma, 'metadata_fix');
+          const fixPrompt = renderPrompt(fixConfig.userTemplate, {
+            appName: project.appName,
+            keywordsLine: project.targetKeywords ? `Target keywords: "${project.targetKeywords}"` : '',
+            fixList,
+          });
 
           const fixResponse = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
+            model: fixConfig.model,
             messages: [
-              { role: 'system', content: 'You are an ASO expert. Return only valid JSON. Every field MUST respect its character limit.' },
+              { role: 'system', content: fixConfig.systemMessage },
               { role: 'user', content: fixPrompt },
             ],
-            temperature: 0.3,
+            temperature: fixConfig.temperature,
             response_format: { type: 'json_object' },
           });
 
@@ -563,14 +533,18 @@ Rules:
     if (project.wizardGenerateIcon) {
       const toneAdj = TONE_ADJECTIVES[project.wizardTone] || 'vibrant, bold';
 
+      // Load icon prompt from DB
+      const iconConfig = await getPrompt(fastify.prisma, 'icon_generation');
+      const iconPrompt = renderPrompt(iconConfig.userTemplate, {
+        appName: project.appName,
+        briefDescription: project.briefDescription,
+        toneAdjective: toneAdj,
+      });
+
       try {
         const iconResponse = await openai.images.generate({
           model: 'dall-e-3',
-          prompt: `Create a modern professional iOS app icon for "${project.appName}".
-The app is: ${project.briefDescription}.
-Style: Clean, minimal, simple recognizable symbol.
-Use a ${toneAdj} color palette.
-No text or letters. Square format.`,
+          prompt: iconPrompt,
           n: 1,
           size: '1024x1024',
         });
@@ -601,7 +575,7 @@ No text or letters. Square format.`,
     // Update project with results
     const updateData: Record<string, unknown> = {
       wizardStatus: 'generated',
-      wizardCurrentStep: 7,
+      wizardCurrentStep: 6,
     };
 
     if (results.wizardGeneratedHeadlines !== undefined) {
@@ -687,28 +661,17 @@ No text or letters. Square format.`,
       // Translate headlines
       if (editedHeadlines && editedHeadlines.length > 0) {
         try {
-          const response = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
-            messages: [
-              {
-                role: 'system',
-                content: `You are a professional translator for App Store screenshots. Translate the following texts to ${lang}.
+          // Load headlines translation prompt from DB
+          const headlinesTransConfig = await getPrompt(fastify.prisma, 'headlines_translation');
+          const systemMessage = renderPrompt(headlinesTransConfig.systemMessage, { targetLanguage: lang });
 
-IMPORTANT RULES:
-1. Keep translations concise and impactful - they appear as headlines on app screenshots
-2. PRESERVE all [brackets] around text - these mark highlighted words
-3. PRESERVE the | character for line breaks
-4. Keep numbers and special characters as-is
-5. Return ONLY the translations, one per line, in the exact same order
-6. Do not add numbers, quotes, or any other formatting
-7. For short promotional phrases, keep them punchy and marketing-style`,
-              },
-              {
-                role: 'user',
-                content: editedHeadlines.join('\n'),
-              },
+          const response = await openai.chat.completions.create({
+            model: headlinesTransConfig.model,
+            messages: [
+              { role: 'system', content: systemMessage },
+              { role: 'user', content: editedHeadlines.join('\n') },
             ],
-            temperature: 0.3,
+            temperature: headlinesTransConfig.temperature,
           });
 
           const translatedContent = response.choices[0]?.message?.content || '';
@@ -731,30 +694,24 @@ IMPORTANT RULES:
           : '';
 
         try {
+          // Load metadata translation prompt from DB
+          const metadataTransConfig = await getPrompt(fastify.prisma, 'metadata_translation');
+          const metadataTransPrompt = renderPrompt(metadataTransConfig.userTemplate, {
+            sourceLanguage: project.sourceLanguage,
+            targetLanguage: lang,
+            appName: project.appName,
+            keywordsContext,
+            metadata: JSON.stringify(editedMetadata, null, 2),
+            fieldsDescription,
+          });
+
           const response = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
+            model: metadataTransConfig.model,
             messages: [
-              { role: 'system', content: 'You are a professional ASO translator. Return only valid JSON. Every field MUST respect its character limit.' },
-              {
-                role: 'user',
-                content: `Translate this App Store (iOS) metadata from ${project.sourceLanguage} to ${lang}.
-
-App name: "${project.appName}"${keywordsContext}
-
-Current metadata:
-${JSON.stringify(editedMetadata, null, 2)}
-
-Rules:
-- Adapt the marketing tone to the target culture
-- STRICTLY respect character limits: ${fieldsDescription}
-- The app name "${project.appName}" MUST remain in appName field
-- For short fields (appName, subtitle): if the direct translation exceeds the limit, rewrite it shorter
-- Incorporate target keywords naturally
-- For keywords: use equivalent search terms in the target language, comma-separated, no spaces
-- Return ONLY valid JSON with the same field names`,
-              },
+              { role: 'system', content: metadataTransConfig.systemMessage },
+              { role: 'user', content: metadataTransPrompt },
             ],
-            temperature: 0.3,
+            temperature: metadataTransConfig.temperature,
             response_format: { type: 'json_object' },
           });
 
@@ -772,26 +729,22 @@ Rules:
               .map(([field, limit]) => `- "${field}": currently ${translated[field].length} chars, max ${limit}. Current value: "${translated[field]}"`)
               .join('\n');
 
+            // Load metadata translation fix prompt from DB
+            const metadataFixConfig = await getPrompt(fastify.prisma, 'metadata_translation_fix');
+            const metadataFixPrompt = renderPrompt(metadataFixConfig.userTemplate, {
+              appName: project.appName,
+              keywordsContext,
+              fixList,
+              targetLanguage: lang,
+            });
+
             const fixResponse = await openai.chat.completions.create({
-              model: 'gpt-4o-mini',
+              model: metadataFixConfig.model,
               messages: [
-                { role: 'system', content: 'You are a professional ASO translator. Return only valid JSON. Every field MUST respect its character limit.' },
-                {
-                  role: 'user',
-                  content: `The following translated fields exceed their character limits. Rewrite ONLY these fields to fit within limits.
-
-App name: "${project.appName}"${keywordsContext}
-
-Fields to fix:
-${fixList}
-
-Rules:
-- Keep the app name "${project.appName}" in the appName field
-- Keep it marketing-friendly and natural in ${lang}
-- Return ONLY valid JSON with just the fixed fields`,
-                },
+                { role: 'system', content: metadataFixConfig.systemMessage },
+                { role: 'user', content: metadataFixPrompt },
               ],
-              temperature: 0.2,
+              temperature: metadataFixConfig.temperature,
               response_format: { type: 'json_object' },
             });
 
@@ -828,7 +781,7 @@ Rules:
         wizardTranslatedHeadlines: translatedHeadlines as Prisma.InputJsonValue,
         metadataTranslations: translatedMetadata as Prisma.InputJsonValue,
         wizardStatus: 'translated',
-        wizardCurrentStep: 9,
+        wizardCurrentStep: 8,
       },
     });
 
@@ -1031,40 +984,23 @@ Rules:
       ? `\nTarget keywords to incorporate: "${project.targetKeywords}"`
       : '';
 
-    const metadataPrompt = `You are an expert ASO (App Store Optimization) copywriter. Generate optimized App Store (iOS) metadata.
-
-App Name: "${project.appName}"
-Brief Description: "${project.briefDescription}"${keywordsLine}
-
-IMPORTANT: Generate all metadata in English (en-US), regardless of the language of the app name or description provided.
-
-Return a JSON object with these fields: ${fieldsDescription}
-
-ASO Best Practices — FOLLOW STRICTLY:
-
-1. appName (30 chars): Format as "${project.appName} - [Key Benefit Phrase]" or "${project.appName}: [Key Benefit Phrase]". The benefit phrase should read naturally, NOT be a comma-separated keyword list.
-
-2. subtitle (30 chars): Complement the title with DIFFERENT keywords. Must NOT repeat ANY word from appName.
-
-3. keywords (100 chars): Comma-separated, NO spaces after commas. Include ONLY words that are NOT already in appName or subtitle.
-
-4. ZERO WORD DUPLICATION: Every word across appName, subtitle, and keywords must be unique.
-
-5. description (4000 chars): First 3 lines are crucial. Use short paragraphs. End with CTA.
-
-6. whatsNew (4000 chars): Mention new features, bug fixes.
-
-- Respect character limits strictly
-- Return ONLY valid JSON, no markdown fences`;
+    // Load prompt from DB
+    const metadataConfig = await getPrompt(fastify.prisma, 'metadata_generation');
+    const metadataPrompt = renderPrompt(metadataConfig.userTemplate, {
+      appName: project.appName,
+      briefDescription: project.briefDescription,
+      keywordsLine,
+      fieldsDescription,
+    });
 
     try {
       const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: metadataConfig.model,
         messages: [
-          { role: 'system', content: 'You are an ASO expert. Return only valid JSON.' },
+          { role: 'system', content: metadataConfig.systemMessage },
           { role: 'user', content: metadataPrompt },
         ],
-        temperature: 0.7,
+        temperature: metadataConfig.temperature,
         response_format: { type: 'json_object' },
       });
 
@@ -1187,29 +1123,24 @@ Rules:
         : '';
 
       try {
+        // Load metadata translation prompt from DB
+        const metadataTransConfig = await getPrompt(fastify.prisma, 'metadata_translation');
+        const metadataTransPrompt = renderPrompt(metadataTransConfig.userTemplate, {
+          sourceLanguage: project.sourceLanguage,
+          targetLanguage: lang,
+          appName: project.appName,
+          keywordsContext,
+          metadata: JSON.stringify(editedMetadata, null, 2),
+          fieldsDescription,
+        });
+
         const response = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
+          model: metadataTransConfig.model,
           messages: [
-            { role: 'system', content: 'You are a professional ASO translator. Return only valid JSON. Every field MUST respect its character limit.' },
-            {
-              role: 'user',
-              content: `Translate this App Store (iOS) metadata from ${project.sourceLanguage} to ${lang}.
-
-App name: "${project.appName}"${keywordsContext}
-
-Current metadata:
-${JSON.stringify(editedMetadata, null, 2)}
-
-Rules:
-- Adapt the marketing tone to the target culture
-- STRICTLY respect character limits: ${fieldsDescription}
-- The app name "${project.appName}" MUST remain in appName field
-- For short fields (appName, subtitle): if the direct translation exceeds the limit, rewrite it shorter
-- For keywords: use equivalent search terms in the target language, comma-separated, no spaces
-- Return ONLY valid JSON with the same field names`,
-            },
+            { role: 'system', content: metadataTransConfig.systemMessage },
+            { role: 'user', content: metadataTransPrompt },
           ],
-          temperature: 0.3,
+          temperature: metadataTransConfig.temperature,
           response_format: { type: 'json_object' },
         });
 
@@ -1226,26 +1157,22 @@ Rules:
             .map(([field, limit]) => `- "${field}": currently ${translated[field].length} chars, max ${limit}. Current value: "${translated[field]}"`)
             .join('\n');
 
+          // Load metadata translation fix prompt from DB
+          const metadataFixConfig = await getPrompt(fastify.prisma, 'metadata_translation_fix');
+          const metadataFixPrompt = renderPrompt(metadataFixConfig.userTemplate, {
+            appName: project.appName,
+            keywordsContext,
+            fixList,
+            targetLanguage: lang,
+          });
+
           const fixResponse = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
+            model: metadataFixConfig.model,
             messages: [
-              { role: 'system', content: 'You are a professional ASO translator. Return only valid JSON. Every field MUST respect its character limit.' },
-              {
-                role: 'user',
-                content: `The following translated fields exceed their character limits. Rewrite ONLY these fields to fit within limits.
-
-App name: "${project.appName}"${keywordsContext}
-
-Fields to fix:
-${fixList}
-
-Rules:
-- Keep the app name "${project.appName}" in the appName field
-- Keep it marketing-friendly and natural in ${lang}
-- Return ONLY valid JSON with just the fixed fields`,
-              },
+              { role: 'system', content: metadataFixConfig.systemMessage },
+              { role: 'user', content: metadataFixPrompt },
             ],
-            temperature: 0.2,
+            temperature: metadataFixConfig.temperature,
             response_format: { type: 'json_object' },
           });
 
