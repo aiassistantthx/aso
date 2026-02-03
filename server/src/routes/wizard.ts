@@ -339,12 +339,26 @@ IMPORTANT: Generate all metadata in English (en-US), regardless of the language 
 
 Return a JSON object with these fields: ${fieldsDescription}
 
-Rules:
-- Respect character limits strictly — each field must not exceed its limit
-- Optimize for discoverability with relevant keywords
-- Use a professional marketing tone with short paragraphs in descriptions
-- For keywords: comma-separated, no spaces after commas, exclude words already in title/subtitle
-- Return ONLY valid JSON, no markdown fences or extra text`;
+ASO Best Practices — FOLLOW STRICTLY:
+
+1. appName (30 chars): Format as "${project.appName} - [Key Benefit Phrase]" or "${project.appName}: [Key Benefit Phrase]". The benefit phrase should read naturally, NOT be a comma-separated keyword list. Example: "Fitbit - Health & Fitness" not "Fitbit - health,fitness,tracker"
+
+2. subtitle (30 chars): Complement the title with DIFFERENT keywords. Must NOT repeat ANY word from appName. Focus on secondary features or unique value proposition.
+
+3. keywords (100 chars): Comma-separated, NO spaces after commas. Include ONLY words that are NOT already in appName or subtitle. Every word must be unique. Use singular forms. Include common misspellings and synonyms.
+
+4. ZERO WORD DUPLICATION: Every word across appName, subtitle, and keywords must be unique. Apple indexes all three fields, so repeating words wastes precious character space.
+
+5. description (4000 chars):
+   - First 3 lines are crucial (visible before "Read More") — put key value proposition and keywords here
+   - Use short paragraphs (2-3 sentences max)
+   - Include social proof if applicable
+   - End with clear call-to-action
+
+6. whatsNew (4000 chars): Mention new features, bug fixes. Can help with keyword ranking.
+
+- Respect character limits strictly
+- Return ONLY valid JSON, no markdown fences`;
 
       try {
         const response = await openai.chat.completions.create({
