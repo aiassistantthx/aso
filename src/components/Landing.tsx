@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 interface Props {
   onGetStarted: () => void;
   onLogin: () => void;
+  onNavigate?: (page: string) => void;
 }
 
 // Color palette: Warm Neutral + Coral Accent
@@ -39,7 +40,7 @@ const SectionHeader: React.FC<{ label: string; title: string; subtitle: string }
   </div>
 );
 
-export const Landing: React.FC<Props> = ({ onGetStarted, onLogin }) => {
+export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) => {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -495,6 +496,28 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin }) => {
               </svg>
             </div>
             <span style={{ ...styles.logoText, fontSize: 15, color: colors.textSecondary }}>LocalizeShots</span>
+          </div>
+          <div style={styles.footerLinks}>
+            <button
+              onClick={() => onNavigate?.('terms')}
+              style={styles.footerLink}
+            >
+              Terms of Service
+            </button>
+            <span style={styles.footerLinkDivider}>|</span>
+            <button
+              onClick={() => onNavigate?.('privacy')}
+              style={styles.footerLink}
+            >
+              Privacy Policy
+            </button>
+            <span style={styles.footerLinkDivider}>|</span>
+            <button
+              onClick={() => onNavigate?.('refund')}
+              style={styles.footerLink}
+            >
+              Refund Policy
+            </button>
           </div>
           <div style={styles.footerDivider} />
           <p style={styles.footerCopy}>&copy; {new Date().getFullYear()} LocalizeShots</p>
@@ -1261,6 +1284,26 @@ const styles: Record<string, React.CSSProperties> = {
     margin: 0,
     fontWeight: 400,
     letterSpacing: '0.2px',
+  },
+  footerLinks: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+  },
+  footerLink: {
+    background: 'none',
+    border: 'none',
+    fontSize: 12,
+    color: colors.textMuted,
+    cursor: 'pointer',
+    padding: 0,
+    fontWeight: 400,
+    letterSpacing: '0.2px',
+    transition: 'color 0.2s',
+  },
+  footerLinkDivider: {
+    color: colors.border,
+    fontSize: 12,
   },
 };
 

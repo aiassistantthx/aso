@@ -6,6 +6,9 @@ import { Editor } from './components/Editor';
 import { Landing } from './components/Landing';
 import { ProfilePage } from './components/ProfilePage';
 import { WizardPage } from './components/WizardPage';
+import { TermsOfService } from './components/TermsOfService';
+import { PrivacyPolicy } from './components/PrivacyPolicy';
+import { RefundPolicy } from './components/RefundPolicy';
 import { auth as authApi } from './services/api';
 
 type Route =
@@ -15,7 +18,10 @@ type Route =
   | { page: 'dashboard' }
   | { page: 'editor'; projectId: string }
   | { page: 'profile' }
-  | { page: 'wizard-editor'; projectId: string };
+  | { page: 'wizard-editor'; projectId: string }
+  | { page: 'terms' }
+  | { page: 'privacy' }
+  | { page: 'refund' };
 
 function AdminPlanToggle() {
   const { user, refreshUser } = useAuth();
@@ -112,6 +118,12 @@ function AppRouter() {
         if (projectId) {
           setRoute({ page: 'wizard-editor', projectId });
         }
+      } else if (path === '/terms') {
+        setRoute({ page: 'terms' });
+      } else if (path === '/privacy') {
+        setRoute({ page: 'privacy' });
+      } else if (path === '/refund') {
+        setRoute({ page: 'refund' });
       } else {
         setRoute({ page: 'landing' });
       }
@@ -122,9 +134,14 @@ function AppRouter() {
     return () => window.removeEventListener('popstate', handlePath);
   }, []);
 
-  // Redirect based on auth state
+  // Redirect based on auth state (legal pages are always accessible)
   useEffect(() => {
     if (loading) return;
+
+    // Legal pages are always accessible, skip redirect logic
+    if (route.page === 'terms' || route.page === 'privacy' || route.page === 'refund') {
+      return;
+    }
 
     if (user) {
       if (route.page === 'landing' || route.page === 'login' || route.page === 'register') {
@@ -162,6 +179,15 @@ function AppRouter() {
     } else if (page === 'editor' && projectId) {
       path = `/project/${projectId}`;
       newRoute = { page: 'editor', projectId };
+    } else if (page === 'terms') {
+      path = '/terms';
+      newRoute = { page: 'terms' };
+    } else if (page === 'privacy') {
+      path = '/privacy';
+      newRoute = { page: 'privacy' };
+    } else if (page === 'refund') {
+      path = '/refund';
+      newRoute = { page: 'refund' };
     } else {
       path = '/';
       newRoute = { page: 'landing' };
@@ -197,6 +223,7 @@ function AppRouter() {
         <Landing
           onGetStarted={() => navigate('register')}
           onLogin={() => navigate('login')}
+          onNavigate={(page) => navigate(page)}
         />
       );
 
@@ -260,6 +287,15 @@ function AppRouter() {
           onNavigate={(page, id) => navigate(page, id)}
         />
       );
+
+    case 'terms':
+      return <TermsOfService onBack={() => navigate('landing')} />;
+
+    case 'privacy':
+      return <PrivacyPolicy onBack={() => navigate('landing')} />;
+
+    case 'refund':
+      return <RefundPolicy onBack={() => navigate('landing')} />;
 
     default:
       return null;
