@@ -545,7 +545,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   logoText: {
     fontSize: 17,
-    fontWeight: 600,
+    fontWeight: 500,
     color: colors.text,
     letterSpacing: '-0.3px',
   },
@@ -619,10 +619,10 @@ const styles: Record<string, React.CSSProperties> = {
   },
   heroTitle: {
     fontSize: 52,
-    fontWeight: 600,
+    fontWeight: 400,
     color: colors.text,
     lineHeight: 1.15,
-    letterSpacing: '-1.5px',
+    letterSpacing: '-1px',
     marginBottom: 24,
   },
   heroAccent: {
@@ -894,7 +894,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   psTitle: {
     fontSize: 15,
-    fontWeight: 600,
+    fontWeight: 500,
     color: colors.text,
     marginBottom: 12,
     letterSpacing: '-0.2px',
@@ -941,9 +941,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
   sectionTitle: {
     fontSize: 34,
-    fontWeight: 600,
+    fontWeight: 400,
     color: colors.text,
-    letterSpacing: '-1px',
+    letterSpacing: '-0.5px',
     marginBottom: 16,
   },
   sectionTitleLine: {
@@ -992,7 +992,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   stepTitle: {
     fontSize: 15,
-    fontWeight: 600,
+    fontWeight: 500,
     color: colors.text,
     marginBottom: 8,
     letterSpacing: '-0.2px',
@@ -1043,7 +1043,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   featureTitle: {
     fontSize: 15,
-    fontWeight: 600,
+    fontWeight: 500,
     color: colors.text,
     marginBottom: 10,
     letterSpacing: '-0.2px',
@@ -1126,9 +1126,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
   pricingPrice: {
     fontSize: 48,
-    fontWeight: 600,
+    fontWeight: 400,
     color: colors.text,
-    letterSpacing: '-2px',
+    letterSpacing: '-1.5px',
   },
   pricingPeriod: {
     fontSize: 14,
@@ -1205,10 +1205,10 @@ const styles: Record<string, React.CSSProperties> = {
   },
   finalCtaTitle: {
     fontSize: 30,
-    fontWeight: 600,
+    fontWeight: 400,
     color: '#fff',
     marginBottom: 12,
-    letterSpacing: '-0.5px',
+    letterSpacing: '-0.3px',
   },
   finalCtaSubtitle: {
     fontSize: 15,
@@ -1267,7 +1267,7 @@ const styles: Record<string, React.CSSProperties> = {
 // Add CSS animations and Google Fonts
 const styleSheet = document.createElement('style');
 styleSheet.textContent = `
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
   @keyframes fadeInUp {
     from {
