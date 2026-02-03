@@ -54,6 +54,9 @@ export interface LayoutPresetStyle {
   mockupVisibility: 'full';
   mockupOffset: { x: number; y: number };
   mockupContinuation?: 'left-start' | 'left-end';
+  mockupRotation?: number;
+  // For spanning: which screenshot index to use for mockup
+  mockupScreenshotIndex?: number;
 }
 
 export interface LayoutPreset {
@@ -111,13 +114,38 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
   {
     id: 'spanning',
     name: 'Spanning',
-    description: 'One mockup spans two consecutive screenshots',
-    getStyle: (index: number) => ({
-      textPosition: 'top' as const,
-      mockupAlignment: 'bottom' as const,
-      mockupVisibility: 'full' as const,
-      mockupOffset: { x: 0, y: 60 },
-      mockupContinuation: (index % 2 === 0 ? 'left-start' : 'left-end') as 'left-start' | 'left-end',
-    }),
+    description: 'One mockup spans two consecutive screenshots, rest is out of box',
+    getStyle: (index: number) => {
+      // Only first two screenshots (0 and 1) use spanning effect
+      if (index === 0) {
+        return {
+          textPosition: 'top' as const,
+          mockupAlignment: 'bottom' as const,
+          mockupVisibility: 'full' as const,
+          mockupOffset: { x: 250, y: 180 }, // Offset right to exit canvas
+          mockupContinuation: 'left-start' as const,
+          mockupRotation: -8, // Tilted angle
+          mockupScreenshotIndex: 0, // Use screenshot 0
+        };
+      } else if (index === 1) {
+        return {
+          textPosition: 'top' as const,
+          mockupAlignment: 'bottom' as const,
+          mockupVisibility: 'full' as const,
+          mockupOffset: { x: -250, y: 180 }, // Offset left to enter from left
+          mockupContinuation: 'left-end' as const,
+          mockupRotation: 8, // Tilted angle (opposite direction)
+          mockupScreenshotIndex: 0, // Use same screenshot 0
+        };
+      } else {
+        // Rest of screenshots use out of box style
+        return {
+          textPosition: 'top' as const,
+          mockupAlignment: 'bottom' as const,
+          mockupVisibility: 'full' as const,
+          mockupOffset: { x: 0, y: 200 },
+        };
+      }
+    },
   },
 ];

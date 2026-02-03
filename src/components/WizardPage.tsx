@@ -627,8 +627,8 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
         }
 
         // Apply layout preset only when not using saved editor styleConfig
+        const layoutStyle = layoutPreset.getStyle(i);
         if (!savedStyle) {
-          const layoutStyle = layoutPreset.getStyle(i);
           effectiveStyle.textPosition = layoutStyle.textPosition;
           effectiveStyle.mockupAlignment = layoutStyle.mockupAlignment;
           effectiveStyle.mockupVisibility = layoutStyle.mockupVisibility;
@@ -636,7 +636,14 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
           if (layoutStyle.mockupContinuation) {
             effectiveStyle.mockupContinuation = layoutStyle.mockupContinuation;
           }
+          if (layoutStyle.mockupRotation !== undefined) {
+            effectiveStyle.mockupRotation = layoutStyle.mockupRotation;
+          }
         }
+
+        // Determine which screenshot to use for mockup (for spanning layout)
+        const mockupScreenshotIdx = layoutStyle.mockupScreenshotIndex ?? i;
+        const mockupScreenshot = screenshots[mockupScreenshotIdx] ?? screenshots[i];
 
         try {
           const canvas = document.createElement('canvas');
@@ -645,6 +652,8 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
             text: headlines[i],
             style: effectiveStyle,
             deviceSize,
+            mockupScreenshot: mockupScreenshot !== screenshots[i] ? mockupScreenshot : undefined,
+            mockupContinuation: layoutStyle.mockupContinuation,
           });
           canvases.push(canvas);
         } catch (err) {
@@ -735,6 +744,13 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
         if (layoutStyle.mockupContinuation) {
           effectiveStyle.mockupContinuation = layoutStyle.mockupContinuation;
         }
+        if (layoutStyle.mockupRotation !== undefined) {
+          effectiveStyle.mockupRotation = layoutStyle.mockupRotation;
+        }
+
+        // Determine which screenshot to use for mockup (for spanning layout)
+        const mockupScreenshotIdx = layoutStyle.mockupScreenshotIndex ?? i;
+        const mockupScreenshot = screenshots[mockupScreenshotIdx] ?? screenshots[i];
 
         try {
           const canvas = document.createElement('canvas');
@@ -743,6 +759,8 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
             text: headlines[i],
             style: effectiveStyle,
             deviceSize,
+            mockupScreenshot: mockupScreenshot !== screenshots[i] ? mockupScreenshot : undefined,
+            mockupContinuation: layoutStyle.mockupContinuation,
           });
           canvases.push(canvas);
         } catch (err) {
@@ -839,8 +857,8 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
             }
 
             // Apply layout preset only when not using saved editor styleConfig
+            const layoutStyle = layoutPreset.getStyle(i);
             if (!savedStyle) {
-              const layoutStyle = layoutPreset.getStyle(i);
               effectiveStyle.textPosition = layoutStyle.textPosition;
               effectiveStyle.mockupAlignment = layoutStyle.mockupAlignment;
               effectiveStyle.mockupVisibility = layoutStyle.mockupVisibility;
@@ -848,7 +866,14 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
               if (layoutStyle.mockupContinuation) {
                 effectiveStyle.mockupContinuation = layoutStyle.mockupContinuation;
               }
+              if (layoutStyle.mockupRotation !== undefined) {
+                effectiveStyle.mockupRotation = layoutStyle.mockupRotation;
+              }
             }
+
+            // Determine which screenshot to use for mockup (for spanning layout)
+            const mockupScreenshotIdx = layoutStyle.mockupScreenshotIndex ?? i;
+            const mockupScreenshot = screenshots[mockupScreenshotIdx] ?? screenshots[i];
 
             try {
               const blob = await generateScreenshotImage({
@@ -856,6 +881,8 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                 text: langHeadlines[i],
                 style: effectiveStyle,
                 deviceSize: size,
+                mockupScreenshot: mockupScreenshot !== screenshots[i] ? mockupScreenshot : undefined,
+                mockupContinuation: layoutStyle.mockupContinuation,
               });
 
               const sizeLabel = size === '6.9' ? '6.9-inch' : '6.5-inch';

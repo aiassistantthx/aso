@@ -6,6 +6,7 @@ import fs from 'fs';
 import { getPlanLimits } from '../middleware/planLimits.js';
 import { UPLOADS_DIR } from '../config.js';
 import { getPrompt, renderPrompt } from '../utils/prompts.js';
+import { logAIUsage, extractTokenUsage } from '../utils/aiUsageLogger.js';
 
 const IOS_LIMITS: Record<string, number> = {
   appName: 30,
@@ -417,6 +418,7 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
         targetKeywords: project.targetKeywords,
       });
 
+      const startTime = Date.now();
       try {
         const response = await openai.chat.completions.create({
           model: headlinesConfig.model,
@@ -432,6 +434,17 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
         const parsed = JSON.parse(content) as { headlines: string[] };
         const headlines = parsed.headlines || [];
 
+        // Log AI usage
+        await logAIUsage(fastify.prisma, {
+          userId: request.user.id,
+          projectId: id,
+          operationType: 'headlines_generation',
+          model: headlinesConfig.model,
+          ...extractTokenUsage(response),
+          durationMs: Date.now() - startTime,
+          success: true,
+        });
+
         if (headlines.length > 0) {
           results.wizardGeneratedHeadlines = headlines;
           results.wizardEditedHeadlines = headlines;
@@ -439,6 +452,15 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
           errors.push('Headlines generation returned empty results');
         }
       } catch (error) {
+        await logAIUsage(fastify.prisma, {
+          userId: request.user.id,
+          projectId: id,
+          operationType: 'headlines_generation',
+          model: headlinesConfig.model,
+          durationMs: Date.now() - startTime,
+          success: false,
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        });
         fastify.log.error(error, 'Headlines generation error');
         errors.push(`Headlines generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
@@ -467,6 +489,7 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
         fieldsDescription,
       });
 
+      const metaStartTime = Date.now();
       try {
         const response = await openai.chat.completions.create({
           model: metadataConfig.model,
@@ -476,6 +499,17 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
           ],
           temperature: metadataConfig.temperature,
           response_format: { type: 'json_object' },
+        });
+
+        // Log AI usage
+        await logAIUsage(fastify.prisma, {
+          userId: request.user.id,
+          projectId: id,
+          operationType: 'metadata_generation',
+          model: metadataConfig.model,
+          ...extractTokenUsage(response),
+          durationMs: Date.now() - metaStartTime,
+          success: true,
         });
 
         const content = response.choices[0]?.message?.content || '{}';
@@ -499,6 +533,7 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
             fixList,
           });
 
+          const fixStartTime = Date.now();
           const fixResponse = await openai.chat.completions.create({
             model: fixConfig.model,
             messages: [
@@ -507,6 +542,17 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
             ],
             temperature: fixConfig.temperature,
             response_format: { type: 'json_object' },
+          });
+
+          // Log fix usage
+          await logAIUsage(fastify.prisma, {
+            userId: request.user.id,
+            projectId: id,
+            operationType: 'metadata_fix',
+            model: fixConfig.model,
+            ...extractTokenUsage(fixResponse),
+            durationMs: Date.now() - fixStartTime,
+            success: true,
           });
 
           const fixContent = fixResponse.choices[0]?.message?.content || '{}';
@@ -524,6 +570,15 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
         results.generatedMetadata = metadata;
         results.editedMetadata = metadata;
       } catch (error) {
+        await logAIUsage(fastify.prisma, {
+          userId: request.user.id,
+          projectId: id,
+          operationType: 'metadata_generation',
+          model: metadataConfig.model,
+          durationMs: Date.now() - metaStartTime,
+          success: false,
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        });
         fastify.log.error(error, 'Metadata generation error');
         errors.push(`Metadata generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
@@ -541,12 +596,25 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
         toneAdjective: toneAdj,
       });
 
+      const iconStartTime = Date.now();
       try {
         const iconResponse = await openai.images.generate({
           model: 'dall-e-3',
           prompt: iconPrompt,
           n: 1,
           size: '1024x1024',
+        });
+
+        // Log AI usage for icon generation
+        await logAIUsage(fastify.prisma, {
+          userId: request.user.id,
+          projectId: id,
+          operationType: 'icon_generation',
+          model: 'dall-e-3',
+          durationMs: Date.now() - iconStartTime,
+          success: true,
+          imageSize: '1024x1024',
+          imageCount: 1,
         });
 
         const imageUrl = iconResponse.data?.[0]?.url;
@@ -567,6 +635,15 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
           results.wizardGeneratedIconUrl = relativeIconPath;
         }
       } catch (error) {
+        await logAIUsage(fastify.prisma, {
+          userId: request.user.id,
+          projectId: id,
+          operationType: 'icon_generation',
+          model: 'dall-e-3',
+          durationMs: Date.now() - iconStartTime,
+          success: false,
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        });
         fastify.log.error(error, 'Icon generation error');
         errors.push(`Icon generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
@@ -660,6 +737,7 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
     const translateLang = async (lang: string) => {
       // Translate headlines
       if (editedHeadlines && editedHeadlines.length > 0) {
+        const headlineStartTime = Date.now();
         try {
           // Load headlines translation prompt from DB
           const headlinesTransConfig = await getPrompt(fastify.prisma, 'headlines_translation');
@@ -674,10 +752,32 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
             temperature: headlinesTransConfig.temperature,
           });
 
+          // Log AI usage
+          await logAIUsage(fastify.prisma, {
+            userId: request.user.id,
+            projectId: id,
+            operationType: 'headlines_translation',
+            model: headlinesTransConfig.model,
+            ...extractTokenUsage(response),
+            durationMs: Date.now() - headlineStartTime,
+            success: true,
+            metadata: { targetLanguage: lang },
+          });
+
           const translatedContent = response.choices[0]?.message?.content || '';
           const translatedTexts = translatedContent.split('\n').filter((t) => t.trim());
           translatedHeadlines[lang] = editedHeadlines.map((original, i) => translatedTexts[i]?.trim() || original);
         } catch (error) {
+          await logAIUsage(fastify.prisma, {
+            userId: request.user.id,
+            projectId: id,
+            operationType: 'headlines_translation',
+            model: 'gpt-4o-mini',
+            durationMs: Date.now() - headlineStartTime,
+            success: false,
+            errorMessage: error instanceof Error ? error.message : 'Unknown error',
+            metadata: { targetLanguage: lang },
+          });
           fastify.log.error(error, `Headline translation error for ${lang}`);
           translatedHeadlines[lang] = editedHeadlines;
         }
@@ -693,6 +793,7 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
           ? `\nTarget keywords that MUST be incorporated where possible: "${project.targetKeywords}"`
           : '';
 
+        const metaTransStartTime = Date.now();
         try {
           // Load metadata translation prompt from DB
           const metadataTransConfig = await getPrompt(fastify.prisma, 'metadata_translation');
@@ -713,6 +814,18 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
             ],
             temperature: metadataTransConfig.temperature,
             response_format: { type: 'json_object' },
+          });
+
+          // Log AI usage
+          await logAIUsage(fastify.prisma, {
+            userId: request.user.id,
+            projectId: id,
+            operationType: 'metadata_translation',
+            model: metadataTransConfig.model,
+            ...extractTokenUsage(response),
+            durationMs: Date.now() - metaTransStartTime,
+            success: true,
+            metadata: { targetLanguage: lang },
           });
 
           const content = response.choices[0]?.message?.content || '{}';
@@ -738,6 +851,7 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
               targetLanguage: lang,
             });
 
+            const fixStartTime = Date.now();
             const fixResponse = await openai.chat.completions.create({
               model: metadataFixConfig.model,
               messages: [
@@ -746,6 +860,18 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
               ],
               temperature: metadataFixConfig.temperature,
               response_format: { type: 'json_object' },
+            });
+
+            // Log fix usage
+            await logAIUsage(fastify.prisma, {
+              userId: request.user.id,
+              projectId: id,
+              operationType: 'metadata_translation_fix',
+              model: metadataFixConfig.model,
+              ...extractTokenUsage(fixResponse),
+              durationMs: Date.now() - fixStartTime,
+              success: true,
+              metadata: { targetLanguage: lang },
             });
 
             const fixContent = fixResponse.choices[0]?.message?.content || '{}';
@@ -762,6 +888,16 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
 
           translatedMetadata[lang] = translated;
         } catch (error) {
+          await logAIUsage(fastify.prisma, {
+            userId: request.user.id,
+            projectId: id,
+            operationType: 'metadata_translation',
+            model: 'gpt-4o-mini',
+            durationMs: Date.now() - metaTransStartTime,
+            success: false,
+            errorMessage: error instanceof Error ? error.message : 'Unknown error',
+            metadata: { targetLanguage: lang },
+          });
           fastify.log.error(error, `Metadata translation error for ${lang}`);
           translatedMetadata[lang] = { ...editedMetadata };
         }

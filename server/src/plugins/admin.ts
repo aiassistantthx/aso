@@ -22,6 +22,7 @@ const componentLoader = new ComponentLoader();
 const Components = {
   PolarLink: componentLoader.add('PolarLink', path.join(__dirname, '../admin/components/PolarLink')),
   StripeLink: componentLoader.add('StripeLink', path.join(__dirname, '../admin/components/StripeLink')),
+  Dashboard: componentLoader.add('Dashboard', path.join(__dirname, '../admin/components/Dashboard')),
 };
 
 export async function setupAdmin(fastify: FastifyInstance, prisma: PrismaClient) {
@@ -37,6 +38,9 @@ export async function setupAdmin(fastify: FastifyInstance, prisma: PrismaClient)
       companyName: 'ASO Admin',
       logo: false,
       withMadeWithLove: false,
+    },
+    dashboard: {
+      component: Components.Dashboard,
     },
     resources: [
       // Users with enhanced features
@@ -330,6 +334,89 @@ export async function setupAdmin(fastify: FastifyInstance, prisma: PrismaClient)
         options: {
           navigation: { name: 'Legacy', icon: 'Archive' },
           listProperties: ['id', 'projectId', 'order', 'text'],
+        },
+      },
+      // Promo Codes
+      {
+        resource: { model: getModelByName('PromoCode', dmmf), client: prisma },
+        options: {
+          navigation: { name: 'Marketing', icon: 'Gift' },
+          listProperties: ['code', 'description', 'discountType', 'discountValue', 'usedCount', 'maxUses', 'isActive', 'validUntil'],
+          filterProperties: ['code', 'discountType', 'isActive'],
+          editProperties: ['code', 'description', 'discountType', 'discountValue', 'freeTrialDays', 'maxUses', 'validFrom', 'validUntil', 'isActive'],
+          showProperties: ['id', 'code', 'description', 'discountType', 'discountValue', 'freeTrialDays', 'maxUses', 'usedCount', 'validFrom', 'validUntil', 'isActive', 'createdAt'],
+          properties: {
+            code: {
+              description: 'Unique promo code (will be uppercased)',
+            },
+            discountType: {
+              availableValues: [
+                { value: 'percent', label: 'Percentage Discount' },
+                { value: 'fixed', label: 'Fixed Amount Discount' },
+                { value: 'free_trial', label: 'Free Trial Days' },
+              ],
+            },
+            discountValue: {
+              description: 'For percent: 0-100, for fixed: amount in cents',
+            },
+            freeTrialDays: {
+              description: 'Days of free PRO access (for free_trial type)',
+            },
+          },
+          actions: {
+            new: {
+              before: async (request: { payload?: { code?: string } }) => {
+                if (request.payload?.code) {
+                  request.payload.code = request.payload.code.toUpperCase();
+                }
+                return request;
+              },
+            },
+            edit: {
+              before: async (request: { payload?: { code?: string } }) => {
+                if (request.payload?.code) {
+                  request.payload.code = request.payload.code.toUpperCase();
+                }
+                return request;
+              },
+            },
+          },
+        },
+      },
+      {
+        resource: { model: getModelByName('PromoRedemption', dmmf), client: prisma },
+        options: {
+          navigation: { name: 'Marketing', icon: 'CheckCircle' },
+          listProperties: ['id', 'promoCodeId', 'userId', 'redeemedAt'],
+          actions: {
+            new: { isAccessible: false },
+            edit: { isAccessible: false },
+            delete: { isAccessible: false },
+          },
+        },
+      },
+      // AI Usage Logs
+      {
+        resource: { model: getModelByName('AIUsageLog', dmmf), client: prisma },
+        options: {
+          navigation: { name: 'Analytics', icon: 'Activity' },
+          listProperties: ['id', 'operationType', 'model', 'totalTokens', 'estimatedCost', 'success', 'createdAt'],
+          filterProperties: ['operationType', 'model', 'success', 'createdAt'],
+          showProperties: ['id', 'userId', 'projectId', 'operationType', 'model', 'promptTokens', 'completionTokens', 'totalTokens', 'estimatedCost', 'durationMs', 'success', 'errorMessage', 'metadata', 'createdAt'],
+          properties: {
+            estimatedCost: {
+              type: 'number',
+            },
+          },
+          sort: {
+            sortBy: 'createdAt',
+            direction: 'desc',
+          },
+          actions: {
+            new: { isAccessible: false },
+            edit: { isAccessible: false },
+            delete: { isAccessible: false },
+          },
         },
       },
     ],

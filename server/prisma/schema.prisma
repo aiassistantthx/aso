@@ -192,3 +192,54 @@ model AdminPrompt {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
+
+// Promo codes for subscriptions
+model PromoCode {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  description     String?
+  discountType    String    @default("percent") // "percent" | "fixed" | "free_trial"
+  discountValue   Float     @default(0)         // percent (0-100) or fixed amount
+  freeTrialDays   Int       @default(0)         // days of free PRO access
+  maxUses         Int?                          // null = unlimited
+  usedCount       Int       @default(0)
+  validFrom       DateTime  @default(now())
+  validUntil      DateTime?                     // null = no expiration
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  redemptions     PromoRedemption[]
+}
+
+// Track promo code redemptions
+model PromoRedemption {
+  id          String    @id @default(cuid())
+  promoCodeId String
+  promoCode   PromoCode @relation(fields: [promoCodeId], references: [id])
+  userId      String
+  redeemedAt  DateTime  @default(now())
+
+  @@unique([promoCodeId, userId])
+}
+
+// AI usage logging for cost tracking
+model AIUsageLog {
+  id               String   @id @default(cuid())
+  userId           String?
+  projectId        String?
+  operationType    String   // "headlines_generation", "metadata_generation", "translation", "icon_generation"
+  model            String   // "gpt-4o-mini", "dall-e-3", etc.
+  promptTokens     Int      @default(0)
+  completionTokens Int      @default(0)
+  totalTokens      Int      @default(0)
+  estimatedCost    Float    @default(0) // in USD
+  durationMs       Int      @default(0)
+  success          Boolean  @default(true)
+  errorMessage     String?
+  metadata         Json?    // additional context (language, etc.)
+  createdAt        DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([operationType])
+}

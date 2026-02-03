@@ -14,6 +14,7 @@ import polarPlugin from './plugins/polar.js';
 import { setupAdmin } from './plugins/admin.js';
 import { seedPrompts } from './utils/seedPrompts.js';
 
+import cookie from '@fastify/cookie';
 import authRoutes from './routes/auth.js';
 import projectRoutes from './routes/projects.js';
 import screenshotRoutes from './routes/screenshots.js';
@@ -23,6 +24,7 @@ import polarRoutes from './routes/polar.js';
 import metadataRoutes from './routes/metadata.js';
 import wizardRoutes from './routes/wizard.js';
 import unifiedRoutes from './routes/unified.js';
+import adminApiRoutes from './routes/admin-api.js';
 import { UPLOADS_DIR } from './config.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -47,6 +49,9 @@ async function start() {
   await fastify.register(async (instance) => {
     await setupAdmin(instance, prisma);
   });
+
+  // Cookie parser (for admin session check)
+  await fastify.register(cookie);
 
   // CORS for dev mode
   await fastify.register(cors, {
@@ -79,6 +84,7 @@ async function start() {
   await fastify.register(metadataRoutes);
   await fastify.register(wizardRoutes);
   await fastify.register(unifiedRoutes);
+  await fastify.register(adminApiRoutes);
 
   // Serve uploaded files
   const uploadsDir = UPLOADS_DIR;
