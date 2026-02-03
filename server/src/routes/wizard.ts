@@ -608,10 +608,24 @@ No text or letters. Square format.`,
     const editedHeadlines = project.editedHeadlines as string[] | null;
     const editedMetadata = project.editedMetadata as Record<string, string> | null;
 
-    const translatedHeadlines: Record<string, string[]> = {};
-    const translatedMetadata: Record<string, Record<string, string>> = {};
+    // Load existing translations to preserve them
+    const existingHeadlines = (project.translatedHeadlines as Record<string, string[]> | null) || {};
+    const existingMetadata = (project.translatedMetadata as Record<string, Record<string, string>> | null) || {};
 
-    const langsToTranslate = project.targetLanguages.filter(l => l !== project.sourceLanguage);
+    const translatedHeadlines: Record<string, string[]> = { ...existingHeadlines };
+    const translatedMetadata: Record<string, Record<string, string>> = { ...existingMetadata };
+
+    // Only translate languages that don't have translations yet
+    const langsToTranslate = project.targetLanguages.filter(
+      l => l !== project.sourceLanguage && !existingHeadlines[l] && !existingMetadata[l]
+    );
+
+    // If all languages already translated, just return
+    if (langsToTranslate.length === 0) {
+      return project;
+    }
+
+    fastify.log.info(`Translating ${langsToTranslate.length} new languages (${Object.keys(existingHeadlines).length} already done)`);
 
     // Translate a single language (headlines + metadata)
     const translateLang = async (lang: string) => {
