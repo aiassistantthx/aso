@@ -40,11 +40,11 @@ const logoIconStyle: React.CSSProperties = {
   width: '34px',
   height: '34px',
   borderRadius: '9px',
-  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  background: 'linear-gradient(135deg, #FF6B4A 0%, #FF8A65 100%)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
+  boxShadow: '0 2px 8px rgba(255, 107, 74, 0.3)',
 };
 
 const logoTextStyle: React.CSSProperties = {

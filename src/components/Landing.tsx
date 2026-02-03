@@ -5,6 +5,20 @@ interface Props {
   onLogin: () => void;
 }
 
+// Color palette: Warm Neutral + Coral Accent
+const colors = {
+  bg: '#FAFAF8',
+  card: '#FFFFFF',
+  text: '#1A1A1A',
+  textSecondary: '#6B6B6B',
+  textMuted: '#9A9A9A',
+  accent: '#FF6B4A',
+  accentLight: '#FF8A65',
+  accentBg: '#FFF5F2',
+  border: '#EEEEEE',
+  success: '#22C55E',
+};
+
 export const Landing: React.FC<Props> = ({ onGetStarted, onLogin }) => {
   const [scrolled, setScrolled] = useState(false);
 
@@ -19,17 +33,17 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin }) => {
       {/* Navigation */}
       <nav style={{
         ...styles.nav,
-        backgroundColor: scrolled ? 'rgba(255, 255, 255, 0.9)' : 'transparent',
+        backgroundColor: scrolled ? 'rgba(250, 250, 248, 0.95)' : 'transparent',
         backdropFilter: scrolled ? 'blur(20px)' : 'none',
-        boxShadow: scrolled ? '0 1px 0 rgba(0,0,0,0.05)' : 'none',
+        borderBottom: scrolled ? `1px solid ${colors.border}` : 'none',
       }}>
         <div style={styles.navInner}>
           <div style={styles.logo}>
             <div style={styles.logoIcon}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="2" width="18" height="20" rx="3" fill="white" fillOpacity="0.9"/>
-                <rect x="6" y="5" width="12" height="3" rx="1" fill="#6366f1"/>
-                <rect x="6" y="10" width="12" height="8" rx="1" fill="#6366f1" fillOpacity="0.3"/>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="2" width="18" height="20" rx="3" fill="white"/>
+                <rect x="6" y="5" width="12" height="3" rx="1" fill={colors.accent}/>
+                <rect x="6" y="10" width="12" height="8" rx="1" fill={colors.accent} fillOpacity="0.3"/>
               </svg>
             </div>
             <span style={styles.logoText}>LocalizeShots</span>
@@ -41,7 +55,7 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin }) => {
           </div>
           <div style={styles.navButtons}>
             <button style={styles.loginBtn} onClick={onLogin}>Sign In</button>
-            <button style={styles.ctaBtn} onClick={onGetStarted}>Get Started Free</button>
+            <button style={styles.ctaBtn} onClick={onGetStarted}>Get Started</button>
           </div>
         </div>
       </nav>
@@ -49,24 +63,18 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin }) => {
       {/* Hero Section */}
       <section style={styles.hero}>
         <div style={styles.heroContent}>
-          <div style={styles.badge}>
-            <span style={styles.badgeDot} />
-            AI-Powered ASO Tool
-          </div>
           <h1 style={styles.heroTitle}>
-            App Store Screenshots
-            <br />
-            <span style={styles.heroGradient}>Localized in Minutes</span>
+            Localize App Store screenshots
+            <span style={styles.heroAccent}> in minutes</span>
           </h1>
           <p style={styles.heroSubtitle}>
-            Generate stunning App Store screenshots with AI headlines,
-            translate to 40+ languages, and export ready-to-upload assets.
-            All from one powerful tool.
+            AI generates headlines and metadata, translates to 40+ languages.
+            Export ready-to-upload assets with one click.
           </p>
           <div style={styles.heroCtas}>
             <button style={styles.heroCtaPrimary} onClick={onGetStarted}>
-              Start Free — No Credit Card
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ marginLeft: 8 }}>
+              Start Free
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ marginLeft: 8 }}>
                 <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
@@ -74,43 +82,27 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin }) => {
               See How It Works
             </button>
           </div>
-          <div style={styles.heroStats}>
-            <div style={styles.heroStat}>
-              <span style={styles.heroStatNumber}>40+</span>
-              <span style={styles.heroStatLabel}>Languages</span>
-            </div>
-            <div style={styles.heroStatDivider} />
-            <div style={styles.heroStat}>
-              <span style={styles.heroStatNumber}>8</span>
-              <span style={styles.heroStatLabel}>Device Sizes</span>
-            </div>
-            <div style={styles.heroStatDivider} />
-            <div style={styles.heroStat}>
-              <span style={styles.heroStatNumber}>AI</span>
-              <span style={styles.heroStatLabel}>Headlines & Icons</span>
-            </div>
-          </div>
         </div>
 
-        {/* Hero Visual */}
+        {/* Hero Visual - iPhone Mockups */}
         <div style={styles.heroVisual}>
-          <div style={styles.heroGlow} />
-          <div style={styles.screenshotsRow}>
+          <div style={styles.mockupsContainer}>
             {[
-              { bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', text: '[Create] Stunning\nVideos [Effortlessly]', highlight: '#FFE135' },
-              { bg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', text: '[Transform] Ideas\ninto [Reality]', highlight: '#00ff88' },
-              { bg: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', text: '[Save] Hours\n[Every Week]', highlight: '#fff740' },
-              { bg: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', text: '[Boost] Your\nProductivity [Now]', highlight: '#ff6b6b' },
+              { lang: 'EN', headline: '[Create] Beautiful\nVideos [Easily]', bg: '#1A1A1A' },
+              { lang: 'DE', headline: '[Erstelle] Schone\nVideos [Einfach]', bg: '#2D2D2D' },
+              { lang: 'JA', headline: '[作成] 美しい\nビデオを [簡単に]', bg: '#404040' },
+              { lang: 'ES', headline: '[Crea] Videos\nHermosos [Facil]', bg: '#1A1A1A' },
             ].map((item, i) => (
-              <div key={i} style={{ ...styles.mockupCard, animationDelay: `${i * 0.1}s` }}>
-                <div style={{ ...styles.mockupInner, background: item.bg }}>
-                  <div style={styles.mockupText}>
-                    {item.text.split('\n').map((line, j) => (
+              <div key={i} style={{ ...styles.mockup, animationDelay: `${i * 0.15}s` }}>
+                <div style={styles.mockupLang}>{item.lang}</div>
+                <div style={{ ...styles.mockupScreen, backgroundColor: item.bg }}>
+                  <div style={styles.mockupHeadline}>
+                    {item.headline.split('\n').map((line, j) => (
                       <div key={j}>
                         {line.split(/(\[.*?\])/).map((part, k) => {
                           if (part.startsWith('[') && part.endsWith(']')) {
                             return (
-                              <span key={k} style={{ ...styles.mockupHighlight, backgroundColor: item.highlight }}>
+                              <span key={k} style={styles.mockupHighlight}>
                                 {part.slice(1, -1)}
                               </span>
                             );
@@ -120,8 +112,8 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin }) => {
                       </div>
                     ))}
                   </div>
-                  <div style={styles.mockupPhone}>
-                    <div style={styles.mockupScreen} />
+                  <div style={styles.mockupPhoneInner}>
+                    <div style={styles.mockupAppScreen} />
                   </div>
                 </div>
               </div>
@@ -130,117 +122,181 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin }) => {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" style={styles.features}>
-        <div style={styles.sectionHeader}>
-          <h2 style={styles.sectionTitle}>Everything you need for ASO success</h2>
-          <p style={styles.sectionSubtitle}>
-            From AI-generated headlines to one-click localization — we've got you covered
-          </p>
-        </div>
-
-        <div style={styles.featuresGrid}>
-          {[
-            {
-              icon: (
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              ),
-              title: 'AI-Powered Headlines',
-              description: 'GPT-4 generates compelling, ASO-optimized headlines with smart highlighting for maximum impact.',
-              color: '#6366f1',
-            },
-            {
-              icon: (
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="#10b981" strokeWidth="2"/>
-                  <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke="#10b981" strokeWidth="2"/>
-                </svg>
-              ),
-              title: '40+ Languages',
-              description: 'Translate all your screenshots and metadata to every App Store language with context-aware AI.',
-              color: '#10b981',
-            },
-            {
-              icon: (
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                  <rect x="5" y="2" width="14" height="20" rx="3" stroke="#f59e0b" strokeWidth="2"/>
-                  <path d="M12 18h.01" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-              ),
-              title: 'iPhone Mockups',
-              description: 'Beautiful device frames in multiple styles. Position, scale, and rotate with pixel-perfect control.',
-              color: '#f59e0b',
-            },
-            {
-              icon: (
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="#ec4899" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-              ),
-              title: 'AI App Icons',
-              description: 'Generate unique app icons with DALL-E 3. Multiple styles and color schemes to match your brand.',
-              color: '#ec4899',
-            },
-            {
-              icon: (
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              ),
-              title: 'ASO Metadata',
-              description: 'AI generates optimized titles, subtitles, keywords, and descriptions following ASO best practices.',
-              color: '#8b5cf6',
-            },
-            {
-              icon: (
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              ),
-              title: 'One-Click Export',
-              description: 'Download everything as a ZIP — all languages, all device sizes, organized and ready to upload.',
-              color: '#06b6d4',
-            },
-          ].map((feature, i) => (
-            <div key={i} style={styles.featureCard}>
-              <div style={{ ...styles.featureIcon, backgroundColor: `${feature.color}15` }}>
-                {feature.icon}
-              </div>
-              <h3 style={styles.featureTitle}>{feature.title}</h3>
-              <p style={styles.featureDescription}>{feature.description}</p>
+      {/* Problem → Solution */}
+      <section style={styles.problemSolution}>
+        <div style={styles.psContainer}>
+          <div style={styles.psCard}>
+            <div style={styles.psIconBad}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="#DC2626" strokeWidth="2"/>
+                <path d="M15 9l-6 6M9 9l6 6" stroke="#DC2626" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
             </div>
-          ))}
+            <h3 style={styles.psTitle}>Without LocalizeShots</h3>
+            <ul style={styles.psList}>
+              <li>Manually resize screenshots for each device</li>
+              <li>Hire translators for each language</li>
+              <li>Design headlines in Figma/Photoshop</li>
+              <li>Days or weeks of work</li>
+            </ul>
+          </div>
+          <div style={styles.psArrow}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12h14M12 5l7 7-7 7" stroke={colors.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <div style={{ ...styles.psCard, ...styles.psCardGood }}>
+            <div style={styles.psIconGood}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke={colors.success} strokeWidth="2"/>
+                <path d="M9 12l2 2 4-4" stroke={colors.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <h3 style={styles.psTitle}>With LocalizeShots</h3>
+            <ul style={styles.psList}>
+              <li>AI generates optimized headlines</li>
+              <li>One-click translation to 40+ languages</li>
+              <li>Automatic device mockups</li>
+              <li>Done in minutes, not days</li>
+            </ul>
+          </div>
         </div>
       </section>
 
       {/* How It Works */}
       <section id="how-it-works" style={styles.howItWorks}>
         <div style={styles.sectionHeader}>
-          <h2 style={styles.sectionTitle}>From upload to App Store in 8 simple steps</h2>
-          <p style={styles.sectionSubtitle}>Our AI-powered wizard handles the heavy lifting</p>
+          <h2 style={styles.sectionTitle}>How it works</h2>
+          <p style={styles.sectionSubtitle}>Four simple steps to localized screenshots</p>
         </div>
 
-        <div style={styles.stepsContainer}>
+        <div style={styles.stepsGrid}>
           {[
-            { num: '1', title: 'Add App Info', desc: 'Enter your app name, description, and target keywords' },
-            { num: '2', title: 'Upload Screenshots', desc: 'Add 3-8 screenshots of your app interface' },
-            { num: '3', title: 'Choose Services', desc: 'Select what to generate: screenshots, icon, metadata' },
-            { num: '4', title: 'Pick Style', desc: 'Choose color theme and layout preset' },
-            { num: '5', title: 'Generate', desc: 'AI creates headlines, metadata, and app icon' },
-            { num: '6', title: 'Review & Edit', desc: 'Fine-tune everything in the visual editor' },
-            { num: '7', title: 'Translate', desc: 'Localize to 40+ languages with one click' },
-            { num: '8', title: 'Export', desc: 'Download ready-to-upload ZIP package' },
+            {
+              num: '1',
+              title: 'Upload',
+              desc: 'Add your app screenshots and basic info',
+              icon: (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke={colors.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )
+            },
+            {
+              num: '2',
+              title: 'Generate',
+              desc: 'AI creates headlines, metadata & icons',
+              icon: (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke={colors.accent} strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              )
+            },
+            {
+              num: '3',
+              title: 'Translate',
+              desc: 'Localize to any of 40+ languages',
+              icon: (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke={colors.accent} strokeWidth="2"/>
+                  <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke={colors.accent} strokeWidth="2"/>
+                </svg>
+              )
+            },
+            {
+              num: '4',
+              title: 'Export',
+              desc: 'Download ready-to-upload ZIP',
+              icon: (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" stroke={colors.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )
+            },
           ].map((step, i) => (
-            <div key={i} style={styles.step}>
-              <div style={styles.stepNumber}>{step.num}</div>
-              <div style={styles.stepContent}>
-                <h4 style={styles.stepTitle}>{step.title}</h4>
-                <p style={styles.stepDesc}>{step.desc}</p>
-              </div>
-              {i < 7 && <div style={styles.stepConnector} />}
+            <div key={i} style={styles.stepCard}>
+              <div style={styles.stepIcon}>{step.icon}</div>
+              <div style={styles.stepNum}>{step.num}</div>
+              <h3 style={styles.stepTitle}>{step.title}</h3>
+              <p style={styles.stepDesc}>{step.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Features */}
+      <section id="features" style={styles.features}>
+        <div style={styles.sectionHeader}>
+          <h2 style={styles.sectionTitle}>Everything you need</h2>
+          <p style={styles.sectionSubtitle}>Powerful tools for App Store optimization</p>
+        </div>
+
+        <div style={styles.featuresGrid}>
+          {[
+            {
+              icon: (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ),
+              title: 'AI Headlines',
+              description: 'GPT-4 generates compelling headlines with smart [bracket] highlighting for key benefits.',
+            },
+            {
+              icon: (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              ),
+              title: '40+ Languages',
+              description: 'Translate screenshots and metadata to every App Store language with context-aware AI.',
+            },
+            {
+              icon: (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <rect x="5" y="2" width="14" height="20" rx="3" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M12 18h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              ),
+              title: 'Device Mockups',
+              description: 'Beautiful iPhone frames in multiple styles. Position and scale with pixel-perfect control.',
+            },
+            {
+              icon: (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
+                  <path d="M21 15l-5-5L5 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ),
+              title: 'AI App Icons',
+              description: 'Generate unique app icons with DALL-E 3. Multiple styles to match your brand.',
+            },
+            {
+              icon: (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ),
+              title: 'ASO Metadata',
+              description: 'Optimized titles, subtitles, keywords, and descriptions following ASO best practices.',
+            },
+            {
+              icon: (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ),
+              title: 'One-Click Export',
+              description: 'Download everything as organized ZIP — all languages, all devices, ready to upload.',
+            },
+          ].map((feature, i) => (
+            <div key={i} style={styles.featureCard}>
+              <div style={styles.featureIcon}>{feature.icon}</div>
+              <h3 style={styles.featureTitle}>{feature.title}</h3>
+              <p style={styles.featureDescription}>{feature.description}</p>
             </div>
           ))}
         </div>
@@ -249,8 +305,8 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin }) => {
       {/* Pricing */}
       <section id="pricing" style={styles.pricing}>
         <div style={styles.sectionHeader}>
-          <h2 style={styles.sectionTitle}>Simple, transparent pricing</h2>
-          <p style={styles.sectionSubtitle}>Start free, upgrade when you're ready</p>
+          <h2 style={styles.sectionTitle}>Simple pricing</h2>
+          <p style={styles.sectionSubtitle}>Start free, upgrade when you need more</p>
         </div>
 
         <div style={styles.pricingCards}>
@@ -260,21 +316,13 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin }) => {
               <span style={styles.pricingPlan}>Free</span>
               <div style={styles.pricingPriceRow}>
                 <span style={styles.pricingPrice}>$0</span>
-                <span style={styles.pricingPeriod}>forever</span>
               </div>
-              <p style={styles.pricingDesc}>Perfect for getting started</p>
             </div>
             <ul style={styles.pricingFeatures}>
-              {[
-                '3 wizard projects',
-                '2 target languages',
-                'All mockup styles',
-                'AI headlines & metadata',
-                'ZIP export',
-              ].map((f, i) => (
+              {['3 projects', '2 languages', 'All mockup styles', 'AI headlines', 'ZIP export'].map((f, i) => (
                 <li key={i} style={styles.pricingFeature}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-                    <path d="M20 6L9 17l-5-5" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17l-5-5" stroke={colors.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                   {f}
                 </li>
@@ -287,27 +335,19 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin }) => {
 
           {/* Pro Plan */}
           <div style={{ ...styles.pricingCard, ...styles.pricingCardPro }}>
-            <div style={styles.pricingPopular}>Most Popular</div>
+            <div style={styles.pricingPopular}>Popular</div>
             <div style={styles.pricingHeader}>
-              <span style={{ ...styles.pricingPlan, color: '#6366f1' }}>Pro</span>
+              <span style={{ ...styles.pricingPlan, color: colors.accent }}>Pro</span>
               <div style={styles.pricingPriceRow}>
                 <span style={styles.pricingPrice}>$9</span>
-                <span style={styles.pricingPeriod}>/month</span>
+                <span style={styles.pricingPeriod}>/mo</span>
               </div>
-              <p style={styles.pricingDesc}>For serious app developers</p>
             </div>
             <ul style={styles.pricingFeatures}>
-              {[
-                'Unlimited projects',
-                'All 40+ languages',
-                'AI app icon generation',
-                'Priority AI processing',
-                'Select All languages button',
-                'Priority support',
-              ].map((f, i) => (
+              {['Unlimited projects', 'All 40+ languages', 'AI app icons', 'Priority processing', 'Priority support'].map((f, i) => (
                 <li key={i} style={styles.pricingFeature}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-                    <path d="M20 6L9 17l-5-5" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17l-5-5" stroke={colors.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                   {f}
                 </li>
@@ -322,33 +362,30 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin }) => {
 
       {/* Final CTA */}
       <section style={styles.finalCta}>
-        <div style={styles.finalCtaContent}>
-          <h2 style={styles.finalCtaTitle}>Ready to localize your App Store presence?</h2>
-          <p style={styles.finalCtaSubtitle}>Join developers who save hours on screenshot localization</p>
-          <button style={styles.finalCtaBtn} onClick={onGetStarted}>
-            Get Started Free
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ marginLeft: 8 }}>
-              <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-        </div>
+        <h2 style={styles.finalCtaTitle}>Ready to localize your app?</h2>
+        <p style={styles.finalCtaSubtitle}>Join developers who save hours on App Store assets</p>
+        <button style={styles.finalCtaBtn} onClick={onGetStarted}>
+          Get Started Free
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ marginLeft: 8 }}>
+            <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
       </section>
 
       {/* Footer */}
       <footer style={styles.footer}>
-        <div style={styles.footerContent}>
+        <div style={styles.footerInner}>
           <div style={styles.footerLogo}>
-            <div style={{ ...styles.logoIcon, width: 32, height: 32 }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="2" width="18" height="20" rx="3" fill="white" fillOpacity="0.9"/>
-                <rect x="6" y="5" width="12" height="3" rx="1" fill="#6366f1"/>
-                <rect x="6" y="10" width="12" height="8" rx="1" fill="#6366f1" fillOpacity="0.3"/>
+            <div style={{ ...styles.logoIcon, width: 28, height: 28 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="2" width="18" height="20" rx="3" fill="white"/>
+                <rect x="6" y="5" width="12" height="3" rx="1" fill={colors.accent}/>
+                <rect x="6" y="10" width="12" height="8" rx="1" fill={colors.accent} fillOpacity="0.3"/>
               </svg>
             </div>
-            <span style={{ ...styles.logoText, fontSize: 16 }}>LocalizeShots</span>
+            <span style={{ ...styles.logoText, fontSize: 15, color: colors.textSecondary }}>LocalizeShots</span>
           </div>
-          <p style={styles.footerText}>App Store Screenshot Generator & ASO Tool</p>
-          <p style={styles.footerCopy}>&copy; {new Date().getFullYear()} LocalizeShots. All rights reserved.</p>
+          <p style={styles.footerCopy}>&copy; {new Date().getFullYear()} LocalizeShots</p>
         </div>
       </footer>
     </div>
@@ -358,7 +395,7 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin }) => {
 const styles: Record<string, React.CSSProperties> = {
   container: {
     minHeight: '100vh',
-    backgroundColor: '#fafafa',
+    backgroundColor: colors.bg,
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
   },
 
@@ -372,9 +409,9 @@ const styles: Record<string, React.CSSProperties> = {
     transition: 'all 0.3s ease',
   },
   navInner: {
-    maxWidth: 1200,
+    maxWidth: 1100,
     margin: '0 auto',
-    padding: '16px 24px',
+    padding: '14px 24px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -385,532 +422,512 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 10,
   },
   logoIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+    width: 34,
+    height: 34,
+    borderRadius: 9,
+    background: `linear-gradient(135deg, ${colors.accent} 0%, ${colors.accentLight} 100%)`,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+    boxShadow: `0 4px 12px ${colors.accent}40`,
   },
   logoText: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: 700,
-    color: '#1f2937',
-    letterSpacing: '-0.5px',
+    color: colors.text,
+    letterSpacing: '-0.3px',
   },
   navLinks: {
     display: 'flex',
-    gap: 32,
+    gap: 28,
   },
   navLink: {
     fontSize: 14,
     fontWeight: 500,
-    color: '#6b7280',
+    color: colors.textSecondary,
     textDecoration: 'none',
-    transition: 'color 0.2s',
   },
   navButtons: {
     display: 'flex',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
   },
   loginBtn: {
-    padding: '8px 16px',
+    padding: '8px 14px',
     fontSize: 14,
-    fontWeight: 600,
-    color: '#6366f1',
+    fontWeight: 500,
+    color: colors.textSecondary,
     backgroundColor: 'transparent',
     border: 'none',
     cursor: 'pointer',
   },
   ctaBtn: {
-    padding: '10px 20px',
+    padding: '9px 18px',
     fontSize: 14,
     fontWeight: 600,
     color: '#fff',
-    backgroundColor: '#6366f1',
+    backgroundColor: colors.accent,
     border: 'none',
-    borderRadius: 10,
+    borderRadius: 8,
     cursor: 'pointer',
-    boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
     transition: 'all 0.2s',
   },
 
   // Hero
   hero: {
-    paddingTop: 120,
-    paddingBottom: 80,
-    position: 'relative',
-    overflow: 'hidden',
+    paddingTop: 100,
+    paddingBottom: 60,
   },
   heroContent: {
-    maxWidth: 800,
+    maxWidth: 700,
     margin: '0 auto',
     textAlign: 'center',
     padding: '0 24px',
   },
-  badge: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 8,
-    padding: '6px 14px',
-    backgroundColor: '#f0f0ff',
-    borderRadius: 20,
-    fontSize: 13,
-    fontWeight: 600,
-    color: '#6366f1',
-    marginBottom: 24,
-  },
-  badgeDot: {
-    width: 8,
-    height: 8,
-    borderRadius: '50%',
-    backgroundColor: '#10b981',
-    animation: 'pulse 2s infinite',
-  },
   heroTitle: {
-    fontSize: 56,
-    fontWeight: 800,
-    color: '#111827',
-    lineHeight: 1.1,
-    letterSpacing: '-2px',
-    marginBottom: 20,
+    fontSize: 48,
+    fontWeight: 700,
+    color: colors.text,
+    lineHeight: 1.15,
+    letterSpacing: '-1.5px',
+    marginBottom: 18,
   },
-  heroGradient: {
-    background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    backgroundClip: 'text',
+  heroAccent: {
+    color: colors.accent,
   },
   heroSubtitle: {
     fontSize: 18,
-    lineHeight: 1.7,
-    color: '#6b7280',
-    maxWidth: 600,
-    margin: '0 auto 32px',
+    lineHeight: 1.6,
+    color: colors.textSecondary,
+    maxWidth: 500,
+    margin: '0 auto 28px',
   },
   heroCtas: {
     display: 'flex',
     justifyContent: 'center',
-    gap: 16,
-    marginBottom: 48,
+    gap: 12,
   },
   heroCtaPrimary: {
     display: 'inline-flex',
     alignItems: 'center',
-    padding: '14px 28px',
-    fontSize: 16,
+    padding: '14px 26px',
+    fontSize: 15,
     fontWeight: 600,
     color: '#fff',
-    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+    backgroundColor: colors.accent,
     border: 'none',
-    borderRadius: 12,
+    borderRadius: 10,
     cursor: 'pointer',
-    boxShadow: '0 8px 24px rgba(99, 102, 241, 0.35)',
+    boxShadow: `0 6px 20px ${colors.accent}40`,
     transition: 'all 0.2s',
   },
   heroCtaSecondary: {
-    padding: '14px 28px',
-    fontSize: 16,
+    padding: '14px 26px',
+    fontSize: 15,
     fontWeight: 600,
-    color: '#374151',
-    backgroundColor: '#fff',
-    border: '2px solid #e5e7eb',
-    borderRadius: 12,
+    color: colors.text,
+    backgroundColor: colors.card,
+    border: `1px solid ${colors.border}`,
+    borderRadius: 10,
     cursor: 'pointer',
     transition: 'all 0.2s',
-  },
-  heroStats: {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 32,
-  },
-  heroStat: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  heroStatNumber: {
-    fontSize: 28,
-    fontWeight: 800,
-    color: '#111827',
-  },
-  heroStatLabel: {
-    fontSize: 13,
-    color: '#9ca3af',
-    fontWeight: 500,
-  },
-  heroStatDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: '#e5e7eb',
   },
 
   // Hero Visual
   heroVisual: {
-    position: 'relative',
-    marginTop: 64,
+    marginTop: 50,
     padding: '0 24px',
+    overflow: 'hidden',
   },
-  heroGlow: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: 600,
-    height: 400,
-    background: 'radial-gradient(ellipse, rgba(99, 102, 241, 0.15) 0%, transparent 70%)',
-    pointerEvents: 'none',
-  },
-  screenshotsRow: {
+  mockupsContainer: {
     display: 'flex',
     justifyContent: 'center',
-    gap: 20,
-    flexWrap: 'wrap',
+    gap: 16,
   },
-  mockupCard: {
-    width: 200,
-    animation: 'fadeInUp 0.6s ease-out forwards',
+  mockup: {
+    width: 180,
+    animation: 'fadeInUp 0.5s ease-out forwards',
     opacity: 0,
   },
-  mockupInner: {
-    borderRadius: 20,
-    padding: '20px 16px',
+  mockupLang: {
+    textAlign: 'center',
+    fontSize: 11,
+    fontWeight: 700,
+    color: colors.textMuted,
+    marginBottom: 8,
+    letterSpacing: '1px',
+  },
+  mockupScreen: {
+    borderRadius: 16,
+    padding: '16px 12px',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
+    boxShadow: '0 16px 48px rgba(0, 0, 0, 0.12)',
   },
-  mockupText: {
-    fontSize: 14,
-    fontWeight: 700,
+  mockupHeadline: {
+    fontSize: 12,
+    fontWeight: 600,
     color: '#fff',
     textAlign: 'center',
     lineHeight: 1.4,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   mockupHighlight: {
-    padding: '2px 6px',
-    borderRadius: 4,
-    color: '#000',
-    fontWeight: 800,
+    backgroundColor: colors.accent,
+    padding: '1px 5px',
+    borderRadius: 3,
+    color: '#fff',
+    fontWeight: 700,
   },
-  mockupPhone: {
-    width: '85%',
-    aspectRatio: '9/19',
+  mockupPhoneInner: {
+    width: '88%',
+    aspectRatio: '9/16',
     backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 8,
-    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+    borderRadius: 12,
+    padding: 4,
   },
-  mockupScreen: {
+  mockupAppScreen: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#f3f4f6',
-    borderRadius: 12,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
   },
 
-  // Features
-  features: {
-    padding: '100px 24px',
-    maxWidth: 1200,
+  // Problem/Solution
+  problemSolution: {
+    padding: '80px 24px',
+  },
+  psContainer: {
+    maxWidth: 900,
     margin: '0 auto',
-  },
-  sectionHeader: {
-    textAlign: 'center',
-    marginBottom: 64,
-  },
-  sectionTitle: {
-    fontSize: 40,
-    fontWeight: 800,
-    color: '#111827',
-    letterSpacing: '-1px',
-    marginBottom: 16,
-  },
-  sectionSubtitle: {
-    fontSize: 18,
-    color: '#6b7280',
-    maxWidth: 500,
-    margin: '0 auto',
-  },
-  featuresGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
+    display: 'flex',
+    alignItems: 'center',
     gap: 24,
   },
-  featureCard: {
-    backgroundColor: '#fff',
+  psCard: {
+    flex: 1,
+    backgroundColor: colors.card,
     borderRadius: 16,
     padding: 28,
-    border: '1px solid #f3f4f6',
-    transition: 'all 0.2s',
+    border: `1px solid ${colors.border}`,
   },
-  featureIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 14,
+  psCardGood: {
+    borderColor: `${colors.success}40`,
+    backgroundColor: '#F8FDF9',
+  },
+  psIconBad: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#FEF2F2',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
-  featureTitle: {
-    fontSize: 18,
+  psIconGood: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#ECFDF5',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  psTitle: {
+    fontSize: 16,
     fontWeight: 700,
-    color: '#111827',
-    marginBottom: 8,
+    color: colors.text,
+    marginBottom: 14,
   },
-  featureDescription: {
-    fontSize: 14,
-    lineHeight: 1.6,
-    color: '#6b7280',
+  psList: {
     margin: 0,
+    paddingLeft: 18,
+    fontSize: 14,
+    lineHeight: 2,
+    color: colors.textSecondary,
+  },
+  psArrow: {
+    flexShrink: 0,
   },
 
   // How It Works
   howItWorks: {
-    padding: '100px 24px',
-    backgroundColor: '#fff',
+    padding: '80px 24px',
+    backgroundColor: colors.card,
   },
-  stepsContainer: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 16,
-    maxWidth: 1000,
+  sectionHeader: {
+    textAlign: 'center',
+    marginBottom: 50,
+  },
+  sectionTitle: {
+    fontSize: 36,
+    fontWeight: 700,
+    color: colors.text,
+    letterSpacing: '-1px',
+    marginBottom: 12,
+  },
+  sectionSubtitle: {
+    fontSize: 16,
+    color: colors.textSecondary,
+  },
+  stepsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: 20,
+    maxWidth: 900,
     margin: '0 auto',
   },
-  step: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
+  stepCard: {
+    textAlign: 'center',
+    padding: '24px 16px',
+    backgroundColor: colors.bg,
+    borderRadius: 14,
+    position: 'relative',
   },
-  stepNumber: {
-    width: 40,
-    height: 40,
+  stepIcon: {
+    marginBottom: 14,
+  },
+  stepNum: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 22,
+    height: 22,
     borderRadius: '50%',
-    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-    color: '#fff',
-    fontSize: 16,
+    backgroundColor: colors.accentBg,
+    color: colors.accent,
+    fontSize: 11,
     fontWeight: 700,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0,
-  },
-  stepContent: {
-    minWidth: 140,
   },
   stepTitle: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: 700,
-    color: '#111827',
-    margin: '0 0 2px',
+    color: colors.text,
+    marginBottom: 6,
   },
   stepDesc: {
-    fontSize: 12,
-    color: '#9ca3af',
+    fontSize: 13,
+    color: colors.textSecondary,
+    lineHeight: 1.5,
     margin: 0,
   },
-  stepConnector: {
-    width: 24,
-    height: 2,
-    backgroundColor: '#e5e7eb',
-    marginLeft: 4,
+
+  // Features
+  features: {
+    padding: '80px 24px',
+  },
+  featuresGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: 20,
+    maxWidth: 950,
+    margin: '0 auto',
+  },
+  featureCard: {
+    backgroundColor: colors.card,
+    borderRadius: 14,
+    padding: 24,
+    border: `1px solid ${colors.border}`,
+  },
+  featureIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 11,
+    backgroundColor: colors.accentBg,
+    color: colors.accent,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  featureTitle: {
+    fontSize: 15,
+    fontWeight: 700,
+    color: colors.text,
+    marginBottom: 8,
+  },
+  featureDescription: {
+    fontSize: 13,
+    lineHeight: 1.6,
+    color: colors.textSecondary,
+    margin: 0,
   },
 
   // Pricing
   pricing: {
-    padding: '100px 24px',
-    backgroundColor: '#fafafa',
+    padding: '80px 24px',
+    backgroundColor: colors.card,
   },
   pricingCards: {
     display: 'flex',
     justifyContent: 'center',
-    gap: 24,
-    maxWidth: 800,
+    gap: 20,
+    maxWidth: 700,
     margin: '0 auto',
   },
   pricingCard: {
     flex: 1,
-    maxWidth: 360,
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 32,
-    border: '1px solid #e5e7eb',
+    maxWidth: 320,
+    backgroundColor: colors.bg,
+    borderRadius: 16,
+    padding: 28,
+    border: `1px solid ${colors.border}`,
     position: 'relative',
   },
   pricingCardPro: {
-    border: '2px solid #6366f1',
-    boxShadow: '0 8px 32px rgba(99, 102, 241, 0.15)',
+    borderColor: colors.accent,
+    borderWidth: 2,
+    backgroundColor: colors.card,
   },
   pricingPopular: {
     position: 'absolute',
-    top: -12,
+    top: -11,
     left: '50%',
     transform: 'translateX(-50%)',
-    padding: '4px 16px',
-    backgroundColor: '#6366f1',
+    padding: '4px 14px',
+    backgroundColor: colors.accent,
     color: '#fff',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 600,
     borderRadius: 20,
   },
   pricingHeader: {
-    textAlign: 'center',
-    marginBottom: 24,
-    paddingBottom: 24,
-    borderBottom: '1px solid #f3f4f6',
+    marginBottom: 20,
+    paddingBottom: 20,
+    borderBottom: `1px solid ${colors.border}`,
   },
   pricingPlan: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 700,
-    color: '#9ca3af',
+    color: colors.textMuted,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: '0.5px',
   },
   pricingPriceRow: {
     display: 'flex',
     alignItems: 'baseline',
-    justifyContent: 'center',
-    gap: 4,
-    margin: '8px 0',
+    gap: 2,
+    marginTop: 6,
   },
   pricingPrice: {
-    fontSize: 48,
-    fontWeight: 800,
-    color: '#111827',
+    fontSize: 40,
+    fontWeight: 700,
+    color: colors.text,
   },
   pricingPeriod: {
-    fontSize: 16,
-    color: '#9ca3af',
-  },
-  pricingDesc: {
-    fontSize: 14,
-    color: '#6b7280',
-    margin: 0,
+    fontSize: 15,
+    color: colors.textMuted,
   },
   pricingFeatures: {
     listStyle: 'none',
     padding: 0,
-    margin: '0 0 24px',
+    margin: '0 0 20px',
   },
   pricingFeature: {
     display: 'flex',
     alignItems: 'center',
-    gap: 12,
-    padding: '10px 0',
+    gap: 10,
+    padding: '8px 0',
     fontSize: 14,
-    color: '#374151',
+    color: colors.text,
   },
   pricingBtnSecondary: {
     width: '100%',
-    padding: '14px 24px',
-    fontSize: 15,
+    padding: '12px 20px',
+    fontSize: 14,
     fontWeight: 600,
-    color: '#374151',
-    backgroundColor: '#f9fafb',
-    border: '2px solid #e5e7eb',
-    borderRadius: 12,
+    color: colors.text,
+    backgroundColor: colors.card,
+    border: `1px solid ${colors.border}`,
+    borderRadius: 10,
     cursor: 'pointer',
-    transition: 'all 0.2s',
   },
   pricingBtnPrimary: {
     width: '100%',
-    padding: '14px 24px',
-    fontSize: 15,
+    padding: '12px 20px',
+    fontSize: 14,
     fontWeight: 600,
     color: '#fff',
-    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+    backgroundColor: colors.accent,
     border: 'none',
-    borderRadius: 12,
+    borderRadius: 10,
     cursor: 'pointer',
-    boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
-    transition: 'all 0.2s',
+    boxShadow: `0 4px 14px ${colors.accent}40`,
   },
 
   // Final CTA
   finalCta: {
-    padding: '100px 24px',
-    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-  },
-  finalCtaContent: {
-    maxWidth: 600,
-    margin: '0 auto',
+    padding: '80px 24px',
     textAlign: 'center',
+    backgroundColor: colors.text,
   },
   finalCtaTitle: {
-    fontSize: 36,
-    fontWeight: 800,
+    fontSize: 32,
+    fontWeight: 700,
     color: '#fff',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   finalCtaSubtitle: {
-    fontSize: 18,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 32,
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.6)',
+    marginBottom: 28,
   },
   finalCtaBtn: {
     display: 'inline-flex',
     alignItems: 'center',
-    padding: '16px 32px',
-    fontSize: 16,
+    padding: '14px 28px',
+    fontSize: 15,
     fontWeight: 600,
-    color: '#6366f1',
+    color: colors.text,
     backgroundColor: '#fff',
     border: 'none',
-    borderRadius: 12,
+    borderRadius: 10,
     cursor: 'pointer',
-    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
-    transition: 'all 0.2s',
   },
 
   // Footer
   footer: {
-    padding: '48px 24px',
-    backgroundColor: '#111827',
+    padding: '32px 24px',
+    backgroundColor: colors.bg,
+    borderTop: `1px solid ${colors.border}`,
   },
-  footerContent: {
-    maxWidth: 1200,
+  footerInner: {
+    maxWidth: 1100,
     margin: '0 auto',
-    textAlign: 'center',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   footerLogo: {
-    display: 'inline-flex',
+    display: 'flex',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 12,
-  },
-  footerText: {
-    fontSize: 14,
-    color: '#9ca3af',
-    marginBottom: 8,
   },
   footerCopy: {
     fontSize: 13,
-    color: '#6b7280',
+    color: colors.textMuted,
+    margin: 0,
   },
 };
 
-// Add CSS animations via style tag
+// Add CSS animations
 const styleSheet = document.createElement('style');
 styleSheet.textContent = `
   @keyframes fadeInUp {
     from {
       opacity: 0;
-      transform: translateY(20px);
+      transform: translateY(16px);
     }
     to {
       opacity: 1;
       transform: translateY(0);
     }
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
   }
 `;
 if (!document.getElementById('landing-animations')) {
