@@ -1133,13 +1133,13 @@ const SingleScreenPreview: React.FC<{
     const deltaY = ((e.clientY - dragStart.y) / rect.height) * 100;
 
     if (dragMode === 'text') {
-      // Update text offset in style
-      onStyleChange({
-        ...style,
-        textOffset: {
-          x: Math.max(-50, Math.min(50, (style.textOffset?.x || 0) + deltaX)),
-          y: Math.max(-50, Math.min(50, (style.textOffset?.y || 0) + deltaY))
-        }
+      // Update per-screenshot text offset in mockupSettings
+      const currentTextX = settings.textOffsetX ?? style.textOffset?.x ?? 0;
+      const currentTextY = settings.textOffsetY ?? style.textOffset?.y ?? 0;
+      onSettingsChange({
+        ...settings,
+        textOffsetX: Math.max(-50, Math.min(50, currentTextX + deltaX)),
+        textOffsetY: Math.max(-50, Math.min(50, currentTextY + deltaY))
       });
     } else {
       // Update mockup offset
@@ -1173,9 +1173,11 @@ const SingleScreenPreview: React.FC<{
   const previewWidth = previewHeight * aspectRatio;
 
   // Check if there's any offset to show
+  const textOffsetX = settings.textOffsetX ?? style.textOffset?.x ?? 0;
+  const textOffsetY = settings.textOffsetY ?? style.textOffset?.y ?? 0;
   const hasOffset = dragMode === 'mockup'
     ? (settings.offsetX !== 0 || settings.offsetY !== 0 || settings.rotation !== 0)
-    : (style.textOffset?.x !== 0 || style.textOffset?.y !== 0);
+    : (textOffsetX !== 0 || textOffsetY !== 0);
 
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -1191,7 +1193,7 @@ const SingleScreenPreview: React.FC<{
             marginBottom: '6px'
           }}>
             {dragMode === 'text'
-              ? `Text: X:${Math.round(style.textOffset?.x || 0)}% Y:${Math.round(style.textOffset?.y || 0)}%`
+              ? `Text: X:${Math.round(textOffsetX)}% Y:${Math.round(textOffsetY)}%`
               : `X:${Math.round(settings.offsetX)}% Y:${Math.round(settings.offsetY)}%`}
           </div>
         )}
@@ -1603,6 +1605,14 @@ export const ScreensFlowEditor: React.FC<Props> = ({
   };
 
   const unlinkScreens = (index: number) => {
+    // When unlinking, restore screen2's mockup to use its own screenshot
+    // If screen2 has no screenshot, copy from screen1 (the linked source)
+    const screen1 = screenshots[index];
+
+    // Check if screen3 has a screenshot that was originally from screen2
+    const screen3 = screenshots[index + 2];
+    const restoreFromScreen3 = screen3?.preview && !screen3?.mockupSettings?.linkedToNext;
+
     const newScreenshots = screenshots.map((s, i) => {
       if (i === index) {
         return {
@@ -1616,12 +1626,25 @@ export const ScreensFlowEditor: React.FC<Props> = ({
       }
       if (i === index + 1) {
         const { linkedMockupIndex: _, ...rest } = s;
+        // Restore screenshot: if screen3 has one, move it back; otherwise use screen1's
+        const restoredPreview = restoreFromScreen3 ? screen3.preview : screen1.preview;
+        const restoredFile = restoreFromScreen3 ? screen3.file : null;
         return {
           ...rest,
+          preview: restoredPreview,
+          file: restoredFile,
           mockupSettings: {
             ...(s.mockupSettings || DEFAULT_MOCKUP_SETTINGS),
             offsetX: 0
           }
+        };
+      }
+      if (i === index + 2 && restoreFromScreen3) {
+        // Clear screen3's screenshot since we moved it back to screen2
+        return {
+          ...s,
+          preview: '',
+          file: null
         };
       }
       return s;

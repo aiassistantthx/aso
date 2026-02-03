@@ -1595,9 +1595,11 @@ export const generateScreenshotImage = async (
       textY = textArea.y + textArea.height - totalTextHeight + adaptiveFontSize;
     }
 
-    // Apply custom offset
-    const textOffsetX = ((style.textOffset?.x || 0) / 100) * canvas.width;
-    const textOffsetY = ((style.textOffset?.y || 0) / 100) * canvas.height;
+    // Apply custom offset - use per-screenshot offset if available, otherwise global style
+    const textOffsetXValue = mockupSettings?.textOffsetX ?? style.textOffset?.x ?? 0;
+    const textOffsetYValue = mockupSettings?.textOffsetY ?? style.textOffset?.y ?? 0;
+    const textOffsetX = (textOffsetXValue / 100) * canvas.width;
+    const textOffsetY = (textOffsetYValue / 100) * canvas.height;
     const finalX = textArea.x + textOffsetX;
     const finalY = textY + textOffsetY;
 
@@ -1789,8 +1791,11 @@ export const generatePreviewCanvas = async (
       textY = textArea.y + textArea.height - totalTextHeight + adaptiveFontSize;
     }
 
-    const textOffsetX = ((style.textOffset?.x || 0) / 100) * dimensions.width;
-    const textOffsetY = ((style.textOffset?.y || 0) / 100) * dimensions.height;
+    // Apply custom offset - use per-screenshot offset if available, otherwise global style
+    const textOffsetXValue = mockupSettings?.textOffsetX ?? style.textOffset?.x ?? 0;
+    const textOffsetYValue = mockupSettings?.textOffsetY ?? style.textOffset?.y ?? 0;
+    const textOffsetX = (textOffsetXValue / 100) * dimensions.width;
+    const textOffsetY = (textOffsetYValue / 100) * dimensions.height;
     const finalX = textArea.x + textOffsetX;
     const finalY = textY + textOffsetY;
 

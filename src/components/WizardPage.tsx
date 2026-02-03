@@ -1808,9 +1808,28 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                     </div>
                   )}
 
-                  <div style={{ marginTop: '24px' }}>
+                  <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
                     <button style={pageStyles.primaryButton} onClick={nextStep}>
                       Continue to Export
+                    </button>
+                    <button
+                      style={{
+                        ...pageStyles.secondaryButton,
+                        fontSize: '13px',
+                        padding: '8px 16px',
+                      }}
+                      onClick={async () => {
+                        if (!project || !projectId) return;
+                        try {
+                          await unifiedApi.convertToManual(projectId);
+                          onNavigate('editor', projectId);
+                        } catch (err) {
+                          console.error('Failed to convert to manual mode:', err);
+                          setError('Failed to switch to manual editing mode');
+                        }
+                      }}
+                    >
+                      Edit Manually (per-language fine-tuning)
                     </button>
                   </div>
                 </div>

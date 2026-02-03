@@ -55,6 +55,9 @@ export interface ScreenshotMockupSettings {
   scale?: number;    // optional - falls back to style.mockupScale if undefined
   // Link to next screen (for smooth transitions)
   linkedToNext?: boolean;
+  // Per-screenshot text offset (overrides global style.textOffset)
+  textOffsetX?: number;
+  textOffsetY?: number;
 }
 
 export interface Screenshot {

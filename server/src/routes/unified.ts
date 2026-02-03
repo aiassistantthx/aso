@@ -986,12 +986,14 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
       }
     }
 
-    // Update project mode
+    // Update project mode and preserve style config
     const updated = await fastify.prisma.unifiedProject.update({
       where: { id },
       data: {
         mode: 'manual',
         name: project.name || project.appName || 'Converted Project',
+        // Preserve styleConfig from wizard - it contains colors, fonts, mockup settings
+        styleConfig: project.styleConfig as Prisma.InputJsonValue ?? undefined,
       },
       include: {
         screenshots: {
