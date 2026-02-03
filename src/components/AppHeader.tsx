@@ -140,7 +140,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ currentPage, onNavigate, r
               <rect x="7" y="8" width="10" height="8" rx="1" fill="white" opacity="0.5" />
             </svg>
           </div>
-          <span style={logoTextStyle}>Screenshot Studio</span>
+          <span style={logoTextStyle}>LocalizeShots</span>
         </div>
 
         {/* Navigation */}

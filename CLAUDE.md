@@ -9,7 +9,9 @@
 
 ## Project Overview
 
-This is an App Store Screenshot Generator - a web service for creating localized App Store screenshots with iPhone mockups. Includes an ASO Wizard for automated generation of screenshots, metadata, and app icons.
+**LocalizeShots** — App Store Screenshot Generator & ASO Tool. A web service for creating localized App Store screenshots with iPhone mockups, AI-generated headlines, metadata, and app icons.
+
+Website: https://localizeshots.com
 
 ## Tech Stack
 
@@ -27,7 +29,8 @@ This is an App Store Screenshot Generator - a web service for creating localized
 ### Deployment
 - Coolify (self-hosted PaaS)
 - Server: 46.225.26.104
-- App URL: http://agk8kwowcc48kkwkcsk844wo.46.225.26.104.sslip.io
+- Domain: https://localizeshots.com
+- App UUID: agk8kwowcc48kkwkcsk844wo
 
 ## Key Components
 
@@ -42,32 +45,32 @@ This is an App Store Screenshot Generator - a web service for creating localized
 - `ExportButton` - Export with translation and progress tracking
 
 ### Wizard (Auto-generation)
-- `WizardPage` - 9-step wizard for automated ASO content generation:
+- `WizardPage` - 8-step wizard for automated ASO content generation:
   1. App Info (name, description, keywords)
   2. Screenshots (upload 3+ screenshots)
   3. Services (select: screenshots, icon, metadata)
-  4. Tone (professional, playful, minimal, etc.)
-  5. Languages (select target languages, "Select All" for PRO)
-  6. Generate (AI generates headlines, metadata, icon)
-  7. Review & Edit (review/editor tabs with alternating colors)
-  8. Translate (parallel translation, batches of 10)
-  9. Export (download localized assets)
+  4. Tone (visual style & layout selection)
+  5. Generate (AI generates headlines, metadata, icon)
+  6. Review & Edit (review/editor tabs with alternating colors)
+  7. Translate (select languages, "Select All" for PRO, parallel translation)
+  8. Export (download localized assets)
 
 ### Metadata
 - `MetadataPage` - ASO text generation and localization
 
-## AI Prompts (server/src/routes/wizard.ts)
+## AI Prompts (server/src/utils/prompts.ts)
 
 ### Headlines Generation
 - Model: gpt-4o-mini
-- Rules: 3-8 words, [brackets] with verb + benefit, unique meanings
-- Example: "[Track Your Progress] Daily", "[Save Time] Instantly"
+- Rules: 3-8 words, TWO separate [brackets] - one for verb, one for benefit
+- Example: "[Create] Stunning Videos [Effortlessly]", "[Generate] Content [in Minutes]"
 
 ### Metadata Generation (ASO Best Practices)
 - appName: "Brand - Key Benefit Phrase" (not keyword list)
 - subtitle: Different words from appName
 - keywords: Only words NOT in appName/subtitle, no duplicates
 - description: First 3 lines crucial, short paragraphs, CTA at end
+- whatsNew: Structured with bullet points (New Features, Improvements, Bug Fixes)
 - Zero word duplication across appName, subtitle, keywords
 
 ### Translation
@@ -82,20 +85,19 @@ Key models:
 - `UnifiedProject` - Single model for all project types (mode: "wizard" | "manual")
 - `UnifiedScreenshot` - Screenshot data for unified projects
 - `Subscription` - Plan management (FREE/PRO)
+- `AdminPrompt` - Customizable AI prompts
 
-Legacy models (kept for backward compatibility during migration):
+Legacy models (kept for backward compatibility):
 - `Project`, `Screenshot`, `WizardProject`, `MetadataProject`
 
 ## Unified Project Architecture
 
-The codebase uses a unified project model that combines wizard and manual editing modes:
-
-- **Dashboard** (`src/components/Dashboard.tsx`) - Lists all projects with mode filter (All/Wizard/Manual)
-- **WizardPage** (`src/components/WizardPage.tsx`) - 9-step wizard flow for mode="wizard" projects
-- **Editor** (`src/components/Editor.tsx`) - Manual screenshot editor for mode="manual" projects
+- **Dashboard** (`src/components/Dashboard.tsx`) - Lists all projects with mode filter
+- **WizardPage** (`src/components/WizardPage.tsx`) - 8-step wizard flow
+- **Editor** (`src/components/Editor.tsx`) - Manual screenshot editor
 
 API endpoints (`server/src/routes/unified.ts`):
-- `GET /api/unified` - List all projects (optional ?mode=wizard|manual filter)
+- `GET /api/unified` - List all projects
 - `GET /api/unified/:id` - Get project with screenshots
 - `POST /api/unified` - Create project { mode, name? }
 - `PUT /api/unified/:id` - Update project fields
@@ -103,7 +105,6 @@ API endpoints (`server/src/routes/unified.ts`):
 - `POST /api/unified/:id/screenshots` - Upload screenshot
 - `POST /api/unified/:id/generate-all` - AI generate (wizard mode)
 - `POST /api/unified/:id/translate` - Translate headlines + metadata
-- `POST /api/unified/:id/convert-to-manual` - Switch wizard to manual mode
 
 ## Code Style
 
@@ -115,15 +116,19 @@ API endpoints (`server/src/routes/unified.ts`):
 ## Deployment Commands
 
 ```bash
-# Deploy to Coolify
-curl -X POST "http://46.225.26.104:8000/api/v1/applications/agk8kwowcc48kkwkcsk844wo/restart" \
-  -H "Authorization: Bearer 2|hjAbdUPchFI55QuEEHIpxJinD2xqtO59gOSPJIvB8736c446"
+# Deploy to Coolify (restart)
+curl -s -X POST "http://46.225.26.104:8000/api/v1/applications/agk8kwowcc48kkwkcsk844wo/restart" \
+  -H "Authorization: Bearer $(cat /tmp/coolify_token.txt)"
 
 # Run DB migrations on production
-ssh -i ~/.ssh/id_ed25519_hetzner root@46.225.26.104 \
-  "docker exec <container> npx prisma db push --schema=server/prisma/schema.prisma"
+ssh -i ~/.ssh/id_ed25519_hetzner root@46.225.26.104 '
+docker run --rm --network coolify \
+  -e DATABASE_URL="postgres://aso:aso_secure_2024@bcsc4w84ko8swkcssosgk8ss:5432/aso" \
+  $(docker images --format "{{.Repository}}:{{.Tag}}" | grep agk8kwowcc48kkwkcsk844wo | head -1) \
+  npx prisma db push --schema=/app/server/prisma/schema.prisma --skip-generate
+'
 
 # Check container logs
 ssh -i ~/.ssh/id_ed25519_hetzner root@46.225.26.104 \
-  "docker logs <container> --tail 50"
+  "docker logs \$(docker ps --filter 'name=agk8kwowcc48kkwkcsk844wo' -q) --tail 50"
 ```

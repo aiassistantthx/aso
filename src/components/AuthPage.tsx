@@ -163,7 +163,7 @@ export const AuthPage: React.FC<Props> = ({ mode, onToggleMode, onSuccess }) => 
               <rect x="7" y="8" width="10" height="8" rx="1" fill="white" opacity="0.5" />
             </svg>
           </div>
-          <span style={styles.logoText}>Screenshot Studio</span>
+          <span style={styles.logoText}>LocalizeShots</span>
         </div>
 
         <h1 style={styles.title as React.CSSProperties}>
