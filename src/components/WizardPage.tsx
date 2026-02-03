@@ -1603,7 +1603,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
 
             <div style={pageStyles.stepActions}>
               <div style={{ display: 'flex', gap: '12px' }}>
-                <button style={pageStyles.secondaryButton} onClick={() => goToStep(6)}>Regenerate</button>
+                <button style={pageStyles.secondaryButton} onClick={() => goToStep(5)}>Regenerate</button>
               </div>
               <button style={pageStyles.primaryButton} onClick={nextStep}>
                 Continue to Translation

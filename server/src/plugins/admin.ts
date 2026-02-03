@@ -20,7 +20,6 @@ const componentLoader = new ComponentLoader();
 
 // Register custom components
 const Components = {
-  Dashboard: componentLoader.add('Dashboard', path.join(__dirname, '../admin/components/dashboard')),
   PolarLink: componentLoader.add('PolarLink', path.join(__dirname, '../admin/components/PolarLink')),
   StripeLink: componentLoader.add('StripeLink', path.join(__dirname, '../admin/components/StripeLink')),
 };
@@ -34,59 +33,6 @@ export async function setupAdmin(fastify: FastifyInstance, prisma: PrismaClient)
     loginPath: '/admin/login',
     logoutPath: '/admin/logout',
     componentLoader,
-    dashboard: {
-      component: Components.Dashboard,
-      handler: async (request, response, context) => {
-        // Dashboard stats API endpoint
-        if (request.method === 'post') {
-          const totalUsers = await prisma.user.count();
-
-          const subscriptions = await prisma.subscription.groupBy({
-            by: ['plan'],
-            _count: true,
-          });
-
-          const proUsers = subscriptions.find(s => s.plan === 'PRO')?._count || 0;
-          const freeUsers = totalUsers - proUsers;
-
-          const projectCounts = await prisma.unifiedProject.groupBy({
-            by: ['mode'],
-            _count: true,
-          });
-
-          const wizardProjects = projectCounts.find(p => p.mode === 'wizard')?._count || 0;
-          const manualProjects = projectCounts.find(p => p.mode === 'manual')?._count || 0;
-          const totalProjects = wizardProjects + manualProjects;
-
-          const recentUsers = await prisma.user.findMany({
-            take: 10,
-            orderBy: { createdAt: 'desc' },
-            include: {
-              subscription: {
-                select: { plan: true },
-              },
-            },
-          });
-
-          return {
-            totalUsers,
-            proUsers,
-            freeUsers,
-            totalProjects,
-            wizardProjects,
-            manualProjects,
-            recentUsers: recentUsers.map(u => ({
-              id: u.id,
-              email: u.email,
-              name: u.name,
-              createdAt: u.createdAt.toISOString(),
-              plan: u.subscription?.plan || 'FREE',
-            })),
-          };
-        }
-        return {};
-      },
-    },
     branding: {
       companyName: 'ASO Admin',
       logo: false,
