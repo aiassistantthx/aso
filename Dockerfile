@@ -39,8 +39,8 @@ COPY --from=server-builder /app/server/dist ./server/dist
 # Copy AdminJS components (bundled at runtime)
 COPY server/src/admin/ ./server/admin/
 
-# Create uploads directory
-RUN mkdir -p uploads
+# Create uploads directory (relative to server/dist where index.js runs)
+RUN mkdir -p server/uploads
 
 EXPOSE 3001
 
