@@ -19,17 +19,18 @@
     "db:generate": "npm run db:generate -w server"
   },
   "dependencies": {
+    "@polar-sh/sdk": "^0.42.5",
+    "file-saver": "^2.0.5",
+    "jszip": "^3.10.1",
+    "openai": "^4.20.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^7.1.1",
-    "jszip": "^3.10.1",
-    "file-saver": "^2.0.5",
-    "openai": "^4.20.0"
+    "react-router-dom": "^7.1.1"
   },
   "devDependencies": {
+    "@types/file-saver": "^2.0.7",
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
-    "@types/file-saver": "^2.0.7",
     "@vitejs/plugin-react": "^4.2.0",
     "concurrently": "^9.1.2",
     "typescript": "^5.2.2",

@@ -9,12 +9,14 @@ import fs from 'fs';
 import prismaPlugin from './plugins/prisma.js';
 import authPlugin from './plugins/auth.js';
 import stripePlugin from './plugins/stripe.js';
+import polarPlugin from './plugins/polar.js';
 
 import authRoutes from './routes/auth.js';
 import projectRoutes from './routes/projects.js';
 import screenshotRoutes from './routes/screenshots.js';
 import translateRoutes from './routes/translate.js';
 import stripeRoutes from './routes/stripe.js';
+import polarRoutes from './routes/polar.js';
 import metadataRoutes from './routes/metadata.js';
 import wizardRoutes from './routes/wizard.js';
 import { UPLOADS_DIR } from './config.js';
@@ -49,6 +51,7 @@ async function start() {
   await fastify.register(prismaPlugin);
   await fastify.register(authPlugin);
   await fastify.register(stripePlugin);
+  await fastify.register(polarPlugin);
 
   // API Routes
   await fastify.register(authRoutes);
@@ -56,6 +59,7 @@ async function start() {
   await fastify.register(screenshotRoutes);
   await fastify.register(translateRoutes);
   await fastify.register(stripeRoutes);
+  await fastify.register(polarRoutes);
   await fastify.register(metadataRoutes);
   await fastify.register(wizardRoutes);
 

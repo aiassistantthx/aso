@@ -13,6 +13,7 @@ model User {
   passwordHash     String
   name             String?
   stripeCustomerId String?          @unique
+  polarCustomerId  String?          @unique
   createdAt        DateTime         @default(now())
   projects         Project[]
   metadataProjects MetadataProject[]
@@ -21,13 +22,14 @@ model User {
 }
 
 model Subscription {
-  id                   String   @id @default(cuid())
-  userId               String   @unique
-  user                 User     @relation(fields: [userId], references: [id])
-  stripeSubscriptionId String   @unique
-  plan                 Plan     @default(FREE)
-  status               String   // active, canceled, past_due
-  currentPeriodEnd     DateTime
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id])
+  stripeSubscriptionId  String?  @unique
+  polarSubscriptionId   String?  @unique
+  plan                  Plan     @default(FREE)
+  status                String   // active, canceled, past_due
+  currentPeriodEnd      DateTime
 }
 
 enum Plan {
