@@ -109,40 +109,105 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin }) => {
           </div>
         </div>
 
-        {/* Hero Visual - iPhone Mockups */}
+        {/* Hero Visual - App Interface Preview */}
         <div style={styles.heroVisual}>
-          <div style={styles.mockupsContainer}>
-            {[
-              { lang: 'EN', headline: '[Create] Beautiful\nVideos [Easily]', bg: '#1A1A1A' },
-              { lang: 'DE', headline: '[Erstelle] Schone\nVideos [Einfach]', bg: '#252525' },
-              { lang: 'JA', headline: '[作成] 美しい\nビデオを [簡単に]', bg: '#303030' },
-              { lang: 'ES', headline: '[Crea] Videos\nHermosos [Facil]', bg: '#1A1A1A' },
-            ].map((item, i) => (
-              <div key={i} style={{ ...styles.mockup, animationDelay: `${i * 0.15}s` }}>
-                <div style={styles.mockupLang}>{item.lang}</div>
-                <div style={{ ...styles.mockupScreen, backgroundColor: item.bg }}>
-                  <div style={styles.mockupHeadline}>
-                    {item.headline.split('\n').map((line, j) => (
-                      <div key={j}>
-                        {line.split(/(\[.*?\])/).map((part, k) => {
-                          if (part.startsWith('[') && part.endsWith(']')) {
-                            return (
-                              <span key={k} style={styles.mockupHighlight}>
-                                {part.slice(1, -1)}
-                              </span>
-                            );
-                          }
-                          return <span key={k}>{part}</span>;
-                        })}
-                      </div>
-                    ))}
+          <div style={styles.appPreview}>
+            {/* Browser Window */}
+            <div style={styles.browserWindow}>
+              {/* Browser Header */}
+              <div style={styles.browserHeader}>
+                <div style={styles.browserDots}>
+                  <span style={{ ...styles.browserDot, backgroundColor: '#FF5F57' }} />
+                  <span style={{ ...styles.browserDot, backgroundColor: '#FFBD2E' }} />
+                  <span style={{ ...styles.browserDot, backgroundColor: '#28C840' }} />
+                </div>
+                <div style={styles.browserUrl}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ marginRight: 6 }}>
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#9A9A9A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  localizeshots.com
+                </div>
+              </div>
+
+              {/* App Content */}
+              <div style={styles.appContent}>
+                {/* Wizard Steps */}
+                <div style={styles.wizardSteps}>
+                  {['App Info', 'Screenshots', 'Generate', 'Review', 'Translate', 'Export'].map((_, i) => (
+                    <div key={i} style={{
+                      ...styles.wizardStep,
+                      backgroundColor: i === 3 ? colors.accent : i < 3 ? colors.success : 'transparent',
+                      color: i <= 3 ? '#fff' : colors.textMuted,
+                      borderColor: i > 3 ? colors.border : 'transparent',
+                    }}>
+                      {i < 3 ? (
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                          <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      ) : (
+                        <span style={{ fontSize: 9, fontWeight: 600 }}>{i + 1}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Main Content Area */}
+                <div style={styles.appMain}>
+                  {/* Left Panel - Headlines */}
+                  <div style={styles.headlinesPanel}>
+                    <div style={styles.panelTitle}>Generated Headlines</div>
+                    <div style={styles.headlinesList}>
+                      {[
+                        '[Create] Stunning Videos [Effortlessly]',
+                        '[Transform] Ideas into [Reality]',
+                        '[Save] Hours [Every Week]',
+                      ].map((headline, i) => (
+                        <div key={i} style={styles.headlineItem}>
+                          <span style={styles.headlineNum}>{i + 1}</span>
+                          <span style={styles.headlineText}>
+                            {headline.split(/(\[.*?\])/).map((part, k) => {
+                              if (part.startsWith('[') && part.endsWith(']')) {
+                                return (
+                                  <span key={k} style={styles.headlineHighlight}>
+                                    {part.slice(1, -1)}
+                                  </span>
+                                );
+                              }
+                              return <span key={k}>{part}</span>;
+                            })}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div style={styles.mockupPhoneInner}>
-                    <div style={styles.mockupAppScreen} />
+
+                  {/* Right Panel - Preview */}
+                  <div style={styles.previewPanel}>
+                    <div style={styles.previewLanguages}>
+                      {['EN', 'DE', 'JA', 'ES'].map((lang, i) => (
+                        <span key={i} style={{
+                          ...styles.previewLangTab,
+                          backgroundColor: i === 0 ? colors.accent : 'transparent',
+                          color: i === 0 ? '#fff' : colors.textMuted,
+                        }}>{lang}</span>
+                      ))}
+                    </div>
+                    <div style={styles.previewScreenshots}>
+                      {[0, 1, 2].map((i) => (
+                        <div key={i} style={styles.previewCard}>
+                          <div style={styles.previewHeadline}>
+                            {i === 0 && <><span style={styles.hl}>[Create]</span> Stunning Videos <span style={styles.hl}>[Effortlessly]</span></>}
+                            {i === 1 && <><span style={styles.hl}>[Transform]</span> Ideas into <span style={styles.hl}>[Reality]</span></>}
+                            {i === 2 && <><span style={styles.hl}>[Save]</span> Hours <span style={styles.hl}>[Every Week]</span></>}
+                          </div>
+                          <div style={styles.previewPhone} />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
-            ))}
+            </div>
           </div>
         </div>
       </section>
@@ -603,65 +668,185 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: '0.3px',
   },
 
-  // Hero Visual
+  // Hero Visual - App Interface Preview
   heroVisual: {
     marginTop: 56,
     padding: '0 24px',
     overflow: 'hidden',
   },
-  mockupsContainer: {
+  appPreview: {
+    maxWidth: 900,
+    margin: '0 auto',
+    animation: 'fadeInUp 0.6s ease-out forwards',
+  },
+  browserWindow: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    boxShadow: '0 25px 80px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+    overflow: 'hidden',
+  },
+  browserHeader: {
+    backgroundColor: '#F5F5F5',
+    padding: '12px 16px',
+    display: 'flex',
+    alignItems: 'center',
+    borderBottom: `1px solid ${colors.borderLight}`,
+  },
+  browserDots: {
+    display: 'flex',
+    gap: 6,
+    marginRight: 16,
+  },
+  browserDot: {
+    width: 10,
+    height: 10,
+    borderRadius: '50%',
+    display: 'inline-block',
+  },
+  browserUrl: {
+    flex: 1,
+    backgroundColor: '#fff',
+    padding: '6px 12px',
+    borderRadius: 6,
+    fontSize: 11,
+    color: colors.textMuted,
+    display: 'flex',
+    alignItems: 'center',
+    border: `1px solid ${colors.borderLight}`,
+  },
+  appContent: {
+    padding: 20,
+    backgroundColor: colors.bg,
+  },
+  wizardSteps: {
     display: 'flex',
     justifyContent: 'center',
-    gap: 18,
+    gap: 8,
+    marginBottom: 20,
   },
-  mockup: {
-    width: 175,
-    animation: 'fadeInUp 0.5s ease-out forwards',
-    opacity: 0,
-  },
-  mockupLang: {
-    textAlign: 'center',
+  wizardStep: {
+    width: 24,
+    height: 24,
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     fontSize: 10,
     fontWeight: 600,
-    color: colors.textMuted,
-    marginBottom: 10,
-    letterSpacing: '2px',
+    border: '1px solid transparent',
   },
-  mockupScreen: {
-    borderRadius: 18,
-    padding: '18px 14px',
+  appMain: {
+    display: 'flex',
+    gap: 16,
+    minHeight: 280,
+  },
+  headlinesPanel: {
+    width: 240,
+    backgroundColor: colors.card,
+    borderRadius: 10,
+    padding: 16,
+    border: `1px solid ${colors.borderLight}`,
+  },
+  panelTitle: {
+    fontSize: 11,
+    fontWeight: 600,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
+    marginBottom: 14,
+  },
+  headlinesList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+  },
+  headlineItem: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 10,
+    padding: '10px 12px',
+    backgroundColor: colors.bg,
+    borderRadius: 8,
+    border: `1px solid ${colors.borderLight}`,
+  },
+  headlineNum: {
+    width: 18,
+    height: 18,
+    borderRadius: '50%',
+    backgroundColor: colors.accentBg,
+    color: colors.accent,
+    fontSize: 9,
+    fontWeight: 700,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  headlineText: {
+    fontSize: 11,
+    lineHeight: 1.4,
+    color: colors.text,
+    fontWeight: 500,
+  },
+  headlineHighlight: {
+    backgroundColor: colors.accent,
+    color: '#fff',
+    padding: '1px 4px',
+    borderRadius: 3,
+    fontWeight: 600,
+  },
+  previewPanel: {
+    flex: 1,
+    backgroundColor: colors.card,
+    borderRadius: 10,
+    padding: 16,
+    border: `1px solid ${colors.borderLight}`,
+  },
+  previewLanguages: {
+    display: 'flex',
+    gap: 6,
+    marginBottom: 14,
+  },
+  previewLangTab: {
+    padding: '4px 10px',
+    borderRadius: 6,
+    fontSize: 10,
+    fontWeight: 600,
+    letterSpacing: '0.5px',
+  },
+  previewScreenshots: {
+    display: 'flex',
+    gap: 12,
+    justifyContent: 'center',
+  },
+  previewCard: {
+    width: 140,
+    backgroundColor: '#1A1A1A',
+    borderRadius: 12,
+    padding: '14px 10px',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    boxShadow: '0 20px 50px rgba(0, 0, 0, 0.12)',
   },
-  mockupHeadline: {
-    fontSize: 11,
+  previewHeadline: {
+    fontSize: 9,
     fontWeight: 500,
     color: '#fff',
     textAlign: 'center',
     lineHeight: 1.5,
-    marginBottom: 14,
-    letterSpacing: '0.2px',
+    marginBottom: 10,
   },
-  mockupHighlight: {
+  hl: {
     backgroundColor: colors.accent,
-    padding: '2px 6px',
-    borderRadius: 4,
     color: '#fff',
+    padding: '1px 4px',
+    borderRadius: 3,
     fontWeight: 600,
   },
-  mockupPhoneInner: {
-    width: '86%',
+  previewPhone: {
+    width: '85%',
     aspectRatio: '9/16',
     backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 5,
-  },
-  mockupAppScreen: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#f5f5f5',
     borderRadius: 10,
   },
 
