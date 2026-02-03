@@ -520,8 +520,8 @@ const LinkedPairCanvas: React.FC<{
           cursor: isDragging ? 'grabbing' : 'grab',
           borderRadius: '16px',
           overflow: 'hidden',
-          border: '3px solid #0071e3',
-          boxShadow: '0 8px 24px rgba(0, 113, 227, 0.3)',
+          border: '3px solid #FF6B4A',
+          boxShadow: '0 8px 24px rgba(255, 107, 74, 0.3)',
           position: 'relative'
         }}
       >
@@ -547,7 +547,7 @@ const LinkedPairCanvas: React.FC<{
             style={{
               flex: 1,
               padding: '8px',
-              backgroundColor: selectedIndex === index1 ? '#0071e3' : 'rgba(255,255,255,0.9)',
+              backgroundColor: selectedIndex === index1 ? '#FF6B4A' : 'rgba(255,255,255,0.9)',
               textAlign: 'center',
               fontSize: '13px',
               fontWeight: 600,
@@ -563,7 +563,7 @@ const LinkedPairCanvas: React.FC<{
             style={{
               flex: 1,
               padding: '8px',
-              backgroundColor: selectedIndex === index2 ? '#0071e3' : 'rgba(255,255,255,0.9)',
+              backgroundColor: selectedIndex === index2 ? '#FF6B4A' : 'rgba(255,255,255,0.9)',
               textAlign: 'center',
               fontSize: '13px',
               fontWeight: 600,
@@ -625,7 +625,7 @@ const LinkedPairCanvas: React.FC<{
             borderRadius: '50%',
             border: '2px solid #d1d1d6',
             backgroundColor: '#fff',
-            color: '#0071e3',
+            color: '#FF6B4A',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -1204,8 +1204,8 @@ const SingleScreenPreview: React.FC<{
             cursor: isDragging ? 'grabbing' : 'grab',
             borderRadius: '16px',
             overflow: 'hidden',
-            border: isSelected ? '3px solid #0071e3' : '3px solid transparent',
-            boxShadow: isSelected ? '0 8px 24px rgba(0, 113, 227, 0.3)' : '0 4px 16px rgba(0,0,0,0.1)',
+            border: isSelected ? '3px solid #FF6B4A' : '3px solid transparent',
+            boxShadow: isSelected ? '0 8px 24px rgba(255, 107, 74, 0.3)' : '0 4px 16px rgba(0,0,0,0.1)',
             position: 'relative'
           }}
         >
@@ -1225,7 +1225,7 @@ const SingleScreenPreview: React.FC<{
             left: 0,
             right: 0,
             padding: '8px',
-            backgroundColor: isSelected ? '#0071e3' : 'rgba(255,255,255,0.9)',
+            backgroundColor: isSelected ? '#FF6B4A' : 'rgba(255,255,255,0.9)',
             textAlign: 'center',
             fontSize: '13px',
             fontWeight: 600,
@@ -1346,7 +1346,7 @@ const UploadCard: React.FC<{
           width: `${previewWidth}px`,
           height: `${previewHeight}px`,
           borderRadius: '16px',
-          border: isDragging ? '3px solid #0071e3' : '3px dashed #d1d1d6',
+          border: isDragging ? '3px solid #FF6B4A' : '3px dashed #d1d1d6',
           backgroundColor: isDragging ? '#f0f7ff' : '#fafafa',
           display: 'flex',
           flexDirection: 'column',
@@ -1389,10 +1389,10 @@ const UploadCard: React.FC<{
             padding: '8px 14px',
             fontSize: '12px',
             fontWeight: 500,
-            border: '1px solid #0071e3',
+            border: '1px solid #FF6B4A',
             borderRadius: '8px',
             backgroundColor: '#fff',
-            color: '#0071e3',
+            color: '#FF6B4A',
             cursor: 'pointer'
           }}
         >
@@ -1412,7 +1412,7 @@ const UploadCard: React.FC<{
       style={{
         padding: '60px 40px',
         borderRadius: '20px',
-        border: isDragging ? '3px solid #0071e3' : '3px dashed #d1d1d6',
+        border: isDragging ? '3px solid #FF6B4A' : '3px dashed #d1d1d6',
         backgroundColor: isDragging ? '#f0f7ff' : '#fafafa',
         display: 'flex',
         flexDirection: 'column',
@@ -1462,10 +1462,10 @@ const UploadCard: React.FC<{
           padding: '10px 20px',
           fontSize: '14px',
           fontWeight: 600,
-          border: '1px solid #0071e3',
+          border: '1px solid #FF6B4A',
           borderRadius: '10px',
           backgroundColor: '#fff',
-          color: '#0071e3',
+          color: '#FF6B4A',
           cursor: 'pointer',
           marginTop: '8px'
         }}
@@ -1719,7 +1719,7 @@ export const ScreensFlowEditor: React.FC<Props> = ({
               border: 'none',
               borderRadius: '6px',
               backgroundColor: dragMode === 'mockup' ? '#fff' : 'transparent',
-              color: dragMode === 'mockup' ? '#0071e3' : '#666',
+              color: dragMode === 'mockup' ? '#FF6B4A' : '#666',
               cursor: 'pointer',
               boxShadow: dragMode === 'mockup' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
               transition: 'all 0.2s'
@@ -1736,7 +1736,7 @@ export const ScreensFlowEditor: React.FC<Props> = ({
               border: 'none',
               borderRadius: '6px',
               backgroundColor: dragMode === 'text' ? '#fff' : 'transparent',
-              color: dragMode === 'text' ? '#0071e3' : '#666',
+              color: dragMode === 'text' ? '#FF6B4A' : '#666',
               cursor: 'pointer',
               boxShadow: dragMode === 'text' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
               transition: 'all 0.2s'
@@ -1779,10 +1779,10 @@ export const ScreensFlowEditor: React.FC<Props> = ({
             padding: '6px 12px',
             fontSize: '11px',
             fontWeight: 500,
-            border: '1px solid #0071e3',
+            border: '1px solid #FF6B4A',
             borderRadius: '6px',
             backgroundColor: '#f0f7ff',
-            color: '#0071e3',
+            color: '#FF6B4A',
             cursor: 'pointer'
           }}
         >
@@ -1868,8 +1868,8 @@ export const ScreensFlowEditor: React.FC<Props> = ({
                         minWidth: 0
                       }}
                       onFocus={(e) => {
-                        e.target.style.borderColor = '#0071e3';
-                        e.target.style.boxShadow = '0 0 0 2px rgba(0, 113, 227, 0.1)';
+                        e.target.style.borderColor = '#FF6B4A';
+                        e.target.style.boxShadow = '0 0 0 2px rgba(255, 107, 74, 0.1)';
                       }}
                       onBlur={(e) => {
                         e.target.style.borderColor = '#e0e0e5';
@@ -1955,8 +1955,8 @@ export const ScreensFlowEditor: React.FC<Props> = ({
                     boxSizing: 'border-box'
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = '#0071e3';
-                    e.target.style.boxShadow = '0 0 0 2px rgba(0, 113, 227, 0.1)';
+                    e.target.style.borderColor = '#FF6B4A';
+                    e.target.style.boxShadow = '0 0 0 2px rgba(255, 107, 74, 0.1)';
                   }}
                   onBlur={(e) => {
                     e.target.style.borderColor = '#e0e0e5';

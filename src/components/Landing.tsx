@@ -23,9 +23,9 @@ const colors = {
 // Decorative line component
 const SectionDivider: React.FC<{ style?: React.CSSProperties }> = ({ style }) => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px', ...style }}>
-    <div style={{ height: 1, width: 60, backgroundColor: colors.border }} />
-    <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: colors.accent, margin: '0 16px' }} />
-    <div style={{ height: 1, width: 60, backgroundColor: colors.border }} />
+    <div style={{ height: '0.5px', width: 50, backgroundColor: colors.border }} />
+    <div style={{ width: 4, height: 4, borderRadius: '50%', backgroundColor: colors.accent, margin: '0 14px' }} />
+    <div style={{ height: '0.5px', width: 50, backgroundColor: colors.border }} />
   </div>
 );
 
@@ -606,8 +606,8 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 28,
   },
   heroBadgeLine: {
-    width: 40,
-    height: 1,
+    width: 35,
+    height: '0.5px',
     backgroundColor: colors.border,
   },
   heroBadgeText: {
@@ -900,7 +900,7 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: '-0.2px',
   },
   psDivider: {
-    height: 1,
+    height: '0.5px',
     backgroundColor: colors.borderLight,
     marginBottom: 16,
   },
@@ -920,8 +920,8 @@ const styles: Record<string, React.CSSProperties> = {
     flexShrink: 0,
   },
   psArrowLine: {
-    width: 1,
-    height: 20,
+    width: '0.5px',
+    height: 16,
     backgroundColor: colors.border,
   },
 
@@ -947,11 +947,10 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 16,
   },
   sectionTitleLine: {
-    width: 50,
-    height: 2,
+    width: 40,
+    height: 1,
     backgroundColor: colors.accent,
     margin: '0 auto 16px',
-    borderRadius: 1,
   },
   sectionSubtitle: {
     fontSize: 15,
@@ -1010,7 +1009,7 @@ const styles: Record<string, React.CSSProperties> = {
     right: -12,
     top: '50%',
     width: 8,
-    height: 1,
+    height: '0.5px',
     backgroundColor: colors.border,
   },
 
@@ -1050,8 +1049,8 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: '-0.2px',
   },
   featureDivider: {
-    width: 30,
-    height: 1,
+    width: 24,
+    height: '0.5px',
     backgroundColor: colors.border,
     marginBottom: 12,
   },
@@ -1138,7 +1137,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginLeft: 4,
   },
   pricingDivider: {
-    height: 1,
+    height: '0.5px',
     backgroundColor: colors.borderLight,
   },
   pricingFeatures: {
@@ -1200,9 +1199,9 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 24,
   },
   finalCtaLine: {
-    width: 30,
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    width: 25,
+    height: '0.5px',
+    backgroundColor: 'rgba(255,255,255,0.15)',
   },
   finalCtaTitle: {
     fontSize: 30,
@@ -1252,8 +1251,8 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 8,
   },
   footerDivider: {
-    width: 1,
-    height: 16,
+    width: '0.5px',
+    height: 14,
     backgroundColor: colors.border,
   },
   footerCopy: {

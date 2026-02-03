@@ -70,10 +70,10 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     border: 'none',
     borderRadius: '12px',
-    background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+    background: 'linear-gradient(135deg, #FF6B4A 0%, #FF8A65 100%)',
     color: '#fff',
     cursor: 'pointer',
-    boxShadow: '0 4px 14px rgba(139, 92, 246, 0.35)',
+    boxShadow: '0 4px 14px rgba(255, 107, 74, 0.35)',
     transition: 'all 0.2s ease',
     display: 'flex',
     alignItems: 'center',
@@ -124,11 +124,11 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: '0.5px',
   },
   wizardBadge: {
-    backgroundColor: 'rgba(139, 92, 246, 0.9)',
+    backgroundColor: 'rgba(255, 107, 74, 0.9)',
     color: '#fff',
   },
   manualBadge: {
-    backgroundColor: 'rgba(0, 113, 227, 0.9)',
+    backgroundColor: 'rgba(34, 197, 94, 0.9)',
     color: '#fff',
   },
   cardBody: {
@@ -280,7 +280,7 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
     switch (status) {
       case 'draft': return { label: 'Draft', color: '#86868b', bg: '#f5f5f7' };
       case 'generated': return { label: 'Generated', color: '#248a3d', bg: '#e3f9e5' };
-      case 'translated': return { label: 'Translated', color: '#0071e3', bg: '#e5f1fb' };
+      case 'translated': return { label: 'Translated', color: '#FF6B4A', bg: '#FFF5F2' };
       default: return { label: status, color: '#86868b', bg: '#f5f5f7' };
     }
   };

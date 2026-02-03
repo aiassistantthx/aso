@@ -64,7 +64,7 @@ const styles: Record<string, React.CSSProperties> = {
     transition: 'all 0.2s'
   },
   languageItemActive: {
-    backgroundColor: '#0071e3',
+    backgroundColor: '#FF6B4A',
     color: '#fff'
   },
   languageName: {
@@ -112,7 +112,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '13px',
     border: 'none',
     borderRadius: '6px',
-    backgroundColor: '#0071e3',
+    backgroundColor: '#FF6B4A',
     color: '#fff',
     cursor: 'pointer',
     fontWeight: 500
@@ -148,7 +148,7 @@ const styles: Record<string, React.CSSProperties> = {
     objectFit: 'cover'
   },
   thumbnailActive: {
-    borderColor: '#0071e3'
+    borderColor: '#FF6B4A'
   },
   thumbnailPlaceholder: {
     width: '50px',

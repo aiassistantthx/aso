@@ -552,7 +552,7 @@ export const TEMPLATES: Template[] = [
     category: 'bold',
     layout: 'classic-bottom',
     backgroundColor: '#f5f5f7',
-    gradient: { enabled: false, color1: '#667eea', color2: '#764ba2', angle: 135 },
+    gradient: { enabled: false, color1: '#FF6B4A', color2: '#FF8A65', angle: 135 },
     textColor: '#5B4FD9',
     pattern: noPattern,
     fontFamily: 'Poppins, sans-serif',

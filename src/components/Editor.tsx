@@ -145,10 +145,10 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
   },
   headerButtonPrimary: {
-    background: 'linear-gradient(135deg, #0071e3 0%, #0077ed 100%)',
+    background: 'linear-gradient(135deg, #FF6B4A 0%, #FF8A65 100%)',
     borderColor: 'transparent',
     color: '#fff',
-    boxShadow: '0 2px 10px rgba(0, 113, 227, 0.35)',
+    boxShadow: '0 2px 10px rgba(255, 107, 74, 0.35)',
   },
   saveStatus: {
     fontSize: '12px',
@@ -431,12 +431,12 @@ export const Editor: React.FC<Props> = ({ projectId, onBack, onNavigate }) => {
                     fontWeight: 600,
                     color: '#1d1d1f',
                     letterSpacing: '-0.3px',
-                    border: '1px solid #0071e3',
+                    border: '1px solid #FF6B4A',
                     borderRadius: '8px',
                     padding: '4px 10px',
                     outline: 'none',
                     width: '200px',
-                    boxShadow: '0 0 0 3px rgba(0, 113, 227, 0.12)',
+                    boxShadow: '0 0 0 3px rgba(255, 107, 74, 0.12)',
                   }}
                 />
               ) : (
@@ -502,7 +502,7 @@ export const Editor: React.FC<Props> = ({ projectId, onBack, onNavigate }) => {
               <div style={{
                 height: '100%',
                 width: `${(uploadProgress.current / uploadProgress.total) * 100}%`,
-                background: 'linear-gradient(90deg, #0071e3 0%, #4a9eff 100%)',
+                background: 'linear-gradient(90deg, #FF6B4A 0%, #4a9eff 100%)',
                 borderRadius: '3px',
                 transition: 'width 0.3s ease',
               }} />

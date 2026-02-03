@@ -135,7 +135,7 @@ export const ProfilePage: React.FC<Props> = ({ onNavigate }) => {
               style={{
                 ...styles.planBadge,
                 backgroundColor: plan === 'PRO' ? '#e8f9ed' : '#f0f7ff',
-                color: plan === 'PRO' ? '#248a3d' : '#0071e3',
+                color: plan === 'PRO' ? '#248a3d' : '#FF6B4A',
               }}
             >
               {plan === 'PRO' ? 'Pro' : 'Free'}

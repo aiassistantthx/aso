@@ -49,7 +49,7 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: '#f5f5f7'
   },
   itemActive: {
-    backgroundColor: '#0071e3',
+    backgroundColor: '#FF6B4A',
     color: '#fff'
   },
   itemAll: {
@@ -58,7 +58,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: '8px'
   },
   itemAllActive: {
-    backgroundColor: '#0071e3',
+    backgroundColor: '#FF6B4A',
     color: '#fff'
   },
   name: {

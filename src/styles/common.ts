@@ -3,8 +3,8 @@ import React from 'react';
 
 // Color palette
 export const colors = {
-  primary: '#0071e3',
-  primaryHover: '#0077ed',
+  primary: '#FF6B4A',
+  primaryHover: '#FF8A65',
   primaryLight: '#f0f7ff',
   text: '#1d1d1f',
   textSecondary: '#86868b',

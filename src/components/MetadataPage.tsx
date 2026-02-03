@@ -308,7 +308,7 @@ export const MetadataPage: React.FC<Props> = ({ projectId, onBack, onOpenProject
                           fontSize: '12px', fontWeight: 600, textTransform: 'uppercase',
                           padding: '2px 8px', borderRadius: '4px',
                           backgroundColor: p.platform === 'ios' ? '#f0f7ff' : '#e8f9ed',
-                          color: p.platform === 'ios' ? '#0071e3' : '#248a3d',
+                          color: p.platform === 'ios' ? '#FF6B4A' : '#248a3d',
                         }}>
                           {p.platform === 'ios' ? 'iOS' : 'Android'}
                         </span>
@@ -376,10 +376,10 @@ export const MetadataPage: React.FC<Props> = ({ projectId, onBack, onOpenProject
         <div style={{ display: 'flex', gap: '8px', marginBottom: '32px' }}>
           {(['input', 'review', 'translations'] as Step[]).map((s2, i) => (
             <div key={s2} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {i > 0 && <div style={{ width: '24px', height: '2px', backgroundColor: step === s2 || (i === 1 && step === 'translations') ? '#0071e3' : '#d1d1d6' }} />}
+              {i > 0 && <div style={{ width: '24px', height: '2px', backgroundColor: step === s2 || (i === 1 && step === 'translations') ? '#FF6B4A' : '#d1d1d6' }} />}
               <div style={{
                 padding: '6px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: 600,
-                backgroundColor: step === s2 ? '#0071e3' : '#f5f5f7',
+                backgroundColor: step === s2 ? '#FF6B4A' : '#f5f5f7',
                 color: step === s2 ? '#fff' : '#86868b',
                 cursor: 'pointer',
               }}
@@ -409,7 +409,7 @@ export const MetadataPage: React.FC<Props> = ({ projectId, onBack, onOpenProject
                     key={p}
                     style={{
                       ...s.toggleBtn,
-                      backgroundColor: platform === p ? '#0071e3' : '#f5f5f7',
+                      backgroundColor: platform === p ? '#FF6B4A' : '#f5f5f7',
                       color: platform === p ? '#fff' : '#1d1d1f',
                     }}
                     onClick={() => setPlatform(p)}
@@ -427,7 +427,7 @@ export const MetadataPage: React.FC<Props> = ({ projectId, onBack, onOpenProject
                 <button
                   style={{
                     ...s.toggleBtn,
-                    backgroundColor: inputMode === 'description' ? '#0071e3' : '#f5f5f7',
+                    backgroundColor: inputMode === 'description' ? '#FF6B4A' : '#f5f5f7',
                     color: inputMode === 'description' ? '#fff' : '#1d1d1f',
                   }}
                   onClick={() => setInputMode('description')}
@@ -437,7 +437,7 @@ export const MetadataPage: React.FC<Props> = ({ projectId, onBack, onOpenProject
                 <button
                   style={{
                     ...s.toggleBtn,
-                    backgroundColor: inputMode === 'keywords' ? '#0071e3' : '#f5f5f7',
+                    backgroundColor: inputMode === 'keywords' ? '#FF6B4A' : '#f5f5f7',
                     color: inputMode === 'keywords' ? '#fff' : '#1d1d1f',
                   }}
                   onClick={() => setInputMode('keywords')}
@@ -547,9 +547,9 @@ export const MetadataPage: React.FC<Props> = ({ projectId, onBack, onOpenProject
                       key={lang.code}
                       style={{
                         padding: '6px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
-                        border: selected ? '2px solid #0071e3' : '1px solid #d1d1d6',
+                        border: selected ? '2px solid #FF6B4A' : '1px solid #d1d1d6',
                         backgroundColor: selected ? '#f0f7ff' : '#fff',
-                        color: disabled ? '#d1d1d6' : selected ? '#0071e3' : '#1d1d1f',
+                        color: disabled ? '#d1d1d6' : selected ? '#FF6B4A' : '#1d1d1f',
                         cursor: disabled ? 'not-allowed' : 'pointer',
                         transition: 'all 0.15s ease',
                       }}
@@ -580,9 +580,9 @@ export const MetadataPage: React.FC<Props> = ({ projectId, onBack, onOpenProject
                       key={lang}
                       style={{
                         padding: '10px 18px', fontSize: '14px', fontWeight: 500,
-                        border: 'none', borderBottom: activeTranslationTab === lang ? '3px solid #0071e3' : '3px solid transparent',
+                        border: 'none', borderBottom: activeTranslationTab === lang ? '3px solid #FF6B4A' : '3px solid transparent',
                         backgroundColor: 'transparent',
-                        color: activeTranslationTab === lang ? '#0071e3' : '#86868b',
+                        color: activeTranslationTab === lang ? '#FF6B4A' : '#86868b',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease',
                       }}
@@ -742,10 +742,10 @@ const s: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     border: 'none',
     borderRadius: '12px',
-    background: 'linear-gradient(135deg, #0071e3 0%, #0077ed 100%)',
+    background: 'linear-gradient(135deg, #FF6B4A 0%, #FF8A65 100%)',
     color: '#fff',
     cursor: 'pointer',
-    boxShadow: '0 4px 14px rgba(0, 113, 227, 0.35)',
+    boxShadow: '0 4px 14px rgba(255, 107, 74, 0.35)',
     transition: 'all 0.2s ease',
   },
   secondaryBtn: {

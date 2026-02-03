@@ -88,7 +88,7 @@ const cssStyles: Record<string, React.CSSProperties> = {
   },
   selectedCount: {
     fontSize: '12px',
-    color: '#0071e3',
+    color: '#FF6B4A',
     marginLeft: 'auto'
   }
 };

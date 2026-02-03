@@ -102,10 +102,10 @@ const styles: Record<string, React.CSSProperties> = {
   addButton: {
     padding: '8px 16px',
     fontSize: '13px',
-    border: '1px solid #0071e3',
+    border: '1px solid #FF6B4A',
     borderRadius: '6px',
     backgroundColor: '#fff',
-    color: '#0071e3',
+    color: '#FF6B4A',
     cursor: 'pointer',
     marginRight: '8px',
     transition: 'all 0.2s'

@@ -76,8 +76,8 @@ const navLinkBase: React.CSSProperties = {
 
 const navLinkActive: React.CSSProperties = {
   ...navLinkBase,
-  backgroundColor: 'rgba(0, 113, 227, 0.08)',
-  color: '#0071e3',
+  backgroundColor: 'rgba(255, 107, 74, 0.1)',
+  color: '#FF6B4A',
   fontWeight: 600,
 };
 
@@ -181,8 +181,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ currentPage, onNavigate, r
           <span
             style={{
               ...planBadgeBase,
-              backgroundColor: plan === 'PRO' ? '#e8f9ed' : '#f0f7ff',
-              color: plan === 'PRO' ? '#248a3d' : '#0071e3',
+              backgroundColor: plan === 'PRO' ? '#e8f9ed' : '#FFF5F2',
+              color: plan === 'PRO' ? '#248a3d' : '#FF6B4A',
             }}
           >
             {plan}
@@ -191,7 +191,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ currentPage, onNavigate, r
             {user?.name || user?.email}
           </span>
           <button
-            style={isProfileActive ? { ...navLinkBase, color: '#0071e3', fontWeight: 600, fontSize: '12px', padding: '5px 10px' } : { ...navLinkBase, fontSize: '12px', padding: '5px 10px' }}
+            style={isProfileActive ? { ...navLinkBase, color: '#FF6B4A', fontWeight: 600, fontSize: '12px', padding: '5px 10px' } : { ...navLinkBase, fontSize: '12px', padding: '5px 10px' }}
             onClick={() => onNavigate('profile')}
           >
             Profile

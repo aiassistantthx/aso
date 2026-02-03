@@ -79,8 +79,8 @@ const cssStyles: Record<string, React.CSSProperties> = {
     boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
   },
   thumbnailActive: {
-    borderColor: '#0071e3',
-    boxShadow: '0 4px 16px rgba(0, 113, 227, 0.35)',
+    borderColor: '#FF6B4A',
+    boxShadow: '0 4px 16px rgba(255, 107, 74, 0.35)',
     transform: 'scale(1.05)'
   },
   textOnlyThumbnail: {
@@ -190,8 +190,8 @@ export const MiniPreview: React.FC<{
         cursor: 'pointer',
         borderRadius: '16px',
         overflow: 'hidden',
-        border: isSelected ? '3px solid #0071e3' : '3px solid transparent',
-        boxShadow: isSelected ? '0 8px 24px rgba(0, 113, 227, 0.3)' : '0 4px 16px rgba(0,0,0,0.1)',
+        border: isSelected ? '3px solid #FF6B4A' : '3px solid transparent',
+        boxShadow: isSelected ? '0 8px 24px rgba(255, 107, 74, 0.3)' : '0 4px 16px rgba(0,0,0,0.1)',
         transition: 'all 0.2s ease',
         backgroundColor: '#f5f5f7'
       }}
@@ -207,7 +207,7 @@ export const MiniPreview: React.FC<{
       />
       <div style={{
         padding: '8px',
-        backgroundColor: isSelected ? '#0071e3' : '#fff',
+        backgroundColor: isSelected ? '#FF6B4A' : '#fff',
         textAlign: 'center',
         fontSize: '13px',
         fontWeight: 600,
@@ -589,7 +589,7 @@ export const Preview: React.FC<Props> = ({
           <span style={{
             fontSize: '12px',
             fontWeight: 500,
-            color: '#0071e3',
+            color: '#FF6B4A',
             backgroundColor: '#f0f7ff',
             padding: '4px 10px',
             borderRadius: '6px'

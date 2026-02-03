@@ -61,9 +61,9 @@ const cssStyles: Record<string, React.CSSProperties> = {
     transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
   },
   exportButtonEnabled: {
-    background: 'linear-gradient(135deg, #0071e3 0%, #0077ed 100%)',
+    background: 'linear-gradient(135deg, #FF6B4A 0%, #FF8A65 100%)',
     color: '#fff',
-    boxShadow: '0 4px 14px rgba(0, 113, 227, 0.35)'
+    boxShadow: '0 4px 14px rgba(255, 107, 74, 0.35)'
   },
   exportButtonDisabled: {
     backgroundColor: '#e8e8ed',
@@ -75,10 +75,10 @@ const cssStyles: Record<string, React.CSSProperties> = {
     padding: '14px 24px',
     fontSize: '15px',
     fontWeight: 600,
-    border: '1.5px solid #0071e3',
+    border: '1.5px solid #FF6B4A',
     borderRadius: '12px',
     backgroundColor: '#fff',
-    color: '#0071e3',
+    color: '#FF6B4A',
     cursor: 'pointer',
     transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
   },
@@ -94,7 +94,7 @@ const cssStyles: Record<string, React.CSSProperties> = {
   },
   progressFill: {
     height: '100%',
-    background: 'linear-gradient(90deg, #0071e3 0%, #4a9eff 100%)',
+    background: 'linear-gradient(90deg, #FF6B4A 0%, #4a9eff 100%)',
     transition: 'width 0.3s ease',
     borderRadius: '3px'
   },
@@ -199,11 +199,11 @@ const cssStyles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     border: 'none',
     borderRadius: '12px',
-    background: 'linear-gradient(135deg, #0071e3 0%, #0077ed 100%)',
+    background: 'linear-gradient(135deg, #FF6B4A 0%, #FF8A65 100%)',
     color: '#fff',
     cursor: 'pointer',
     marginBottom: '12px',
-    boxShadow: '0 4px 14px rgba(0, 113, 227, 0.35)',
+    boxShadow: '0 4px 14px rgba(255, 107, 74, 0.35)',
   },
   popupCancel: {
     width: '100%',
@@ -509,13 +509,13 @@ export const ExportButton: React.FC<Props> = ({
           padding: '10px 14px',
           backgroundColor: '#f0f7ff',
           borderRadius: '10px',
-          border: '1px solid rgba(0, 113, 227, 0.1)',
+          border: '1px solid rgba(255, 107, 74, 0.1)',
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
         }}>
           <span style={{
-            backgroundColor: '#0071e3',
+            backgroundColor: '#FF6B4A',
             color: '#fff',
             fontSize: '11px',
             fontWeight: 700,
@@ -558,13 +558,13 @@ export const ExportButton: React.FC<Props> = ({
           onMouseEnter={(e) => {
             if (canTranslate && !isWorking) {
               e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 113, 227, 0.45)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 107, 74, 0.45)';
             }
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0)';
             if (canTranslate && !isWorking) {
-              e.currentTarget.style.boxShadow = '0 4px 14px rgba(0, 113, 227, 0.35)';
+              e.currentTarget.style.boxShadow = '0 4px 14px rgba(255, 107, 74, 0.35)';
             }
           }}
         >

@@ -93,11 +93,11 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     border: 'none',
     borderRadius: '12px',
-    background: 'linear-gradient(135deg, #0071e3 0%, #0077ed 100%)',
+    background: 'linear-gradient(135deg, #FF6B4A 0%, #FF8A65 100%)',
     color: '#fff',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
-    boxShadow: '0 4px 14px rgba(0, 113, 227, 0.35)',
+    boxShadow: '0 4px 14px rgba(255, 107, 74, 0.35)',
     marginTop: '8px',
   },
   error: {
@@ -116,7 +116,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: '20px',
   },
   toggleLink: {
-    color: '#0071e3',
+    color: '#FF6B4A',
     cursor: 'pointer',
     fontWeight: 600,
     border: 'none',
@@ -186,8 +186,8 @@ export const AuthPage: React.FC<Props> = ({ mode, onToggleMode, onSuccess }) => 
                 placeholder="Your name"
                 style={styles.input}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = '#0071e3';
-                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0, 113, 227, 0.12)';
+                  e.currentTarget.style.borderColor = '#FF6B4A';
+                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(255, 107, 74, 0.12)';
                 }}
                 onBlur={(e) => {
                   e.currentTarget.style.borderColor = '#e0e0e5';

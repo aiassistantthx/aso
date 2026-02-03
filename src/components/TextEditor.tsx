@@ -223,7 +223,7 @@ export const TextEditor: React.FC<Props> = ({
             <span style={{
               fontWeight: 500,
               fontSize: '12px',
-              color: '#0071e3',
+              color: '#FF6B4A',
               marginLeft: '8px',
               backgroundColor: '#f0f7ff',
               padding: '3px 8px',
@@ -281,8 +281,8 @@ export const TextEditor: React.FC<Props> = ({
                 placeholder={`[Highlighted]|Regular text|[Another highlight]`}
                 style={styles.textarea as React.CSSProperties}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#0071e3';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(0, 113, 227, 0.12)';
+                  e.target.style.borderColor = '#FF6B4A';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(255, 107, 74, 0.12)';
                 }}
                 onBlur={(e) => {
                   e.target.style.borderColor = '#e0e0e5';

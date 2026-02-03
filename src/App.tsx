@@ -66,7 +66,7 @@ function AdminPlanToggle() {
       <span style={{
         padding: '3px 10px',
         borderRadius: '6px',
-        backgroundColor: plan === 'PRO' ? '#248a3d' : '#0071e3',
+        backgroundColor: plan === 'PRO' ? '#248a3d' : '#FF6B4A',
         fontSize: '12px',
         fontWeight: 700,
       }}>

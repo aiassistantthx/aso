@@ -962,7 +962,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
               width: '28px', height: '28px', borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '13px', fontWeight: 600,
-              backgroundColor: step === s.num ? '#0071e3' : s.num < step ? '#34c759' : '#e5e5ea',
+              backgroundColor: step === s.num ? '#FF6B4A' : s.num < step ? '#34c759' : '#e5e5ea',
               color: step === s.num || s.num < step ? '#fff' : '#86868b',
               transition: 'all 0.2s',
             }}>
@@ -970,7 +970,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
             </div>
             <span style={{
               fontSize: '11px', fontWeight: 500,
-              color: step === s.num ? '#0071e3' : '#86868b',
+              color: step === s.num ? '#FF6B4A' : '#86868b',
               marginTop: '4px',
             }}>
               {s.label}
@@ -1090,7 +1090,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                     <div style={{
                       width: `${Math.round((uploadProgress.current / uploadProgress.total) * 100)}%`,
                       height: '100%',
-                      backgroundColor: '#0071e3',
+                      backgroundColor: '#FF6B4A',
                       borderRadius: '3px',
                       transition: 'width 0.3s',
                     }} />
@@ -1099,7 +1099,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                     {uploadProgress.current}/{uploadProgress.total}
                   </span>
                 </div>
-                <p style={{ fontSize: '13px', color: '#0071e3', fontWeight: 500 }}>
+                <p style={{ fontSize: '13px', color: '#FF6B4A', fontWeight: 500 }}>
                   Uploading screenshot {uploadProgress.current} of {uploadProgress.total}...
                 </p>
               </div>
@@ -1140,7 +1140,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                   key={svc.key}
                   style={{
                     ...pageStyles.toggleCard,
-                    borderColor: isActive ? '#0071e3' : '#e5e5ea',
+                    borderColor: isActive ? '#FF6B4A' : '#e5e5ea',
                     backgroundColor: isActive ? '#f0f7ff' : '#fff',
                   }}
                   onClick={() => {
@@ -1152,8 +1152,8 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{
                       width: '22px', height: '22px', borderRadius: '6px',
-                      border: `2px solid ${isActive ? '#0071e3' : '#d1d1d6'}`,
-                      backgroundColor: isActive ? '#0071e3' : '#fff',
+                      border: `2px solid ${isActive ? '#FF6B4A' : '#d1d1d6'}`,
+                      backgroundColor: isActive ? '#FF6B4A' : '#fff',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       color: '#fff', fontSize: '14px', fontWeight: 700,
                     }}>
@@ -1194,7 +1194,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                   style={{
                     padding: '20px',
                     borderRadius: '16px',
-                    border: `2px solid ${project.tone === tone.id ? '#0071e3' : '#e5e5ea'}`,
+                    border: `2px solid ${project.tone === tone.id ? '#FF6B4A' : '#e5e5ea'}`,
                     backgroundColor: project.tone === tone.id ? '#f0f7ff' : '#fff',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
@@ -1233,7 +1233,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                   style={{
                     padding: '20px',
                     borderRadius: '16px',
-                    border: `2px solid ${project.layoutPreset === layout.id ? '#0071e3' : '#e5e5ea'}`,
+                    border: `2px solid ${project.layoutPreset === layout.id ? '#FF6B4A' : '#e5e5ea'}`,
                     backgroundColor: project.layoutPreset === layout.id ? '#f0f7ff' : '#fff',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
@@ -1247,42 +1247,42 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                     {layout.id === 'bottom' && (
                       <svg width="48" height="56" viewBox="0 0 48 56" fill="none">
                         <rect x="4" y="2" width="40" height="52" rx="4" stroke="#d1d1d6" strokeWidth="1.5" fill="none"/>
-                        <rect x="10" y="8" width="28" height="4" rx="2" fill="#0071e3" opacity="0.6"/>
-                        <rect x="14" y="24" width="20" height="28" rx="3" stroke="#0071e3" strokeWidth="1.5" fill="#e0f0ff"/>
+                        <rect x="10" y="8" width="28" height="4" rx="2" fill="#FF6B4A" opacity="0.6"/>
+                        <rect x="14" y="24" width="20" height="28" rx="3" stroke="#FF6B4A" strokeWidth="1.5" fill="#e0f0ff"/>
                       </svg>
                     )}
                     {layout.id === 'center' && (
                       <svg width="48" height="56" viewBox="0 0 48 56" fill="none">
                         <rect x="4" y="2" width="40" height="52" rx="4" stroke="#d1d1d6" strokeWidth="1.5" fill="none"/>
-                        <rect x="10" y="6" width="28" height="4" rx="2" fill="#0071e3" opacity="0.6"/>
-                        <rect x="14" y="16" width="20" height="30" rx="3" stroke="#0071e3" strokeWidth="1.5" fill="#e0f0ff"/>
+                        <rect x="10" y="6" width="28" height="4" rx="2" fill="#FF6B4A" opacity="0.6"/>
+                        <rect x="14" y="16" width="20" height="30" rx="3" stroke="#FF6B4A" strokeWidth="1.5" fill="#e0f0ff"/>
                       </svg>
                     )}
                     {layout.id === 'alternating' && (
                       <svg width="80" height="56" viewBox="0 0 80 56" fill="none">
                         <rect x="2" y="2" width="34" height="52" rx="4" stroke="#d1d1d6" strokeWidth="1.5" fill="none"/>
-                        <rect x="8" y="6" width="22" height="4" rx="2" fill="#0071e3" opacity="0.6"/>
-                        <rect x="10" y="24" width="18" height="26" rx="3" stroke="#0071e3" strokeWidth="1.5" fill="#e0f0ff"/>
+                        <rect x="8" y="6" width="22" height="4" rx="2" fill="#FF6B4A" opacity="0.6"/>
+                        <rect x="10" y="24" width="18" height="26" rx="3" stroke="#FF6B4A" strokeWidth="1.5" fill="#e0f0ff"/>
                         <rect x="44" y="2" width="34" height="52" rx="4" stroke="#d1d1d6" strokeWidth="1.5" fill="none"/>
-                        <rect x="50" y="46" width="22" height="4" rx="2" fill="#0071e3" opacity="0.6"/>
-                        <rect x="52" y="4" width="18" height="26" rx="3" stroke="#0071e3" strokeWidth="1.5" fill="#e0f0ff"/>
+                        <rect x="50" y="46" width="22" height="4" rx="2" fill="#FF6B4A" opacity="0.6"/>
+                        <rect x="52" y="4" width="18" height="26" rx="3" stroke="#FF6B4A" strokeWidth="1.5" fill="#e0f0ff"/>
                       </svg>
                     )}
                     {layout.id === 'outofbox' && (
                       <svg width="48" height="56" viewBox="0 0 48 56" fill="none">
                         <rect x="4" y="2" width="40" height="52" rx="4" stroke="#d1d1d6" strokeWidth="1.5" fill="none"/>
-                        <rect x="10" y="8" width="28" height="4" rx="2" fill="#0071e3" opacity="0.6"/>
-                        <rect x="12" y="22" width="24" height="40" rx="3" stroke="#0071e3" strokeWidth="1.5" fill="#e0f0ff"/>
+                        <rect x="10" y="8" width="28" height="4" rx="2" fill="#FF6B4A" opacity="0.6"/>
+                        <rect x="12" y="22" width="24" height="40" rx="3" stroke="#FF6B4A" strokeWidth="1.5" fill="#e0f0ff"/>
                       </svg>
                     )}
                     {layout.id === 'spanning' && (
                       <svg width="80" height="56" viewBox="0 0 80 56" fill="none">
                         <rect x="2" y="2" width="34" height="52" rx="4" stroke="#d1d1d6" strokeWidth="1.5" fill="none"/>
-                        <rect x="8" y="6" width="22" height="4" rx="2" fill="#0071e3" opacity="0.6"/>
-                        <rect x="20" y="20" width="20" height="32" rx="3" stroke="#0071e3" strokeWidth="1.5" fill="#e0f0ff" strokeDasharray="3 2"/>
+                        <rect x="8" y="6" width="22" height="4" rx="2" fill="#FF6B4A" opacity="0.6"/>
+                        <rect x="20" y="20" width="20" height="32" rx="3" stroke="#FF6B4A" strokeWidth="1.5" fill="#e0f0ff" strokeDasharray="3 2"/>
                         <rect x="44" y="2" width="34" height="52" rx="4" stroke="#d1d1d6" strokeWidth="1.5" fill="none"/>
-                        <rect x="50" y="6" width="22" height="4" rx="2" fill="#0071e3" opacity="0.6"/>
-                        <rect x="40" y="20" width="20" height="32" rx="3" stroke="#0071e3" strokeWidth="1.5" fill="#e0f0ff" strokeDasharray="3 2"/>
+                        <rect x="50" y="6" width="22" height="4" rx="2" fill="#FF6B4A" opacity="0.6"/>
+                        <rect x="40" y="20" width="20" height="32" rx="3" stroke="#FF6B4A" strokeWidth="1.5" fill="#e0f0ff" strokeDasharray="3 2"/>
                       </svg>
                     )}
                   </div>
@@ -1333,7 +1333,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                   <div style={{ marginBottom: '24px' }}>
                     <div style={{ fontSize: '48px', marginBottom: '8px' }}>
                       <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="#0071e3" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/>
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="#FF6B4A" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/>
                       </svg>
                     </div>
                     <p style={{ fontSize: '15px', color: '#86868b' }}>
@@ -1370,9 +1370,9 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                     fontSize: '14px',
                     fontWeight: 600,
                     border: 'none',
-                    borderBottom: step6Tab === tab ? '2px solid #0071e3' : '2px solid transparent',
+                    borderBottom: step6Tab === tab ? '2px solid #FF6B4A' : '2px solid transparent',
                     backgroundColor: 'transparent',
-                    color: step6Tab === tab ? '#0071e3' : '#86868b',
+                    color: step6Tab === tab ? '#FF6B4A' : '#86868b',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
                     textTransform: 'capitalize',
@@ -1416,10 +1416,10 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                                   height: '32px',
                                   borderRadius: '8px',
                                   background: bg,
-                                  border: isSelected ? '3px solid #0071e3' : '2px solid rgba(0,0,0,0.1)',
+                                  border: isSelected ? '3px solid #FF6B4A' : '2px solid rgba(0,0,0,0.1)',
                                   cursor: 'pointer',
                                   transition: 'all 0.15s',
-                                  boxShadow: isSelected ? '0 0 0 2px #fff, 0 0 0 4px #0071e3' : 'none',
+                                  boxShadow: isSelected ? '0 0 0 2px #fff, 0 0 0 4px #FF6B4A' : 'none',
                                 }}
                                 onClick={() => {
                                   setProject({ ...project, selectedTemplateId: presetId, styleConfig: null });
@@ -1641,7 +1641,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                     borderRadius: '8px',
                     border: '1px solid #e5e5ea',
                     backgroundColor: '#fff',
-                    color: '#0071e3',
+                    color: '#FF6B4A',
                     fontSize: '12px',
                     fontWeight: 600,
                     cursor: translating ? 'not-allowed' : 'pointer',
@@ -1670,9 +1670,9 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                       style={{
                         padding: '6px 14px',
                         borderRadius: '20px',
-                        border: `1px solid ${selected ? '#0071e3' : '#e5e5ea'}`,
+                        border: `1px solid ${selected ? '#FF6B4A' : '#e5e5ea'}`,
                         backgroundColor: selected ? '#e0f0ff' : disabled ? '#f5f5f7' : '#fff',
-                        color: selected ? '#0071e3' : disabled ? '#c7c7cc' : '#1d1d1f',
+                        color: selected ? '#FF6B4A' : disabled ? '#c7c7cc' : '#1d1d1f',
                         fontSize: '13px',
                         fontWeight: 500,
                         cursor: disabled ? 'not-allowed' : 'pointer',
@@ -1717,8 +1717,8 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                           style={{
                             padding: '6px 14px',
                             borderRadius: '20px',
-                            border: `1px solid ${activeLang === l ? '#0071e3' : '#e5e5ea'}`,
-                            backgroundColor: activeLang === l ? '#0071e3' : '#fff',
+                            border: `1px solid ${activeLang === l ? '#FF6B4A' : '#e5e5ea'}`,
+                            backgroundColor: activeLang === l ? '#FF6B4A' : '#fff',
                             color: activeLang === l ? '#fff' : '#1d1d1f',
                             fontSize: '13px', fontWeight: 500, cursor: 'pointer',
                           }}
@@ -1839,7 +1839,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                     <div style={{
                       width: `${exportProgress}%`,
                       height: '100%',
-                      backgroundColor: '#0071e3',
+                      backgroundColor: '#FF6B4A',
                       borderRadius: '4px',
                       transition: 'width 0.3s',
                     }} />
@@ -1909,10 +1909,10 @@ const pageStyles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     border: 'none',
     borderRadius: '10px',
-    background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+    background: 'linear-gradient(135deg, #FF6B4A 0%, #FF8A65 100%)',
     color: '#fff',
     cursor: 'pointer',
-    boxShadow: '0 4px 14px rgba(139, 92, 246, 0.35)',
+    boxShadow: '0 4px 14px rgba(255, 107, 74, 0.35)',
   },
   content: {
     maxWidth: '900px',
@@ -1988,10 +1988,10 @@ const pageStyles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     border: 'none',
     borderRadius: '12px',
-    background: 'linear-gradient(135deg, #0071e3 0%, #0077ed 100%)',
+    background: 'linear-gradient(135deg, #FF6B4A 0%, #FF8A65 100%)',
     color: '#fff',
     cursor: 'pointer',
-    boxShadow: '0 4px 14px rgba(0, 113, 227, 0.35)',
+    boxShadow: '0 4px 14px rgba(255, 107, 74, 0.35)',
     transition: 'all 0.2s',
   },
   secondaryButton: {
@@ -2053,7 +2053,7 @@ const pageStyles: Record<string, React.CSSProperties> = {
     width: '40px',
     height: '40px',
     border: '4px solid #e5e5ea',
-    borderTopColor: '#0071e3',
+    borderTopColor: '#FF6B4A',
     borderRadius: '50%',
     margin: '0 auto',
     animation: 'spin 1s linear infinite',

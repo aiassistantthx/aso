@@ -75,8 +75,8 @@ const styles: Record<string, React.CSSProperties> = {
     transition: 'all 0.2s'
   },
   languageTabActive: {
-    backgroundColor: '#0071e3',
-    borderColor: '#0071e3',
+    backgroundColor: '#FF6B4A',
+    borderColor: '#FF6B4A',
     color: '#fff'
   },
   screenshotSection: {
@@ -145,7 +145,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     border: 'none',
     borderRadius: '8px',
-    backgroundColor: '#0071e3',
+    backgroundColor: '#FF6B4A',
     color: '#fff',
     cursor: 'pointer'
   },
