@@ -896,6 +896,7 @@ function drawText(
   if (!text) return;
 
   const textColor = override?.textColor ?? style.textColor;
+  const textPosition = override?.textPosition ?? style.textPosition;
   const maxWidth = width * 0.85;
 
   // Calculate available text area based on mockup position
@@ -913,7 +914,7 @@ function drawText(
     const paddingTop = style.paddingTop * 0.04;
     const gapFromMockup = 4;
 
-    if (style.textPosition === 'top') {
+    if (textPosition === 'top') {
       availableHeight = Math.max(mockupTop - gapFromMockup - paddingTop, 20);
       textAreaY = paddingTop;
     } else {
@@ -923,7 +924,7 @@ function drawText(
     }
   } else {
     availableHeight = canvasHeight * 0.3;
-    textAreaY = style.textPosition === 'top' ? 8 : canvasHeight - availableHeight - 8;
+    textAreaY = textPosition === 'top' ? 8 : canvasHeight - availableHeight - 8;
   }
 
   // Calculate adaptive font size (use plain text for sizing)
@@ -941,7 +942,7 @@ function drawText(
 
   // Position text within available area
   let textY: number;
-  if (style.textPosition === 'top') {
+  if (textPosition === 'top') {
     textY = textAreaY + fontSize + (availableHeight - totalTextHeight) / 4 + textOffsetY;
   } else {
     textY = textAreaY + (availableHeight - totalTextHeight) / 2 + fontSize + textOffsetY;

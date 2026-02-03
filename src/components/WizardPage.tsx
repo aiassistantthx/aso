@@ -95,16 +95,56 @@ function buildEditorScreenshots(project: WizardProjectFull): Screenshot[] {
   const headlines = project.editedHeadlines || [];
   const editorData = project.screenshotEditorData || [];
 
-  return urls.map((url, i) => ({
-    id: `wizard-${i}`,
-    file: null,
-    preview: url,
-    text: headlines[i] || '',
-    decorations: editorData[i]?.decorations as Decoration[] | undefined,
-    styleOverride: editorData[i]?.styleOverride as ScreenshotStyleOverride | undefined,
-    mockupSettings: editorData[i]?.mockupSettings as ScreenshotMockupSettings | undefined,
-    linkedMockupIndex: editorData[i]?.linkedMockupIndex,
-  }));
+  // Get theme and layout presets for alternating colors
+  const templateId = project.selectedTemplateId;
+  const themePreset = templateId ? THEME_PRESETS.find(t => t.id === templateId) : null;
+  const layoutPreset = LAYOUT_PRESETS.find(l => l.id === project.layoutPreset) || LAYOUT_PRESETS[0];
+
+  // Only apply alternating styles if no saved styleConfig (user hasn't edited globally)
+  const hasSavedStyle = !!project.styleConfig;
+
+  return urls.map((url, i) => {
+    // Start with saved editor data styleOverride if exists
+    let styleOverride = editorData[i]?.styleOverride as ScreenshotStyleOverride | undefined;
+
+    // Apply alternating colors and layout preset if not already customized
+    if (!styleOverride && !hasSavedStyle && themePreset) {
+      const layoutStyle = layoutPreset.getStyle(i);
+
+      // For first screenshot, use base theme colors
+      if (i === 0) {
+        styleOverride = {
+          textPosition: layoutStyle.textPosition,
+        };
+      } else if (themePreset.alternatingColors) {
+        // For subsequent screenshots, use alternating colors
+        const altIdx = (i - 1) % themePreset.alternatingColors.length;
+        const alt = themePreset.alternatingColors[altIdx];
+        styleOverride = {
+          backgroundColor: alt.backgroundColor,
+          gradient: alt.gradient,
+          textColor: alt.textColor,
+          highlightColor: alt.highlightColor,
+          textPosition: layoutStyle.textPosition,
+        };
+      } else {
+        styleOverride = {
+          textPosition: layoutStyle.textPosition,
+        };
+      }
+    }
+
+    return {
+      id: `wizard-${i}`,
+      file: null,
+      preview: url,
+      text: headlines[i] || '',
+      decorations: editorData[i]?.decorations as Decoration[] | undefined,
+      styleOverride,
+      mockupSettings: editorData[i]?.mockupSettings as ScreenshotMockupSettings | undefined,
+      linkedMockupIndex: editorData[i]?.linkedMockupIndex,
+    };
+  });
 }
 
 export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, onNavigate }) => {

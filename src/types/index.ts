@@ -36,6 +36,7 @@ export interface ScreenshotStyleOverride {
   textColor?: string;
   backgroundColor?: string;
   highlightColor?: string;
+  textPosition?: 'top' | 'bottom';
   gradient?: {
     enabled: boolean;
     color1: string;
