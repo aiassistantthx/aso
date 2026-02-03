@@ -36,6 +36,9 @@ RUN cd server && npx prisma generate
 COPY --from=frontend-builder /app/dist ./dist
 COPY --from=server-builder /app/server/dist ./server/dist
 
+# Copy AdminJS components (bundled at runtime)
+COPY server/src/admin/ ./server/admin/
+
 # Create uploads directory
 RUN mkdir -p uploads
 
