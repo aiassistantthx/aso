@@ -79,11 +79,31 @@ This is an App Store Screenshot Generator - a web service for creating localized
 
 Key models:
 - `User` - Authentication
-- `Project` - Manual editor projects
-- `Screenshot` - Project screenshots
-- `WizardProject` - Wizard projects with all generation data
-- `MetadataProject` - ASO text projects
+- `UnifiedProject` - Single model for all project types (mode: "wizard" | "manual")
+- `UnifiedScreenshot` - Screenshot data for unified projects
 - `Subscription` - Plan management (FREE/PRO)
+
+Legacy models (kept for backward compatibility during migration):
+- `Project`, `Screenshot`, `WizardProject`, `MetadataProject`
+
+## Unified Project Architecture
+
+The codebase uses a unified project model that combines wizard and manual editing modes:
+
+- **Dashboard** (`src/components/Dashboard.tsx`) - Lists all projects with mode filter (All/Wizard/Manual)
+- **WizardPage** (`src/components/WizardPage.tsx`) - 9-step wizard flow for mode="wizard" projects
+- **Editor** (`src/components/Editor.tsx`) - Manual screenshot editor for mode="manual" projects
+
+API endpoints (`server/src/routes/unified.ts`):
+- `GET /api/unified` - List all projects (optional ?mode=wizard|manual filter)
+- `GET /api/unified/:id` - Get project with screenshots
+- `POST /api/unified` - Create project { mode, name? }
+- `PUT /api/unified/:id` - Update project fields
+- `DELETE /api/unified/:id` - Delete project
+- `POST /api/unified/:id/screenshots` - Upload screenshot
+- `POST /api/unified/:id/generate-all` - AI generate (wizard mode)
+- `POST /api/unified/:id/translate` - Translate headlines + metadata
+- `POST /api/unified/:id/convert-to-manual` - Switch wizard to manual mode
 
 ## Code Style
 

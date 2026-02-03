@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { wizard as wizardApi, WizardProjectFull, WizardProjectListItem, ApiError } from '../services/api';
+import { unified as unifiedApi, UnifiedProjectFull, ApiError } from '../services/api';
 import { useAuth } from '../services/authContext';
 import { AppHeader } from './AppHeader';
 import { TONE_PRESETS, LAYOUT_PRESETS } from '../constants/tonePresets';
@@ -11,10 +11,108 @@ import { ScreensFlowEditor } from './ScreensFlowEditor';
 import { StyleEditor } from './StyleEditor';
 import JSZip from 'jszip';
 
+// Adapter type to map UnifiedProjectFull to legacy wizard project interface
+type WizardProjectData = {
+  id: string;
+  userId: string;
+  appName: string;
+  briefDescription: string;
+  targetKeywords: string;
+  uploadedScreenshots: string[] | null;
+  generateScreenshots: boolean;
+  generateIcon: boolean;
+  generateMetadata: boolean;
+  tone: string;
+  layoutPreset: string;
+  selectedTemplateId: string | null;
+  sourceLanguage: string;
+  targetLanguages: string[];
+  generatedHeadlines: string[] | null;
+  editedHeadlines: string[] | null;
+  generatedMetadata: Record<string, string> | null;
+  editedMetadata: Record<string, string> | null;
+  generatedIconUrl: string | null;
+  translatedHeadlines: Record<string, string[]> | null;
+  translatedMetadata: Record<string, Record<string, string>> | null;
+  styleConfig: Record<string, unknown> | null;
+  screenshotEditorData: Array<{
+    decorations?: unknown;
+    styleOverride?: unknown;
+    mockupSettings?: unknown;
+    linkedMockupIndex?: number;
+  }> | null;
+  currentStep: number;
+  status: string;
+  generationErrors?: string[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+// Convert UnifiedProjectFull to WizardProjectData
+function toWizardData(p: UnifiedProjectFull): WizardProjectData {
+  return {
+    id: p.id,
+    userId: p.userId,
+    appName: p.appName,
+    briefDescription: p.briefDescription,
+    targetKeywords: p.targetKeywords,
+    uploadedScreenshots: p.wizardUploadedScreenshots,
+    generateScreenshots: p.wizardGenerateScreenshots,
+    generateIcon: p.wizardGenerateIcon,
+    generateMetadata: p.wizardGenerateMetadata,
+    tone: p.wizardTone,
+    layoutPreset: p.wizardLayoutPreset,
+    selectedTemplateId: p.wizardSelectedTemplateId,
+    sourceLanguage: p.sourceLanguage,
+    targetLanguages: p.targetLanguages,
+    generatedHeadlines: p.wizardGeneratedHeadlines,
+    editedHeadlines: p.wizardEditedHeadlines,
+    generatedMetadata: p.generatedMetadata,
+    editedMetadata: p.editedMetadata,
+    generatedIconUrl: p.wizardGeneratedIconUrl,
+    translatedHeadlines: p.wizardTranslatedHeadlines,
+    translatedMetadata: p.metadataTranslations,
+    styleConfig: p.styleConfig,
+    screenshotEditorData: p.wizardScreenshotEditorData,
+    currentStep: p.wizardCurrentStep,
+    status: p.wizardStatus,
+    generationErrors: p.generationErrors,
+    createdAt: p.createdAt,
+    updatedAt: p.updatedAt,
+  };
+}
+
+// Convert wizard update data to unified update data
+function toUnifiedUpdate(data: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+
+  // Direct mappings
+  if ('appName' in data) result.appName = data.appName;
+  if ('briefDescription' in data) result.briefDescription = data.briefDescription;
+  if ('targetKeywords' in data) result.targetKeywords = data.targetKeywords;
+  if ('sourceLanguage' in data) result.sourceLanguage = data.sourceLanguage;
+  if ('targetLanguages' in data) result.targetLanguages = data.targetLanguages;
+  if ('styleConfig' in data) result.styleConfig = data.styleConfig;
+
+  // Wizard-specific field mappings
+  if ('tone' in data) result.wizardTone = data.tone;
+  if ('layoutPreset' in data) result.wizardLayoutPreset = data.layoutPreset;
+  if ('selectedTemplateId' in data) result.wizardSelectedTemplateId = data.selectedTemplateId;
+  if ('currentStep' in data) result.wizardCurrentStep = data.currentStep;
+  if ('status' in data) result.wizardStatus = data.status;
+  if ('editedHeadlines' in data) result.wizardEditedHeadlines = data.editedHeadlines;
+  if ('editedMetadata' in data) result.editedMetadata = data.editedMetadata;
+  if ('screenshotEditorData' in data) result.wizardScreenshotEditorData = data.screenshotEditorData;
+  if ('generateScreenshots' in data) result.wizardGenerateScreenshots = data.generateScreenshots;
+  if ('generateIcon' in data) result.wizardGenerateIcon = data.generateIcon;
+  if ('generateMetadata' in data) result.wizardGenerateMetadata = data.generateMetadata;
+
+  return result;
+}
+
 interface Props {
   projectId?: string;
   onBack: () => void;
-  onOpenProject: (id: string) => void;
   onNavigate: (page: string, id?: string) => void;
 }
 
@@ -47,7 +145,7 @@ const IOS_FIELD_LABELS: Record<string, string> = {
 };
 
 // Helper: resolve StyleConfig from wizard project data
-function resolveStyleConfig(project: WizardProjectFull): StyleConfig | null {
+function resolveStyleConfig(project: WizardProjectData): StyleConfig | null {
   // If user already edited in editor and saved a styleConfig, use it directly
   if (project.styleConfig) {
     return project.styleConfig as unknown as StyleConfig;
@@ -90,7 +188,7 @@ function resolveStyleConfig(project: WizardProjectFull): StyleConfig | null {
 }
 
 // Helper: build Screenshot[] from wizard project data
-function buildEditorScreenshots(project: WizardProjectFull): Screenshot[] {
+function buildEditorScreenshots(project: WizardProjectData): Screenshot[] {
   const urls = project.uploadedScreenshots || [];
   const headlines = project.editedHeadlines || [];
   const editorData = project.screenshotEditorData || [];
@@ -147,16 +245,12 @@ function buildEditorScreenshots(project: WizardProjectFull): Screenshot[] {
   });
 }
 
-export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, onNavigate }) => {
+export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) => {
   const { user } = useAuth();
   const plan = user?.plan ?? 'FREE';
 
-  // List state
-  const [projectList, setProjectList] = useState<WizardProjectListItem[]>([]);
-  const [listLoading, setListLoading] = useState(true);
-
   // Editor state
-  const [project, setProject] = useState<WizardProjectFull | null>(null);
+  const [project, setProject] = useState<WizardProjectData | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -196,25 +290,13 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
   const [translatedPreviews, setTranslatedPreviews] = useState<HTMLCanvasElement[]>([]);
   const [translatedPreviewLoading, setTranslatedPreviewLoading] = useState(false);
 
-  // Load project list
-  const loadList = useCallback(async () => {
-    try {
-      const list = await wizardApi.list();
-      setProjectList(list);
-    } catch {
-      // ignore
-    } finally {
-      setListLoading(false);
-    }
-  }, []);
-
   // Load specific project
   const loadProject = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      const p = await wizardApi.get(id);
-      setProject(p);
-      setStep(p.currentStep || 1);
+      const p = await unifiedApi.get(id);
+      setProject(toWizardData(p));
+      setStep(p.wizardCurrentStep || 1);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to load project');
     } finally {
@@ -225,50 +307,22 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
   useEffect(() => {
     if (projectId) {
       loadProject(projectId);
-    } else {
-      loadList();
     }
-  }, [projectId, loadProject, loadList]);
+  }, [projectId, loadProject]);
 
   // Auto-save helper
   const saveField = useCallback(async (data: Record<string, unknown>) => {
     if (!project) return;
     setSaving(true);
     try {
-      const updated = await wizardApi.update(project.id, data);
-      setProject(updated);
+      const updated = await unifiedApi.update(project.id, toUnifiedUpdate(data));
+      setProject(toWizardData(updated));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to save');
     } finally {
       setSaving(false);
     }
   }, [project]);
-
-  // Create new project
-  const handleCreate = async () => {
-    try {
-      const p = await wizardApi.create();
-      onOpenProject(p.id);
-    } catch (err) {
-      if (err instanceof ApiError && err.limit === 'wizardProjects') {
-        setError(err.message);
-      } else {
-        setError('Failed to create project');
-      }
-    }
-  };
-
-  // Delete project
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!window.confirm('Delete this wizard project?')) return;
-    try {
-      await wizardApi.delete(id);
-      setProjectList(prev => prev.filter(p => p.id !== id));
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to delete project');
-    }
-  };
 
   // Navigate steps
   const goToStep = (s: number) => {
@@ -303,8 +357,10 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
     for (let i = 0; i < files.length; i++) {
       setUploadProgress({ current: i + 1, total: files.length });
       try {
-        const result = await wizardApi.uploadScreenshot(project.id, files[i]);
-        setProject(result.project);
+        const result = await unifiedApi.uploadScreenshot(project.id, files[i]);
+        if (result.project) {
+          setProject(toWizardData(result.project));
+        }
       } catch {
         setError('Failed to upload screenshot');
       }
@@ -316,8 +372,15 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
   const handleRemoveScreenshot = async (index: number) => {
     if (!project) return;
     try {
-      const updated = await wizardApi.removeScreenshot(project.id, index);
-      setProject(updated);
+      const result = await unifiedApi.removeScreenshot(project.id, index);
+      // Result could be UnifiedProjectFull or { ok: boolean }
+      if ('id' in result) {
+        setProject(toWizardData(result as UnifiedProjectFull));
+      } else {
+        // Reload project to get updated data
+        const updated = await unifiedApi.get(project.id);
+        setProject(toWizardData(updated));
+      }
     } catch {
       setError('Failed to remove screenshot');
     }
@@ -331,13 +394,13 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
     setError(null);
 
     try {
-      const updated = await wizardApi.generateAll(project.id);
+      const updated = await unifiedApi.generateAll(project.id);
+      const wizardData = toWizardData(updated);
       // Check for partial generation errors
-      const genErrors = (updated as unknown as Record<string, unknown>).generationErrors as string[] | undefined;
-      if (genErrors && genErrors.length > 0) {
-        setError('Some generation steps failed: ' + genErrors.join('; '));
+      if (wizardData.generationErrors && wizardData.generationErrors.length > 0) {
+        setError('Some generation steps failed: ' + wizardData.generationErrors.join('; '));
       }
-      setProject(updated);
+      setProject(wizardData);
       setStep(7);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Generation failed');
@@ -377,8 +440,8 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
     if (editorSaveTimerRef.current) clearTimeout(editorSaveTimerRef.current);
     editorSaveTimerRef.current = setTimeout(async () => {
       try {
-        const updated = await wizardApi.update(project.id, data);
-        setProject(updated);
+        const updated = await unifiedApi.update(project.id, toUnifiedUpdate(data));
+        setProject(toWizardData(updated));
       } catch {
         // silent fail for autosave
       }
@@ -397,7 +460,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
       for (const s of newFiles) {
         if (!s.file) continue;
         try {
-          const result = await wizardApi.uploadScreenshot(project.id, s.file);
+          const result = await unifiedApi.uploadScreenshot(project.id, s.file);
           // Replace blob URL with server URL in the screenshots array
           const idx = newScreenshots.indexOf(s);
           if (idx >= 0) {
@@ -407,7 +470,9 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
               preview: result.screenshotUrl,
             };
           }
-          setProject(result.project);
+          if (result.project) {
+            setProject(toWizardData(result.project));
+          }
         } catch {
           setError('Failed to upload screenshot');
         }
@@ -421,8 +486,10 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
       for (let i = currentUrls.length - 1; i >= 0; i--) {
         if (!newUrls.includes(currentUrls[i])) {
           try {
-            const updated = await wizardApi.removeScreenshot(project.id, i);
-            setProject(updated);
+            const result = await unifiedApi.removeScreenshot(project.id, i);
+            if ('id' in result) {
+              setProject(toWizardData(result as UnifiedProjectFull));
+            }
           } catch {
             setError('Failed to remove screenshot');
           }
@@ -465,10 +532,11 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
     setError(null);
 
     try {
-      const updated = await wizardApi.translate(project.id);
-      setProject(updated);
-      if (updated.targetLanguages.length > 0) {
-        const firstTarget = updated.targetLanguages.find(l => l !== updated.sourceLanguage);
+      const updated = await unifiedApi.translate(project.id);
+      const wizardData = toWizardData(updated);
+      setProject(wizardData);
+      if (wizardData.targetLanguages.length > 0) {
+        const firstTarget = wizardData.targetLanguages.find(l => l !== wizardData.sourceLanguage);
         if (firstTarget) setActiveLang(firstTarget);
       }
     } catch (err) {
@@ -841,82 +909,15 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onOpenProject, 
     }
   };
 
-  // --- LIST VIEW ---
+  // Redirect to dashboard if no project ID (list view is now in Dashboard)
+  useEffect(() => {
+    if (!projectId) {
+      onBack();
+    }
+  }, [projectId, onBack]);
+
   if (!projectId) {
-    return (
-      <div style={pageStyles.container}>
-        <AppHeader
-          currentPage="wizard"
-          onNavigate={onNavigate}
-          rightContent={
-            <button style={pageStyles.createButton} onClick={handleCreate}>
-              + New Wizard
-            </button>
-          }
-        />
-        <div style={pageStyles.content}>
-          {error && <div style={pageStyles.errorBanner}>{error}</div>}
-          {listLoading ? (
-            <p style={{ color: '#86868b', textAlign: 'center', padding: '40px' }}>Loading...</p>
-          ) : projectList.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '80px 24px' }}>
-              <div style={{ fontSize: '48px', color: '#d1d1d6', marginBottom: '16px' }}>
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="#d1d1d6" strokeWidth="2" strokeLinejoin="round"/>
-                  <path d="M2 17l10 5 10-5" stroke="#d1d1d6" strokeWidth="2" strokeLinejoin="round"/>
-                  <path d="M2 12l10 5 10-5" stroke="#d1d1d6" strokeWidth="2" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <h2 style={{ fontSize: '22px', fontWeight: 600, color: '#1d1d1f', marginBottom: '8px' }}>
-                No wizard projects yet
-              </h2>
-              <p style={{ fontSize: '15px', color: '#86868b', marginBottom: '24px' }}>
-                Create your first wizard to auto-generate screenshots, metadata, and icons
-              </p>
-              <button style={pageStyles.createButton} onClick={handleCreate}>
-                + Create Wizard Project
-              </button>
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
-              {projectList.map(p => (
-                <div
-                  key={p.id}
-                  style={pageStyles.listCard}
-                  onClick={() => onOpenProject(p.id)}
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.04)'; }}
-                >
-                  <div style={{ padding: '20px' }}>
-                    <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#1d1d1f', marginBottom: '4px' }}>
-                      {p.appName || 'Untitled'}
-                    </h3>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-                      <span style={{
-                        padding: '2px 8px',
-                        borderRadius: '6px',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        backgroundColor: p.status === 'translated' ? '#d1fae5' : p.status === 'generated' ? '#dbeafe' : '#f3f4f6',
-                        color: p.status === 'translated' ? '#065f46' : p.status === 'generated' ? '#1e40af' : '#6b7280',
-                      }}>
-                        Step {p.currentStep} - {p.status}
-                      </span>
-                      <button
-                        style={{ ...pageStyles.smallButton, backgroundColor: '#ff3b30', color: '#fff', border: 'none' }}
-                        onClick={e => handleDelete(p.id, e)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
+    return null;
   }
 
   // --- EDITOR VIEW ---

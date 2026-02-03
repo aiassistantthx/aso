@@ -18,6 +18,7 @@ model User {
   projects         Project[]
   metadataProjects MetadataProject[]
   wizardProjects   WizardProject[]
+  unifiedProjects  UnifiedProject[]
   subscription     Subscription?
 }
 
@@ -112,4 +113,67 @@ model WizardProject {
   status              String   @default("draft")
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+}
+
+// Unified Project Model - combines Project, WizardProject, and MetadataProject
+model UnifiedProject {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  name            String
+  mode            String   @default("wizard") // "wizard" | "manual"
+
+  // App Info
+  appName           String   @default("")
+  briefDescription  String   @default("")
+  targetKeywords    String   @default("")
+
+  // Screenshots
+  screenshots       UnifiedScreenshot[]
+  styleConfig       Json?
+  deviceSize        String   @default("6.9")
+
+  // Metadata
+  metadataPlatform       String   @default("ios")
+  generatedMetadata      Json?
+  editedMetadata         Json?
+  metadataTranslations   Json?
+
+  // Languages
+  sourceLanguage    String   @default("en-US")
+  targetLanguages   String[] @default([])
+  translationData   Json?
+
+  // Wizard State
+  wizardCurrentStep        Int      @default(1)
+  wizardTone               String   @default("bright")
+  wizardLayoutPreset       String   @default("bottom")
+  wizardSelectedTemplateId String?
+  wizardGeneratedHeadlines Json?
+  wizardEditedHeadlines    Json?
+  wizardGeneratedIconUrl   String?
+  wizardStatus             String   @default("draft")
+  wizardUploadedScreenshots Json?
+  wizardScreenshotEditorData Json?
+  wizardTranslatedHeadlines  Json?
+
+  // Wizard service toggles
+  wizardGenerateScreenshots Boolean  @default(true)
+  wizardGenerateIcon        Boolean  @default(true)
+  wizardGenerateMetadata    Boolean  @default(true)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model UnifiedScreenshot {
+  id              String          @id @default(cuid())
+  projectId       String
+  project         UnifiedProject  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  order           Int
+  imagePath       String?
+  text            String          @default("")
+  decorations     Json?
+  styleOverride   Json?
+  mockupSettings  Json?
 }

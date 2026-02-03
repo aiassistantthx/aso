@@ -5,51 +5,17 @@ import { Dashboard } from './components/Dashboard';
 import { Editor } from './components/Editor';
 import { Landing } from './components/Landing';
 import { ProfilePage } from './components/ProfilePage';
-import { MetadataPage } from './components/MetadataPage';
 import { WizardPage } from './components/WizardPage';
-import { projects as projectsApi, auth as authApi, ApiError } from './services/api';
+import { auth as authApi } from './services/api';
 
 type Route =
   | { page: 'landing' }
   | { page: 'login' }
   | { page: 'register' }
   | { page: 'dashboard' }
-  | { page: 'editor'; projectId: string; fromWizardId?: string }
+  | { page: 'editor'; projectId: string }
   | { page: 'profile' }
-  | { page: 'metadata' }
-  | { page: 'metadata-editor'; projectId: string }
-  | { page: 'wizard' }
   | { page: 'wizard-editor'; projectId: string };
-
-const defaultStyle = {
-  backgroundColor: '#667eea',
-  gradient: {
-    enabled: true,
-    color1: '#667eea',
-    color2: '#764ba2',
-    angle: 135,
-  },
-  textColor: '#ffffff',
-  fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif',
-  fontSize: 72,
-  textPosition: 'top',
-  textAlign: 'center',
-  paddingTop: 80,
-  paddingBottom: 60,
-  showMockup: true,
-  mockupColor: 'black',
-  mockupStyle: 'flat',
-  mockupVisibility: 'full',
-  mockupAlignment: 'center',
-  mockupOffset: { x: 0, y: 0 },
-  textOffset: { x: 0, y: 0 },
-  mockupScale: 1.0,
-  mockupRotation: 0,
-  mockupContinuation: 'none',
-  highlightColor: '#FFE135',
-  highlightPadding: 12,
-  highlightBorderRadius: 8,
-};
 
 function AdminPlanToggle() {
   const { user, refreshUser } = useAuth();
@@ -127,24 +93,24 @@ function AppRouter() {
         setRoute({ page: 'dashboard' });
       } else if (path === '/profile') {
         setRoute({ page: 'profile' });
-      } else if (path === '/metadata') {
-        setRoute({ page: 'metadata' });
-      } else if (path.startsWith('/metadata/')) {
-        const projectId = path.replace('/metadata/', '');
+      } else if (path.startsWith('/project/')) {
+        const projectId = path.replace('/project/', '');
         if (projectId) {
-          setRoute({ page: 'metadata-editor', projectId });
-        }
-      } else if (path === '/wizard') {
-        setRoute({ page: 'wizard' });
-      } else if (path.startsWith('/wizard/')) {
-        const projectId = path.replace('/wizard/', '');
-        if (projectId) {
+          // Unified route: /project/:id handles both wizard and manual
+          // The component will determine mode from the project data
           setRoute({ page: 'wizard-editor', projectId });
         }
       } else if (path.startsWith('/editor/')) {
+        // Legacy route for manual editor - redirect to unified
         const projectId = path.replace('/editor/', '');
         if (projectId) {
           setRoute({ page: 'editor', projectId });
+        }
+      } else if (path.startsWith('/wizard/')) {
+        // Legacy route for wizard - redirect to unified
+        const projectId = path.replace('/wizard/', '');
+        if (projectId) {
+          setRoute({ page: 'wizard-editor', projectId });
         }
       } else {
         setRoute({ page: 'landing' });
@@ -165,7 +131,7 @@ function AppRouter() {
         navigate('dashboard');
       }
     } else {
-      if (route.page === 'dashboard' || route.page === 'editor' || route.page === 'profile' || route.page === 'metadata' || route.page === 'metadata-editor' || route.page === 'wizard' || route.page === 'wizard-editor') {
+      if (route.page === 'dashboard' || route.page === 'editor' || route.page === 'profile' || route.page === 'wizard-editor') {
         navigate('landing');
       }
     }
@@ -190,20 +156,11 @@ function AppRouter() {
     } else if (page === 'profile') {
       path = '/profile';
       newRoute = { page: 'profile' };
-    } else if (page === 'metadata') {
-      path = '/metadata';
-      newRoute = { page: 'metadata' };
-    } else if (page === 'wizard') {
-      path = '/wizard';
-      newRoute = { page: 'wizard' };
     } else if (page === 'wizard-editor' && projectId) {
-      path = `/wizard/${projectId}`;
+      path = `/project/${projectId}`;
       newRoute = { page: 'wizard-editor', projectId };
-    } else if (page === 'metadata-editor' && projectId) {
-      path = `/metadata/${projectId}`;
-      newRoute = { page: 'metadata-editor', projectId };
     } else if (page === 'editor' && projectId) {
-      path = `/editor/${projectId}`;
+      path = `/project/${projectId}`;
       newRoute = { page: 'editor', projectId };
     } else {
       path = '/';
@@ -213,23 +170,6 @@ function AppRouter() {
     window.history.pushState({}, '', path);
     setRoute(newRoute);
   }, []);
-
-  const handleNewProject = useCallback(async () => {
-    const defaultName = `Project ${new Date().toLocaleDateString()}`;
-    const name = window.prompt('Project name', defaultName);
-    if (!name || !name.trim()) return;
-
-    try {
-      const project = await projectsApi.create(name.trim(), defaultStyle);
-      navigate('editor', project.id);
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 403) {
-        window.alert(err.message || 'Plan limit reached. Upgrade to Pro for unlimited projects.');
-      } else {
-        console.error('Failed to create project:', err);
-      }
-    }
-  }, [navigate]);
 
   if (loading) {
     return (
@@ -281,8 +221,17 @@ function AppRouter() {
     case 'dashboard':
       return (
         <Dashboard
-          onOpenProject={(id) => navigate('editor', id)}
-          onNewProject={handleNewProject}
+          onOpenProject={(id, mode) => {
+            // Route to appropriate page based on mode
+            if (mode === 'wizard') {
+              navigate('wizard-editor', id);
+            } else {
+              navigate('editor', id);
+            }
+          }}
+          onNewProject={() => {
+            // New project now handled in Dashboard via unified API
+          }}
           onNavigate={(page, id) => navigate(page, id)}
         />
       );
@@ -294,40 +243,11 @@ function AppRouter() {
         />
       );
 
-    case 'metadata':
-      return (
-        <MetadataPage
-          onBack={() => navigate('metadata')}
-          onOpenProject={(id) => navigate('metadata-editor', id)}
-          onNavigate={(page, id) => navigate(page, id)}
-        />
-      );
-
-    case 'metadata-editor':
-      return (
-        <MetadataPage
-          projectId={route.projectId}
-          onBack={() => navigate('metadata')}
-          onOpenProject={(id) => navigate('metadata-editor', id)}
-          onNavigate={(page, id) => navigate(page, id)}
-        />
-      );
-
-    case 'wizard':
-      return (
-        <WizardPage
-          onBack={() => navigate('wizard')}
-          onOpenProject={(id) => navigate('wizard-editor', id)}
-          onNavigate={(page, id) => navigate(page, id)}
-        />
-      );
-
     case 'wizard-editor':
       return (
         <WizardPage
           projectId={route.projectId}
-          onBack={() => navigate('wizard')}
-          onOpenProject={(id) => navigate('wizard-editor', id)}
+          onBack={() => navigate('dashboard')}
           onNavigate={(page, id) => navigate(page, id)}
         />
       );
@@ -336,13 +256,7 @@ function AppRouter() {
       return (
         <Editor
           projectId={route.projectId}
-          onBack={() => {
-            if (route.fromWizardId) {
-              navigate('wizard-editor', route.fromWizardId);
-            } else {
-              navigate('dashboard');
-            }
-          }}
+          onBack={() => navigate('dashboard')}
           onNavigate={(page, id) => navigate(page, id)}
         />
       );

@@ -265,6 +265,91 @@ export const stripe = {
     request<{ url: string }>('/api/stripe/portal', { method: 'POST' }),
 };
 
+// Unified Projects API
+export const unified = {
+  list: (mode?: 'wizard' | 'manual') =>
+    request<UnifiedProjectListItem[]>(`/api/unified${mode ? `?mode=${mode}` : ''}`),
+
+  get: (id: string) => request<UnifiedProjectFull>(`/api/unified/${id}`),
+
+  create: (mode: 'wizard' | 'manual' = 'wizard', name?: string) =>
+    request<UnifiedProjectFull>('/api/unified', {
+      method: 'POST',
+      body: JSON.stringify({ mode, name }),
+    }),
+
+  update: (id: string, data: Record<string, unknown>) =>
+    request<UnifiedProjectFull>(`/api/unified/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    request<{ ok: boolean }>(`/api/unified/${id}`, { method: 'DELETE' }),
+
+  uploadScreenshot: async (id: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return request<{ screenshotUrl: string; project?: UnifiedProjectFull; screenshot?: UnifiedScreenshotRecord }>(
+      `/api/unified/${id}/screenshots`,
+      { method: 'POST', body: formData },
+    );
+  },
+
+  removeScreenshot: (id: string, index: number | string) =>
+    request<UnifiedProjectFull | { ok: boolean }>(`/api/unified/${id}/screenshots/${index}`, {
+      method: 'DELETE',
+    }),
+
+  generateAll: (id: string) =>
+    request<UnifiedProjectFull>(`/api/unified/${id}/generate-all`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+
+  translate: (id: string) =>
+    request<UnifiedProjectFull>(`/api/unified/${id}/translate`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+
+  convertToManual: (id: string) =>
+    request<UnifiedProjectFull>(`/api/unified/${id}/convert-to-manual`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+
+  autosave: (id: string, data: Record<string, unknown>) =>
+    request<{ ok: boolean; updatedAt: string }>(`/api/unified/${id}/autosave`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  bulkUpdateScreenshots: (id: string, screenshotsList: Array<Record<string, unknown>>) =>
+    request<{ ok: boolean }>(`/api/unified/${id}/screenshots/bulk`, {
+      method: 'PUT',
+      body: JSON.stringify({ screenshots: screenshotsList }),
+    }),
+
+  reorderScreenshots: (id: string, order: string[]) =>
+    request<{ ok: boolean }>(`/api/unified/${id}/screenshots/reorder`, {
+      method: 'PUT',
+      body: JSON.stringify({ order }),
+    }),
+
+  generateMetadata: (id: string) =>
+    request<UnifiedProjectFull>(`/api/unified/${id}/generate-metadata`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+
+  translateMetadata: (id: string, targetLanguages: string[]) =>
+    request<UnifiedProjectFull>(`/api/unified/${id}/translate-metadata`, {
+      method: 'POST',
+      body: JSON.stringify({ targetLanguages }),
+    }),
+};
+
 // Types
 export interface User {
   id: string;
@@ -380,6 +465,73 @@ export interface WizardProjectFull {
   }> | null;
   currentStep: number;
   status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Unified Project Types
+export interface UnifiedProjectListItem {
+  id: string;
+  name: string;
+  mode: 'wizard' | 'manual';
+  appName: string;
+  wizardStatus: string;
+  wizardCurrentStep: number;
+  wizardTone: string;
+  updatedAt: string;
+  screenshotCount: number;
+  thumbnail: string | null;
+}
+
+export interface UnifiedScreenshotRecord {
+  id: string;
+  projectId: string;
+  order: number;
+  imagePath: string | null;
+  text: string;
+  decorations: unknown;
+  styleOverride: unknown;
+  mockupSettings: unknown;
+}
+
+export interface UnifiedProjectFull {
+  id: string;
+  userId: string;
+  name: string;
+  mode: 'wizard' | 'manual';
+  appName: string;
+  briefDescription: string;
+  targetKeywords: string;
+  screenshots: UnifiedScreenshotRecord[];
+  styleConfig: Record<string, unknown> | null;
+  deviceSize: string;
+  metadataPlatform: string;
+  generatedMetadata: Record<string, string> | null;
+  editedMetadata: Record<string, string> | null;
+  metadataTranslations: Record<string, Record<string, string>> | null;
+  sourceLanguage: string;
+  targetLanguages: string[];
+  translationData: Record<string, unknown> | null;
+  wizardCurrentStep: number;
+  wizardTone: string;
+  wizardLayoutPreset: string;
+  wizardSelectedTemplateId: string | null;
+  wizardGeneratedHeadlines: string[] | null;
+  wizardEditedHeadlines: string[] | null;
+  wizardGeneratedIconUrl: string | null;
+  wizardStatus: string;
+  wizardUploadedScreenshots: string[] | null;
+  wizardScreenshotEditorData: Array<{
+    decorations?: unknown;
+    styleOverride?: unknown;
+    mockupSettings?: unknown;
+    linkedMockupIndex?: number;
+  }> | null;
+  wizardTranslatedHeadlines: Record<string, string[]> | null;
+  wizardGenerateScreenshots: boolean;
+  wizardGenerateIcon: boolean;
+  wizardGenerateMetadata: boolean;
+  generationErrors?: string[];
   createdAt: string;
   updatedAt: string;
 }

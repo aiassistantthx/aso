@@ -1,92 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { projects as projectsApi, ProjectListItem } from '../services/api';
+import { unified as unifiedApi, UnifiedProjectListItem, ApiError } from '../services/api';
 import { useAuth } from '../services/authContext';
 import { AppHeader } from './AppHeader';
 
 interface Props {
-  onOpenProject: (id: string) => void;
+  onOpenProject: (id: string, mode: 'wizard' | 'manual') => void;
   onNewProject: () => void;
   onNavigate: (page: string, id?: string) => void;
 }
+
+type FilterMode = 'all' | 'wizard' | 'manual';
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
     minHeight: '100vh',
     backgroundColor: '#f5f5f7',
-  },
-  header: {
-    background: 'rgba(255, 255, 255, 0.72)',
-    borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
-    position: 'sticky',
-    top: 0,
-    zIndex: 100,
-    backdropFilter: 'saturate(180%) blur(20px)',
-    WebkitBackdropFilter: 'saturate(180%) blur(20px)',
-  },
-  headerContent: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '14px 24px',
-  },
-  logoContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '14px',
-  },
-  logoIcon: {
-    width: '42px',
-    height: '42px',
-    borderRadius: '12px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '20px',
-    color: '#fff',
-    boxShadow: '0 4px 14px rgba(102, 126, 234, 0.35)',
-  },
-  logo: {
-    fontSize: '18px',
-    fontWeight: 700,
-    color: '#1d1d1f',
-    letterSpacing: '-0.4px',
-  },
-  headerRight: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px',
-  },
-  planBadge: {
-    padding: '4px 12px',
-    borderRadius: '20px',
-    fontSize: '12px',
-    fontWeight: 600,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.5px',
-  },
-  userMenu: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-  },
-  userName: {
-    fontSize: '14px',
-    fontWeight: 500,
-    color: '#1d1d1f',
-  },
-  logoutButton: {
-    padding: '8px 16px',
-    fontSize: '13px',
-    fontWeight: 500,
-    border: '1px solid #e0e0e5',
-    borderRadius: '8px',
-    backgroundColor: '#fff',
-    color: '#86868b',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
   },
   content: {
     maxWidth: '1200px',
@@ -110,6 +38,31 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '24px',
+    flexWrap: 'wrap',
+    gap: '16px',
+  },
+  filterTabs: {
+    display: 'flex',
+    gap: '4px',
+    backgroundColor: '#e5e5ea',
+    padding: '4px',
+    borderRadius: '10px',
+  },
+  filterTab: {
+    padding: '8px 16px',
+    fontSize: '13px',
+    fontWeight: 500,
+    border: 'none',
+    borderRadius: '8px',
+    backgroundColor: 'transparent',
+    color: '#86868b',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  },
+  filterTabActive: {
+    backgroundColor: '#fff',
+    color: '#1d1d1f',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
   },
   newButton: {
     padding: '12px 24px',
@@ -117,10 +70,10 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     border: 'none',
     borderRadius: '12px',
-    background: 'linear-gradient(135deg, #0071e3 0%, #0077ed 100%)',
+    background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
     color: '#fff',
     cursor: 'pointer',
-    boxShadow: '0 4px 14px rgba(0, 113, 227, 0.35)',
+    boxShadow: '0 4px 14px rgba(139, 92, 246, 0.35)',
     transition: 'all 0.2s ease',
     display: 'flex',
     alignItems: 'center',
@@ -148,6 +101,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+    position: 'relative',
   },
   cardThumbnailImage: {
     width: '100%',
@@ -158,6 +112,25 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '48px',
     color: '#d1d1d6',
   },
+  modeBadge: {
+    position: 'absolute',
+    top: '12px',
+    left: '12px',
+    padding: '4px 10px',
+    borderRadius: '6px',
+    fontSize: '11px',
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+  },
+  wizardBadge: {
+    backgroundColor: 'rgba(139, 92, 246, 0.9)',
+    color: '#fff',
+  },
+  manualBadge: {
+    backgroundColor: 'rgba(0, 113, 227, 0.9)',
+    color: '#fff',
+  },
   cardBody: {
     padding: '16px',
   },
@@ -166,6 +139,9 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     color: '#1d1d1f',
     marginBottom: '6px',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   },
   cardMeta: {
     fontSize: '13px',
@@ -221,16 +197,25 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#86868b',
     marginBottom: '24px',
   },
+  statusBadge: {
+    display: 'inline-block',
+    padding: '2px 8px',
+    borderRadius: '4px',
+    fontSize: '11px',
+    fontWeight: 500,
+    marginLeft: '8px',
+  },
 };
 
-export const Dashboard: React.FC<Props> = ({ onOpenProject, onNewProject, onNavigate }) => {
+export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
   const { user } = useAuth();
-  const [projectList, setProjectList] = useState<ProjectListItem[]>([]);
+  const [projectList, setProjectList] = useState<UnifiedProjectListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<FilterMode>('all');
 
   const loadProjects = useCallback(async () => {
     try {
-      const list = await projectsApi.list();
+      const list = await unifiedApi.list();
       setProjectList(list);
     } catch (err) {
       console.error('Failed to load projects:', err);
@@ -249,7 +234,7 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNewProject, onNavi
     if (!newName || newName.trim() === '' || newName.trim() === currentName) return;
 
     try {
-      await projectsApi.update(id, { name: newName.trim() });
+      await unifiedApi.update(id, { name: newName.trim() });
       setProjectList((prev) =>
         prev.map((p) => p.id === id ? { ...p, name: newName.trim() } : p),
       );
@@ -263,10 +248,23 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNewProject, onNavi
     if (!window.confirm('Are you sure you want to delete this project?')) return;
 
     try {
-      await projectsApi.delete(id);
+      await unifiedApi.delete(id);
       setProjectList((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
       window.alert(err instanceof Error ? err.message : 'Failed to delete project');
+    }
+  };
+
+  const handleNewProject = async () => {
+    try {
+      const project = await unifiedApi.create('wizard');
+      onNavigate('wizard-editor', project.id);
+    } catch (err) {
+      if (err instanceof ApiError && err.limit === 'wizardProjects') {
+        window.alert(err.message);
+      } else {
+        console.error('Failed to create project:', err);
+      }
     }
   };
 
@@ -278,7 +276,23 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNewProject, onNavi
     });
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'draft': return { label: 'Draft', color: '#86868b', bg: '#f5f5f7' };
+      case 'generated': return { label: 'Generated', color: '#248a3d', bg: '#e3f9e5' };
+      case 'translated': return { label: 'Translated', color: '#0071e3', bg: '#e5f1fb' };
+      default: return { label: status, color: '#86868b', bg: '#f5f5f7' };
+    }
+  };
+
   const plan = user?.plan ?? 'FREE';
+
+  const filteredProjects = filter === 'all'
+    ? projectList
+    : projectList.filter(p => p.mode === filter);
+
+  const wizardCount = projectList.filter(p => p.mode === 'wizard').length;
+  const manualCount = projectList.filter(p => p.mode === 'manual').length;
 
   return (
     <div style={styles.container}>
@@ -291,45 +305,52 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNewProject, onNavi
         </p>
 
         <div style={styles.toolbar as React.CSSProperties}>
-          <span style={{ fontSize: '14px', color: '#86868b' }}>
-            {projectList.length} project{projectList.length !== 1 ? 's' : ''}
-            {plan === 'FREE' && ` / 3 max`}
-          </span>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button
-              style={{
-                ...styles.newButton,
-                background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
-                boxShadow: '0 4px 14px rgba(139, 92, 246, 0.35)',
-              }}
-              onClick={() => onNavigate('wizard')}
-            >
-              Auto Generate
-            </button>
-            <button
-              style={{
-                ...styles.newButton,
-                background: 'linear-gradient(135deg, #34c759 0%, #30d158 100%)',
-                boxShadow: '0 4px 14px rgba(52, 199, 89, 0.35)',
-              }}
-              onClick={() => onNavigate('metadata')}
-            >
-              ASO Texts
-            </button>
-            <button
-              style={styles.newButton}
-              onClick={onNewProject}
-            >
-              + New Project
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={styles.filterTabs}>
+              <button
+                style={{
+                  ...styles.filterTab,
+                  ...(filter === 'all' ? styles.filterTabActive : {}),
+                }}
+                onClick={() => setFilter('all')}
+              >
+                All ({projectList.length})
+              </button>
+              <button
+                style={{
+                  ...styles.filterTab,
+                  ...(filter === 'wizard' ? styles.filterTabActive : {}),
+                }}
+                onClick={() => setFilter('wizard')}
+              >
+                Wizard ({wizardCount})
+              </button>
+              <button
+                style={{
+                  ...styles.filterTab,
+                  ...(filter === 'manual' ? styles.filterTabActive : {}),
+                }}
+                onClick={() => setFilter('manual')}
+              >
+                Manual ({manualCount})
+              </button>
+            </div>
+            {plan === 'FREE' && (
+              <span style={{ fontSize: '13px', color: '#86868b' }}>
+                {wizardCount}/1 wizard, {manualCount}/3 manual
+              </span>
+            )}
           </div>
+          <button style={styles.newButton} onClick={handleNewProject}>
+            + New Project
+          </button>
         </div>
 
         {loading ? (
           <div style={styles.emptyState as React.CSSProperties}>
             <p style={styles.emptyText}>Loading...</p>
           </div>
-        ) : projectList.length === 0 ? (
+        ) : filteredProjects.length === 0 ? (
           <div style={styles.emptyState as React.CSSProperties}>
             <div style={styles.emptyIcon}>
               <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
@@ -339,69 +360,98 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNewProject, onNavi
                 <line x1="28" y1="32" x2="36" y2="32" stroke="#d1d1d6" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </div>
-            <h2 style={styles.emptyTitle}>No projects yet</h2>
+            <h2 style={styles.emptyTitle}>
+              {filter === 'all' ? 'No projects yet' : `No ${filter} projects`}
+            </h2>
             <p style={styles.emptyText}>
-              Create your first project to start making App Store screenshots
+              {filter === 'all'
+                ? 'Create your first project to start making App Store screenshots'
+                : `You don't have any ${filter} projects yet`}
             </p>
-            <button style={styles.newButton} onClick={onNewProject}>
-              + Create First Project
+            <button style={styles.newButton} onClick={handleNewProject}>
+              + Create Project
             </button>
           </div>
         ) : (
           <div style={styles.grid}>
-            {projectList.map((project) => (
-              <div
-                key={project.id}
-                style={styles.projectCard}
-                onClick={() => onOpenProject(project.id)}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.1)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 2px 12px rgba(0, 0, 0, 0.04)';
-                }}
-              >
-                <div style={styles.cardThumbnail as React.CSSProperties}>
-                  {project.thumbnail ? (
-                    <img
-                      src={project.thumbnail}
-                      alt={project.name}
-                      style={styles.cardThumbnailImage}
-                    />
-                  ) : (
-                    <div style={styles.cardThumbnailPlaceholder}>
-                      <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                        <rect x="6" y="8" width="36" height="32" rx="4" stroke="#d1d1d6" strokeWidth="2" />
-                        <rect x="14" y="16" width="20" height="16" rx="2" fill="#d1d1d6" opacity="0.3" />
-                      </svg>
+            {filteredProjects.map((project) => {
+              const status = getStatusLabel(project.wizardStatus);
+              return (
+                <div
+                  key={project.id}
+                  style={styles.projectCard}
+                  onClick={() => onOpenProject(project.id, project.mode)}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 2px 12px rgba(0, 0, 0, 0.04)';
+                  }}
+                >
+                  <div style={styles.cardThumbnail as React.CSSProperties}>
+                    {project.thumbnail ? (
+                      <img
+                        src={project.thumbnail}
+                        alt={project.name || project.appName}
+                        style={styles.cardThumbnailImage}
+                      />
+                    ) : (
+                      <div style={styles.cardThumbnailPlaceholder}>
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                          <rect x="6" y="8" width="36" height="32" rx="4" stroke="#d1d1d6" strokeWidth="2" />
+                          <rect x="14" y="16" width="20" height="16" rx="2" fill="#d1d1d6" opacity="0.3" />
+                        </svg>
+                      </div>
+                    )}
+                    <span style={{
+                      ...styles.modeBadge,
+                      ...(project.mode === 'wizard' ? styles.wizardBadge : styles.manualBadge),
+                    } as React.CSSProperties}>
+                      {project.mode === 'wizard' ? 'Wizard' : 'Manual'}
+                    </span>
+                  </div>
+                  <div style={styles.cardBody}>
+                    <h3 style={styles.cardTitle}>
+                      {project.name || project.appName || 'Untitled Project'}
+                      {project.mode === 'wizard' && (
+                        <span style={{
+                          ...styles.statusBadge,
+                          color: status.color,
+                          backgroundColor: status.bg,
+                        }}>
+                          {status.label}
+                        </span>
+                      )}
+                    </h3>
+                    <div style={styles.cardMeta as React.CSSProperties}>
+                      <span>
+                        {project.mode === 'wizard'
+                          ? `Step ${project.wizardCurrentStep}/9`
+                          : `${project.screenshotCount} screenshot${project.screenshotCount !== 1 ? 's' : ''}`
+                        }
+                      </span>
+                      <span>{formatDate(project.updatedAt)}</span>
                     </div>
-                  )}
-                </div>
-                <div style={styles.cardBody}>
-                  <h3 style={styles.cardTitle}>{project.name}</h3>
-                  <div style={styles.cardMeta as React.CSSProperties}>
-                    <span>{project.screenshotCount} screenshot{project.screenshotCount !== 1 ? 's' : ''}</span>
-                    <span>{formatDate(project.updatedAt)}</span>
+                  </div>
+                  <div style={styles.cardActions as React.CSSProperties}>
+                    <button
+                      style={styles.cardActionButton}
+                      onClick={(e) => handleRename(project.id, project.name || project.appName, e)}
+                    >
+                      Rename
+                    </button>
+                    <button
+                      style={styles.deleteButton}
+                      onClick={(e) => handleDelete(project.id, e)}
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
-                <div style={styles.cardActions as React.CSSProperties}>
-                  <button
-                    style={styles.cardActionButton}
-                    onClick={(e) => handleRename(project.id, project.name, e)}
-                  >
-                    Rename
-                  </button>
-                  <button
-                    style={styles.deleteButton}
-                    onClick={(e) => handleDelete(project.id, e)}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

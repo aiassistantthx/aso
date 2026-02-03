@@ -5,11 +5,13 @@ import fastifyStatic from '@fastify/static';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import { PrismaClient } from '@prisma/client';
 
 import prismaPlugin from './plugins/prisma.js';
 import authPlugin from './plugins/auth.js';
 import stripePlugin from './plugins/stripe.js';
 import polarPlugin from './plugins/polar.js';
+import { setupAdmin } from './plugins/admin.js';
 
 import authRoutes from './routes/auth.js';
 import projectRoutes from './routes/projects.js';
@@ -19,6 +21,7 @@ import stripeRoutes from './routes/stripe.js';
 import polarRoutes from './routes/polar.js';
 import metadataRoutes from './routes/metadata.js';
 import wizardRoutes from './routes/wizard.js';
+import unifiedRoutes from './routes/unified.js';
 import { UPLOADS_DIR } from './config.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -30,6 +33,15 @@ const HOST = process.env.HOST || '0.0.0.0';
 async function start() {
   const fastify = Fastify({
     logger: true,
+  });
+
+  // Shared Prisma client for admin
+  const prisma = new PrismaClient();
+  await prisma.$connect();
+
+  // Setup AdminJS first (in its own encapsulated scope)
+  await fastify.register(async (instance) => {
+    await setupAdmin(instance, prisma);
   });
 
   // CORS for dev mode
@@ -62,6 +74,7 @@ async function start() {
   await fastify.register(polarRoutes);
   await fastify.register(metadataRoutes);
   await fastify.register(wizardRoutes);
+  await fastify.register(unifiedRoutes);
 
   // Serve uploaded files
   const uploadsDir = UPLOADS_DIR;
@@ -88,12 +101,17 @@ async function start() {
   if (fs.existsSync(distDir)) {
     // SPA fallback: serve index.html for non-API routes
     fastify.setNotFoundHandler(async (request, reply) => {
-      if (request.url.startsWith('/api/') || request.url.startsWith('/uploads/')) {
+      if (request.url.startsWith('/api/') || request.url.startsWith('/uploads/') || request.url.startsWith('/admin')) {
         return reply.status(404).send({ error: 'Not found' });
       }
       return reply.sendFile('index.html');
     });
   }
+
+  // Cleanup on close
+  fastify.addHook('onClose', async () => {
+    await prisma.$disconnect();
+  });
 
   // Start
   try {

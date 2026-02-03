@@ -5,9 +5,12 @@ import { ScreensFlowEditor } from './ScreensFlowEditor';
 import { LanguageSelector } from './LanguageSelector';
 import { ExportButton } from './ExportButton';
 import { LanguageSidebar } from './LanguageSidebar';
-import { projects as projectsApi, screenshots as screenshotsApi, ProjectFull } from '../services/api';
+import { unified as unifiedApi, UnifiedProjectFull } from '../services/api';
 import { useAuth } from '../services/authContext';
 import { AppHeader } from './AppHeader';
+
+// Type alias for compatibility
+type ProjectFull = UnifiedProjectFull;
 
 interface Props {
   projectId: string;
@@ -181,7 +184,7 @@ export const Editor: React.FC<Props> = ({ projectId, onBack, onNavigate }) => {
   useEffect(() => {
     const loadProject = async () => {
       try {
-        const project: ProjectFull = await projectsApi.get(projectId);
+        const project: ProjectFull = await unifiedApi.get(projectId);
         setProjectName(project.name);
         setDeviceSize((project.deviceSize || '6.9') as DeviceSize);
         setSourceLanguage(project.sourceLanguage || 'en-US');
@@ -202,7 +205,9 @@ export const Editor: React.FC<Props> = ({ projectId, onBack, onNavigate }) => {
         const initialScreenshots: Screenshot[] = project.screenshots.map((s) => ({
           id: s.id,
           file: null,
-          preview: s.imagePath ? `/uploads/${project.userId}/${projectId}/${s.imagePath}` : '',
+          preview: s.imagePath
+            ? (s.imagePath.startsWith('/uploads') ? s.imagePath : `/uploads/${project.userId}/${projectId}/${s.imagePath}`)
+            : '',
           text: s.text || '',
           decorations: s.decorations as Screenshot['decorations'],
           styleOverride: s.styleOverride as Screenshot['styleOverride'],
@@ -216,7 +221,9 @@ export const Editor: React.FC<Props> = ({ projectId, onBack, onNavigate }) => {
         for (let i = 0; i < initialScreenshots.length; i++) {
           const s = project.screenshots[i];
           if (!s.imagePath) continue;
-          const imageUrl = `/uploads/${project.userId}/${projectId}/${s.imagePath}`;
+          const imageUrl = s.imagePath.startsWith('/uploads')
+            ? s.imagePath
+            : `/uploads/${project.userId}/${projectId}/${s.imagePath}`;
           try {
             const response = await fetch(imageUrl);
             const blob = await response.blob();
@@ -246,7 +253,7 @@ export const Editor: React.FC<Props> = ({ projectId, onBack, onNavigate }) => {
     const timeoutId = setTimeout(async () => {
       setSaving(true);
       try {
-        await projectsApi.autosave(projectId, {
+        await unifiedApi.autosave(projectId, {
           styleConfig,
           deviceSize,
           sourceLanguage,
@@ -256,7 +263,7 @@ export const Editor: React.FC<Props> = ({ projectId, onBack, onNavigate }) => {
 
         // Also save screenshot data
         if (screenshots.length > 0) {
-          await screenshotsApi.bulkUpdate(
+          await unifiedApi.bulkUpdateScreenshots(
             projectId,
             screenshots.map((s, i) => ({
               id: s.id,
@@ -303,12 +310,12 @@ export const Editor: React.FC<Props> = ({ projectId, onBack, onNavigate }) => {
         if (!s.file) continue;
         setUploadProgress({ current: idx + 1, total: toUpload.length });
         try {
-          const result = await screenshotsApi.upload(projectId, s.file);
+          const result = await unifiedApi.uploadScreenshot(projectId, s.file);
           // Load the uploaded image as base64
           let preview = s.preview;
-          if (result.imageUrl) {
+          if (result.screenshotUrl) {
             try {
-              const response = await fetch(result.imageUrl);
+              const response = await fetch(result.screenshotUrl);
               const blob = await response.blob();
               preview = await new Promise<string>((resolve) => {
                 const reader = new FileReader();
@@ -321,7 +328,7 @@ export const Editor: React.FC<Props> = ({ projectId, onBack, onNavigate }) => {
           }
           uploadedScreenshots.push({
             ...s,
-            id: result.id,
+            id: result.screenshot?.id || s.id,
             preview,
             file: null,
           });
@@ -342,7 +349,7 @@ export const Editor: React.FC<Props> = ({ projectId, onBack, onNavigate }) => {
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      await projectsApi.update(projectId, {
+      await unifiedApi.update(projectId, {
         name: projectName,
         styleConfig,
         deviceSize,
@@ -352,7 +359,7 @@ export const Editor: React.FC<Props> = ({ projectId, onBack, onNavigate }) => {
       });
 
       if (screenshots.length > 0) {
-        await screenshotsApi.bulkUpdate(
+        await unifiedApi.bulkUpdateScreenshots(
           projectId,
           screenshots.map((s, i) => ({
             id: s.id,
@@ -382,7 +389,7 @@ export const Editor: React.FC<Props> = ({ projectId, onBack, onNavigate }) => {
     if (trimmed && trimmed !== projectName) {
       setProjectName(trimmed);
       try {
-        await projectsApi.update(projectId, { name: trimmed });
+        await unifiedApi.update(projectId, { name: trimmed });
       } catch (err) {
         console.error('Failed to rename project:', err);
       }

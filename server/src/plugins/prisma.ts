@@ -19,4 +19,4 @@ async function prismaPlugin(fastify: FastifyInstance) {
   });
 }
 
-export default fp(prismaPlugin);
+export default fp(prismaPlugin, { name: 'prisma-plugin' });
