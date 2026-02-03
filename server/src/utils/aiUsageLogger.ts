@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 // Pricing per 1M tokens (as of 2024)
 const MODEL_PRICING: Record<string, { input: number; output: number }> = {
@@ -78,7 +78,7 @@ export async function logAIUsage(prisma: PrismaClient, input: AIUsageLogInput): 
         durationMs: input.durationMs || 0,
         success: input.success ?? true,
         errorMessage: input.errorMessage,
-        metadata: input.metadata || null,
+        metadata: input.metadata ? (input.metadata as Prisma.InputJsonValue) : Prisma.JsonNull,
       },
     });
   } catch (error) {

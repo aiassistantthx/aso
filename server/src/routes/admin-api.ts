@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify';
+import { Prisma } from '@prisma/client';
 import { getAIUsageStats } from '../utils/aiUsageLogger.js';
 
 export default async function adminApiRoutes(fastify: FastifyInstance) {
@@ -52,14 +53,11 @@ export default async function adminApiRoutes(fastify: FastifyInstance) {
     const projectsWithTranslations = await fastify.prisma.unifiedProject.findMany({
       where: {
         OR: [
-          { wizardTranslatedHeadlines: { not: null } },
-          { metadataTranslations: { not: null } },
+          { wizardTranslatedHeadlines: { not: Prisma.JsonNull } },
+          { metadataTranslations: { not: Prisma.JsonNull } },
         ],
       },
-      select: {
-        id: true,
-        targetLanguages: true,
-        wizardUploadedScreenshots: true,
+      include: {
         _count: { select: { screenshots: true } },
       },
     });

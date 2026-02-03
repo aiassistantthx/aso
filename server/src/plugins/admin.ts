@@ -96,8 +96,9 @@ export async function setupAdmin(fastify: FastifyInstance, prisma: PrismaClient)
                   const countMap = new Map(projectCounts.map(p => [p.userId, p._count]));
 
                   for (const record of response.records || []) {
-                    record.params.plan = subMap.get(record.params.id) || 'FREE';
-                    record.params.projectCount = countMap.get(record.params.id) || 0;
+                    const id = record.params.id as string;
+                    record.params.plan = subMap.get(id) || 'FREE';
+                    record.params.projectCount = countMap.get(id) || 0;
                   }
                 }
 
