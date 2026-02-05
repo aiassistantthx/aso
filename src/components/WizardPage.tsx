@@ -200,14 +200,18 @@ function buildEditorScreenshots(project: WizardProjectData): Screenshot[] {
   // Only apply alternating styles if no saved styleConfig (user hasn't edited globally)
   const hasSavedStyle = !!project.styleConfig;
 
+  // Device dimensions for converting pixel offsets to percentages
+  const deviceWidth = 1290; // 6.9" width
+  const deviceHeight = 2796; // 6.9" height
+
   return urls.map((url, i) => {
     // Start with saved editor data styleOverride if exists
     let styleOverride = editorData[i]?.styleOverride as ScreenshotStyleOverride | undefined;
 
     // Apply alternating colors and layout preset if not already customized
-    if (!styleOverride && !hasSavedStyle && themePreset) {
-      const layoutStyle = layoutPreset.getStyle(i);
+    const layoutStyle = layoutPreset.getStyle(i);
 
+    if (!styleOverride && !hasSavedStyle && themePreset) {
       // For first screenshot, use base theme colors
       if (i === 0) {
         styleOverride = {
@@ -231,6 +235,19 @@ function buildEditorScreenshots(project: WizardProjectData): Screenshot[] {
       }
     }
 
+    // Use saved mockupSettings or initialize from layout preset
+    let mockupSettings = editorData[i]?.mockupSettings as ScreenshotMockupSettings | undefined;
+
+    if (!mockupSettings && !hasSavedStyle && layoutStyle.mockupOffset) {
+      // Convert pixel-based mockupOffset to percentage-based mockupSettings
+      mockupSettings = {
+        offsetX: (layoutStyle.mockupOffset.x / deviceWidth) * 100,
+        offsetY: (layoutStyle.mockupOffset.y / deviceHeight) * 100,
+        scale: 1,
+        rotation: layoutStyle.mockupRotation ?? 0,
+      };
+    }
+
     return {
       id: `wizard-${i}`,
       file: null,
@@ -238,7 +255,7 @@ function buildEditorScreenshots(project: WizardProjectData): Screenshot[] {
       text: headlines[i] || '',
       decorations: editorData[i]?.decorations as Decoration[] | undefined,
       styleOverride,
-      mockupSettings: editorData[i]?.mockupSettings as ScreenshotMockupSettings | undefined,
+      mockupSettings,
       linkedMockupIndex: editorData[i]?.linkedMockupIndex,
     };
   });
@@ -645,6 +662,20 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
         const mockupScreenshotIdx = layoutStyle.mockupScreenshotIndex ?? i;
         const mockupScreenshot = screenshots[mockupScreenshotIdx] ?? screenshots[i];
 
+        // Use saved mockupSettings or convert from layout preset
+        const deviceWidth = 1290;
+        const deviceHeight = 2796;
+        let mockupSettings = editorData[i]?.mockupSettings as { offsetX: number; offsetY: number; scale: number; rotation: number } | undefined;
+
+        if (!mockupSettings && layoutStyle.mockupOffset) {
+          mockupSettings = {
+            offsetX: (layoutStyle.mockupOffset.x / deviceWidth) * 100,
+            offsetY: (layoutStyle.mockupOffset.y / deviceHeight) * 100,
+            scale: 1,
+            rotation: layoutStyle.mockupRotation ?? 0,
+          };
+        }
+
         try {
           const canvas = document.createElement('canvas');
           await generatePreviewCanvas(canvas, {
@@ -654,6 +685,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
             deviceSize,
             mockupScreenshot: mockupScreenshot !== screenshots[i] ? mockupScreenshot : undefined,
             mockupContinuation: layoutStyle.mockupContinuation,
+            mockupSettings,
           });
           canvases.push(canvas);
         } catch (err) {
@@ -692,6 +724,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
     const screenshots = project.uploadedScreenshots;
     const headlines = project.translatedHeadlines[activeLang];
     const deviceSize: DeviceSize = '6.9';
+    const editorData = project.screenshotEditorData || [];
 
     const style: StyleConfig = {
       backgroundColor: themePreset.backgroundColor,
@@ -752,6 +785,20 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
         const mockupScreenshotIdx = layoutStyle.mockupScreenshotIndex ?? i;
         const mockupScreenshot = screenshots[mockupScreenshotIdx] ?? screenshots[i];
 
+        // Use saved mockupSettings or convert from layout preset
+        const deviceWidth = 1290;
+        const deviceHeight = 2796;
+        let mockupSettings = editorData[i]?.mockupSettings as { offsetX: number; offsetY: number; scale: number; rotation: number } | undefined;
+
+        if (!mockupSettings && layoutStyle.mockupOffset) {
+          mockupSettings = {
+            offsetX: (layoutStyle.mockupOffset.x / deviceWidth) * 100,
+            offsetY: (layoutStyle.mockupOffset.y / deviceHeight) * 100,
+            scale: 1,
+            rotation: layoutStyle.mockupRotation ?? 0,
+          };
+        }
+
         try {
           const canvas = document.createElement('canvas');
           await generatePreviewCanvas(canvas, {
@@ -761,6 +808,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
             deviceSize,
             mockupScreenshot: mockupScreenshot !== screenshots[i] ? mockupScreenshot : undefined,
             mockupContinuation: layoutStyle.mockupContinuation,
+            mockupSettings,
           });
           canvases.push(canvas);
         } catch (err) {
