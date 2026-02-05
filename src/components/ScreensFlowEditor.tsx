@@ -342,7 +342,7 @@ const LinkedPairCanvas: React.FC<{
 
     let isCancelled = false;
 
-    const previewHeight = 420;
+    const previewHeight = 340;
     const aspectRatio = dimensions.width / dimensions.height;
     const singleScreenWidth = previewHeight * aspectRatio;
     const combinedWidth = singleScreenWidth * 2;
@@ -528,7 +528,7 @@ const LinkedPairCanvas: React.FC<{
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
-  const previewHeight = 420;
+  const previewHeight = 340;
   const aspectRatio = dimensions.width / dimensions.height;
   const singleScreenWidth = previewHeight * aspectRatio;
 
@@ -933,7 +933,7 @@ function drawText(
   const textColor = override?.textColor ?? style.textColor;
   const highlightColor = override?.highlightColor ?? style.highlightColor ?? '#FFE135';
   const textPosition = override?.textPosition ?? style.textPosition;
-  const maxWidth = width * 0.85;
+  const maxWidth = width * 0.80; // 10% padding on each side
 
   // Calculate available text area based on mockup position
   let availableHeight: number;
@@ -1107,7 +1107,7 @@ const SingleScreenPreview: React.FC<{
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const previewHeight = 420;
+    const previewHeight = 340;
     const aspectRatio = dimensions.width / dimensions.height;
     const previewWidth = previewHeight * aspectRatio;
 
@@ -1241,7 +1241,7 @@ const SingleScreenPreview: React.FC<{
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
-  const previewHeight = 420;
+  const previewHeight = 340;
   const aspectRatio = dimensions.width / dimensions.height;
   const previewWidth = previewHeight * aspectRatio;
 
@@ -1405,7 +1405,7 @@ const UploadCard: React.FC<{
   }, [onFilesSelected]);
 
   const dimensions = DEVICE_SIZES['6.9'];
-  const previewHeight = 420;
+  const previewHeight = 340;
   const aspectRatio = dimensions.width / dimensions.height;
   const previewWidth = previewHeight * aspectRatio;
 

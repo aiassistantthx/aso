@@ -731,9 +731,31 @@ const calculateTextArea = (
     rotation
   );
 
-  const width = canvasWidth - sidePadding * 2;
-  const x = sidePadding;
-  const gapFromMockup = 40; // Gap between text and mockup
+  // Calculate horizontal text area accounting for mockup position
+  // Ensure text doesn't overlap with mockup horizontally
+  const gapFromMockup = 60; // Gap between text and mockup
+  const minSidePadding = sidePadding;
+
+  // Calculate text width - reduce if mockup extends into text area horizontally
+  let textLeft = minSidePadding;
+  let textRight = canvasWidth - minSidePadding;
+
+  // If mockup is offset to the left, we may need to move text right boundary
+  // If mockup is offset to the right, we may need to move text left boundary
+  const mockupLeft = rotatedBounds.left;
+  const mockupRight = rotatedBounds.right;
+
+  // Only constrain horizontally if mockup extends significantly into text area
+  if (mockupRight > textRight - gapFromMockup && mockupCenterX > canvasWidth / 2) {
+    // Mockup is on the right side, reduce text width from right
+    textRight = Math.max(mockupLeft - gapFromMockup, canvasWidth * 0.5);
+  } else if (mockupLeft < textLeft + gapFromMockup && mockupCenterX < canvasWidth / 2) {
+    // Mockup is on the left side, reduce text width from left
+    textLeft = Math.min(mockupRight + gapFromMockup, canvasWidth * 0.5);
+  }
+
+  const width = textRight - textLeft;
+  const x = textLeft;
 
   if (textPosition === 'top') {
     // Text at top: from paddingTop to mockup's top edge (minus gap)
@@ -1538,7 +1560,7 @@ export const generateScreenshotImage = async (
 
   // Draw text with auto-sizing to fill available space
   if (text) {
-    const sidePadding = canvas.width * 0.075;
+    const sidePadding = canvas.width * 0.10; // 10% padding from each side
     const maxTextWidth = canvas.width - sidePadding * 2;
 
     // Calculate available text area based on mockup bounds
