@@ -42,13 +42,16 @@ Return a JSON object with these fields: {{fieldsDescription}}
 
 ASO Best Practices — FOLLOW STRICTLY:
 
+CRITICAL RULE - ZERO WORD DUPLICATION:
+Before writing ANY field, list all words you've used. NEVER repeat a word (or its variations like video/videos) across appName, subtitle, and keywords. Apple indexes all three fields, so repeating words wastes character space and hurts rankings.
+
 1. appName (30 chars): Format as "{{appName}} - [Key Benefit Phrase]" or "{{appName}}: [Key Benefit Phrase]". The benefit phrase should read naturally, NOT be a comma-separated keyword list. Example: "Fitbit - Health & Fitness" not "Fitbit - health,fitness,tracker"
 
-2. subtitle (30 chars): Complement the title with DIFFERENT keywords. Must NOT repeat ANY word from appName. Focus on secondary features or unique value proposition.
+2. subtitle (30 chars): Use COMPLETELY DIFFERENT words than appName. If appName mentions "Video", subtitle MUST NOT use "Video" or "Videos". Focus on secondary features, target audience, or unique selling point using fresh vocabulary.
 
 3. keywords (100 chars): Comma-separated, NO spaces after commas. Include ONLY words that are NOT already in appName or subtitle. Every word must be unique. Use singular forms. Include common misspellings and synonyms.
 
-4. ZERO WORD DUPLICATION: Every word across appName, subtitle, and keywords must be unique. Apple indexes all three fields, so repeating words wastes precious character space.
+4. VALIDATION CHECK: Before returning, verify that NO word appears in more than one field. Words like "video/videos", "create/creating", "edit/editor" count as the same word.
 
 5. description (4000 chars):
    - First 3 lines are crucial (visible before "Read More") — put key value proposition and keywords here
