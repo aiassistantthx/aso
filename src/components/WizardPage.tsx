@@ -340,7 +340,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
     switch (s) {
       case 1: return project.appName.trim().length > 0 && project.briefDescription.trim().length > 0;
       case 2: return (project.uploadedScreenshots || []).length >= 3;
-      case 3: return project.generateScreenshots || project.generateIcon || project.generateMetadata;
+      case 3: return project.generateScreenshots || project.generateMetadata;
       case 4: return !!project.tone;
       case 5: return true;
       default: return true;
@@ -791,7 +791,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
 
       // Collect all languages
       const allLangs = [project.sourceLanguage, ...project.targetLanguages.filter(l => l !== project.sourceLanguage)];
-      const totalSteps = allLangs.length * screenshots.length + (project.generatedIconUrl ? 1 : 0);
+      const totalSteps = allLangs.length * screenshots.length;
       let completedSteps = 0;
 
       const baseStyle: StyleConfig = savedStyle || (themePreset ? {
@@ -904,19 +904,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
         zip.file(`${lang}/metadata.json`, JSON.stringify(langMetadata, null, 2));
       }
 
-      // Add icon
-      if (project.generatedIconUrl) {
-        try {
-          const iconResp = await fetch(project.generatedIconUrl);
-          const iconBlob = await iconResp.blob();
-          const iconBuffer = await iconBlob.arrayBuffer();
-          zip.file('icon/icon_1024x1024.png', iconBuffer);
-        } catch {
-          // skip icon
-        }
-        completedSteps++;
-        setExportProgress(100);
-      }
+      setExportProgress(100);
 
       const content = await zip.generateAsync({ type: 'blob' });
       const url = URL.createObjectURL(content);
@@ -1158,7 +1146,6 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
 
             {([
               { key: 'generateScreenshots' as const, label: 'Screenshots with Headlines', desc: 'AI-generated headlines on your screenshots with professional templates' },
-              { key: 'generateIcon' as const, label: 'App Icon', desc: 'AI-generated app icon using DALL-E 3' },
               { key: 'generateMetadata' as const, label: 'ASO Metadata', desc: 'Title, subtitle, description, keywords optimized for App Store' },
             ] as const).map(svc => {
               const isActive = project[svc.key];
@@ -1340,7 +1327,6 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
               AI will generate {[
                 project.generateScreenshots && 'headlines',
                 project.generateMetadata && 'metadata',
-                project.generateIcon && 'app icon',
               ].filter(Boolean).join(', ')} in English
             </p>
 
@@ -1581,17 +1567,6 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                   </div>
                 )}
 
-                {/* Icon */}
-                {project.generateIcon && project.generatedIconUrl && (
-                  <div style={{ marginBottom: '32px' }}>
-                    <h3 style={pageStyles.sectionTitle}>App Icon</h3>
-                    <img
-                      src={project.generatedIconUrl}
-                      alt="Generated icon"
-                      style={{ width: '128px', height: '128px', borderRadius: '28px', border: '1px solid #e5e5ea' }}
-                    />
-                  </div>
-                )}
               </>
             )}
 
@@ -1878,7 +1853,6 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                 <ul style={{ listStyle: 'none', padding: 0, color: '#86868b', fontSize: '14px' }}>
                   {project.generateScreenshots && <li>Screenshots for {1 + project.targetLanguages.filter(l => l !== project.sourceLanguage).length} language(s) in 2 device sizes</li>}
                   {project.generateMetadata && <li>Metadata JSON per language</li>}
-                  {project.generateIcon && project.generatedIconUrl && <li>App icon (1024x1024)</li>}
                 </ul>
               </div>
 
