@@ -265,6 +265,15 @@ export const stripe = {
     request<{ url: string }>('/api/stripe/portal', { method: 'POST' }),
 };
 
+// Polar
+export const polar = {
+  checkout: () =>
+    request<{ url: string }>('/api/polar/checkout', { method: 'POST' }),
+
+  portal: () =>
+    request<{ url: string }>('/api/polar/portal', { method: 'POST' }),
+};
+
 // Unified Projects API
 export const unified = {
   list: (mode?: 'wizard' | 'manual') =>

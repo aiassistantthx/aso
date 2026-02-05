@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../services/authContext';
 import { AppHeader } from './AppHeader';
+import { polar } from '../services/api';
 
 interface Props {
   onNavigate: (page: string, id?: string) => void;
@@ -102,14 +103,78 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     transition: 'all 0.2s ease',
   },
+  upgradeButton: {
+    width: '100%',
+    padding: '14px',
+    fontSize: '15px',
+    fontWeight: 600,
+    border: 'none',
+    borderRadius: '12px',
+    background: 'linear-gradient(135deg, #FF6B4A 0%, #FF8A65 100%)',
+    color: '#fff',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    boxShadow: '0 2px 12px rgba(255, 107, 74, 0.3)',
+  },
+  manageButton: {
+    width: '100%',
+    padding: '14px',
+    fontSize: '15px',
+    fontWeight: 600,
+    border: '1px solid #e0e0e5',
+    borderRadius: '12px',
+    backgroundColor: '#fff',
+    color: '#1d1d1f',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  },
+  proFeaturesList: {
+    marginTop: '16px',
+    paddingLeft: '0',
+    listStyle: 'none',
+  },
+  proFeature: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '8px 0',
+    fontSize: '14px',
+    color: '#424245',
+  },
 };
 
 export const ProfilePage: React.FC<Props> = ({ onNavigate }) => {
   const { user, logout } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!user) return null;
 
   const plan = user.plan ?? 'FREE';
+
+  const handleUpgrade = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { url } = await polar.checkout();
+      window.location.href = url;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to start checkout');
+      setLoading(false);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { url } = await polar.portal();
+      window.location.href = url;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to open subscription portal');
+      setLoading(false);
+    }
+  };
 
   return (
     <div style={styles.container}>
@@ -146,6 +211,102 @@ export const ProfilePage: React.FC<Props> = ({ onNavigate }) => {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Subscription Card */}
+        <div style={styles.card}>
+          <h2 style={styles.cardTitle}>Subscription</h2>
+
+          {error && (
+            <div style={{
+              padding: '12px 16px',
+              backgroundColor: '#fff5f5',
+              border: '1px solid #ffccc7',
+              borderRadius: '10px',
+              color: '#ff3b30',
+              fontSize: '14px',
+              marginBottom: '16px'
+            }}>
+              {error}
+            </div>
+          )}
+
+          {plan === 'FREE' ? (
+            <>
+              <p style={{ fontSize: '15px', color: '#424245', marginBottom: '16px', lineHeight: 1.5 }}>
+                Upgrade to PRO to unlock all features:
+              </p>
+              <ul style={styles.proFeaturesList}>
+                <li style={styles.proFeature}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" fill="#e8f9ed"/>
+                    <path d="M8 12l3 3 5-6" stroke="#248a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Unlimited projects
+                </li>
+                <li style={styles.proFeature}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" fill="#e8f9ed"/>
+                    <path d="M8 12l3 3 5-6" stroke="#248a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  All 40+ languages
+                </li>
+                <li style={styles.proFeature}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" fill="#e8f9ed"/>
+                    <path d="M8 12l3 3 5-6" stroke="#248a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  AI-powered ASO metadata generation
+                </li>
+                <li style={styles.proFeature}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" fill="#e8f9ed"/>
+                    <path d="M8 12l3 3 5-6" stroke="#248a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  AI app icon generation
+                </li>
+                <li style={styles.proFeature}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" fill="#e8f9ed"/>
+                    <path d="M8 12l3 3 5-6" stroke="#248a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Priority support
+                </li>
+              </ul>
+              <button
+                style={{ ...styles.upgradeButton, marginTop: '20px', opacity: loading ? 0.7 : 1 }}
+                onClick={handleUpgrade}
+                disabled={loading}
+                onMouseEnter={(e) => {
+                  if (!loading) e.currentTarget.style.transform = 'translateY(-1px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                {loading ? 'Processing...' : 'Upgrade to PRO'}
+              </button>
+            </>
+          ) : (
+            <>
+              <p style={{ fontSize: '15px', color: '#424245', marginBottom: '16px', lineHeight: 1.5 }}>
+                You have access to all PRO features. Manage your subscription or view billing history.
+              </p>
+              <button
+                style={{ ...styles.manageButton, opacity: loading ? 0.7 : 1 }}
+                onClick={handleManageSubscription}
+                disabled={loading}
+                onMouseEnter={(e) => {
+                  if (!loading) e.currentTarget.style.backgroundColor = '#f5f5f7';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#fff';
+                }}
+              >
+                {loading ? 'Processing...' : 'Manage Subscription'}
+              </button>
+            </>
+          )}
         </div>
 
         <div style={styles.card}>

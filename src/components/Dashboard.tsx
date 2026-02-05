@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { unified as unifiedApi, UnifiedProjectListItem, ApiError } from '../services/api';
+import { unified as unifiedApi, UnifiedProjectListItem, ApiError, polar } from '../services/api';
 import { useAuth } from '../services/authContext';
 import { AppHeader } from './AppHeader';
 
@@ -208,10 +208,12 @@ const styles: Record<string, React.CSSProperties> = {
 };
 
 export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [projectList, setProjectList] = useState<UnifiedProjectListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterMode>('all');
+  const [showUpgradeSuccess, setShowUpgradeSuccess] = useState(false);
+  const [upgradeLoading, setUpgradeLoading] = useState(false);
 
   const loadProjects = useCallback(async () => {
     try {
@@ -227,6 +229,31 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
   useEffect(() => {
     loadProjects();
   }, [loadProjects]);
+
+  // Check for checkout success in URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('upgraded') === 'true' || params.get('checkout') === 'success') {
+      setShowUpgradeSuccess(true);
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+      // Refresh user to get updated plan
+      refreshUser?.();
+      // Auto-hide after 5 seconds
+      setTimeout(() => setShowUpgradeSuccess(false), 5000);
+    }
+  }, [refreshUser]);
+
+  const handleUpgrade = async () => {
+    setUpgradeLoading(true);
+    try {
+      const { url } = await polar.checkout();
+      window.location.href = url;
+    } catch (err) {
+      console.error('Failed to start checkout:', err);
+      setUpgradeLoading(false);
+    }
+  };
 
   const handleRename = async (id: string, currentName: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -299,6 +326,49 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
       <AppHeader currentPage="dashboard" onNavigate={onNavigate} />
 
       <div style={styles.content}>
+        {/* Upgrade Success Banner */}
+        {showUpgradeSuccess && (
+          <div style={{
+            padding: '16px 20px',
+            marginBottom: '24px',
+            backgroundColor: '#e8f9ed',
+            border: '1px solid #c6f0c6',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" fill="#248a3d"/>
+                <path d="M8 12l3 3 5-6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <div>
+                <p style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: '#1d1d1f' }}>
+                  Welcome to PRO!
+                </p>
+                <p style={{ margin: 0, fontSize: '13px', color: '#424245' }}>
+                  You now have access to unlimited projects and all languages.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowUpgradeSuccess(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px',
+                color: '#86868b',
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 6l12 12M6 18L18 6"/>
+              </svg>
+            </button>
+          </div>
+        )}
+
         <h1 style={styles.pageTitle}>Projects</h1>
         <p style={styles.pageSubtitle}>
           Create and manage your App Store screenshot projects
@@ -339,6 +409,26 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
               <span style={{ fontSize: '13px', color: '#86868b' }}>
                 {wizardCount}/1 wizard, {manualCount}/3 manual
               </span>
+            )}
+            {plan === 'FREE' && (
+              <button
+                onClick={handleUpgrade}
+                disabled={upgradeLoading}
+                style={{
+                  padding: '6px 14px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  border: 'none',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, #FF6B4A 0%, #FF8A65 100%)',
+                  color: '#fff',
+                  cursor: upgradeLoading ? 'wait' : 'pointer',
+                  opacity: upgradeLoading ? 0.7 : 1,
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {upgradeLoading ? 'Loading...' : 'Upgrade to PRO'}
+              </button>
             )}
           </div>
           <button style={styles.newButton} onClick={handleNewProject}>
