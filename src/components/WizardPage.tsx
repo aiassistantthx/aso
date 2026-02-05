@@ -240,12 +240,12 @@ function buildEditorScreenshots(project: WizardProjectData): Screenshot[] {
 
     if (!mockupSettings && !hasSavedStyle && layoutStyle.mockupOffset) {
       // Convert pixel-based mockupOffset to percentage-based mockupSettings
+      // Don't set scale here - let it fall back to global style.mockupScale
       mockupSettings = {
         offsetX: (layoutStyle.mockupOffset.x / deviceWidth) * 100,
         offsetY: (layoutStyle.mockupOffset.y / deviceHeight) * 100,
-        scale: 1,
         rotation: layoutStyle.mockupRotation ?? 0,
-      };
+      } as ScreenshotMockupSettings;
     }
 
     return {
