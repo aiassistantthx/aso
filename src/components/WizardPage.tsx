@@ -1914,18 +1914,17 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                         fontSize: '13px',
                         padding: '8px 16px',
                       }}
-                      onClick={async () => {
-                        if (!project || !projectId) return;
-                        try {
-                          await unifiedApi.convertToManual(projectId);
-                          onNavigate('editor', projectId);
-                        } catch (err) {
-                          console.error('Failed to convert to manual mode:', err);
-                          setError('Failed to switch to manual editing mode');
+                      onClick={() => {
+                        // Go back to step 6 Editor tab with first translated language selected
+                        const firstTranslatedLang = Object.keys(project.translatedHeadlines || {})[0];
+                        if (firstTranslatedLang) {
+                          setEditorLang(firstTranslatedLang);
                         }
+                        setStep6Tab('editor');
+                        goToStep(6);
                       }}
                     >
-                      Edit Manually (per-language fine-tuning)
+                      Edit Translations
                     </button>
                   </div>
                 </div>
