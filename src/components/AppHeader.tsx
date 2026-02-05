@@ -151,18 +151,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ currentPage, onNavigate, r
           >
             Projects
           </button>
-          <button
-            style={currentPage === 'wizard' ? navLinkActive : navLinkBase}
-            onClick={() => onNavigate('wizard')}
-          >
-            Wizard
-          </button>
-          <button
-            style={currentPage === 'metadata' ? navLinkActive : navLinkBase}
-            onClick={() => onNavigate('metadata')}
-          >
-            ASO Texts
-          </button>
         </nav>
 
         {/* Page-specific right content */}

@@ -4,12 +4,10 @@ import { useAuth } from '../services/authContext';
 import { AppHeader } from './AppHeader';
 
 interface Props {
-  onOpenProject: (id: string, mode: 'wizard' | 'manual') => void;
+  onOpenProject: (id: string) => void;
   onNewProject: () => void;
   onNavigate: (page: string, id?: string) => void;
 }
-
-type FilterMode = 'all' | 'wizard' | 'manual';
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
@@ -40,29 +38,6 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: '24px',
     flexWrap: 'wrap',
     gap: '16px',
-  },
-  filterTabs: {
-    display: 'flex',
-    gap: '4px',
-    backgroundColor: '#e5e5ea',
-    padding: '4px',
-    borderRadius: '10px',
-  },
-  filterTab: {
-    padding: '8px 16px',
-    fontSize: '13px',
-    fontWeight: 500,
-    border: 'none',
-    borderRadius: '8px',
-    backgroundColor: 'transparent',
-    color: '#86868b',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  },
-  filterTabActive: {
-    backgroundColor: '#fff',
-    color: '#1d1d1f',
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
   },
   newButton: {
     padding: '12px 24px',
@@ -111,25 +86,6 @@ const styles: Record<string, React.CSSProperties> = {
   cardThumbnailPlaceholder: {
     fontSize: '48px',
     color: '#d1d1d6',
-  },
-  modeBadge: {
-    position: 'absolute',
-    top: '12px',
-    left: '12px',
-    padding: '4px 10px',
-    borderRadius: '6px',
-    fontSize: '11px',
-    fontWeight: 600,
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-  },
-  wizardBadge: {
-    backgroundColor: 'rgba(255, 107, 74, 0.9)',
-    color: '#fff',
-  },
-  manualBadge: {
-    backgroundColor: 'rgba(34, 197, 94, 0.9)',
-    color: '#fff',
   },
   cardBody: {
     padding: '16px',
@@ -211,7 +167,6 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
   const { user, refreshUser } = useAuth();
   const [projectList, setProjectList] = useState<UnifiedProjectListItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<FilterMode>('all');
   const [showUpgradeSuccess, setShowUpgradeSuccess] = useState(false);
   const [upgradeLoading, setUpgradeLoading] = useState(false);
 
@@ -314,12 +269,7 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
 
   const plan = user?.plan ?? 'FREE';
 
-  const filteredProjects = filter === 'all'
-    ? projectList
-    : projectList.filter(p => p.mode === filter);
-
-  const wizardCount = projectList.filter(p => p.mode === 'wizard').length;
-  const manualCount = projectList.filter(p => p.mode === 'manual').length;
+  const projectCount = projectList.length;
 
   return (
     <div style={styles.container}>
@@ -376,40 +326,10 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
 
         <div style={styles.toolbar as React.CSSProperties}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={styles.filterTabs}>
-              <button
-                style={{
-                  ...styles.filterTab,
-                  ...(filter === 'all' ? styles.filterTabActive : {}),
-                }}
-                onClick={() => setFilter('all')}
-              >
-                All ({projectList.length})
-              </button>
-              <button
-                style={{
-                  ...styles.filterTab,
-                  ...(filter === 'wizard' ? styles.filterTabActive : {}),
-                }}
-                onClick={() => setFilter('wizard')}
-              >
-                Wizard ({wizardCount})
-              </button>
-              <button
-                style={{
-                  ...styles.filterTab,
-                  ...(filter === 'manual' ? styles.filterTabActive : {}),
-                }}
-                onClick={() => setFilter('manual')}
-              >
-                Manual ({manualCount})
-              </button>
-            </div>
-            {plan === 'FREE' && (
-              <span style={{ fontSize: '13px', color: '#86868b' }}>
-                {wizardCount}/1 wizard, {manualCount}/3 manual
-              </span>
-            )}
+            <span style={{ fontSize: '14px', color: '#86868b' }}>
+              {projectCount} project{projectCount !== 1 ? 's' : ''}
+              {plan === 'FREE' && ` (1 free)`}
+            </span>
             {plan === 'FREE' && (
               <button
                 onClick={handleUpgrade}
@@ -440,7 +360,7 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
           <div style={styles.emptyState as React.CSSProperties}>
             <p style={styles.emptyText}>Loading...</p>
           </div>
-        ) : filteredProjects.length === 0 ? (
+        ) : projectList.length === 0 ? (
           <div style={styles.emptyState as React.CSSProperties}>
             <div style={styles.emptyIcon}>
               <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
@@ -450,13 +370,9 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
                 <line x1="28" y1="32" x2="36" y2="32" stroke="#d1d1d6" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </div>
-            <h2 style={styles.emptyTitle}>
-              {filter === 'all' ? 'No projects yet' : `No ${filter} projects`}
-            </h2>
+            <h2 style={styles.emptyTitle}>No projects yet</h2>
             <p style={styles.emptyText}>
-              {filter === 'all'
-                ? 'Create your first project to start making App Store screenshots'
-                : `You don't have any ${filter} projects yet`}
+              Create your first project to start making App Store screenshots
             </p>
             <button style={styles.newButton} onClick={handleNewProject}>
               + Create Project
@@ -464,13 +380,13 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
           </div>
         ) : (
           <div style={styles.grid}>
-            {filteredProjects.map((project) => {
+            {projectList.map((project) => {
               const status = getStatusLabel(project.wizardStatus);
               return (
                 <div
                   key={project.id}
                   style={styles.projectCard}
-                  onClick={() => onOpenProject(project.id, project.mode)}
+                  onClick={() => onOpenProject(project.id)}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-2px)';
                     e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.1)';
@@ -495,33 +411,20 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
                         </svg>
                       </div>
                     )}
-                    <span style={{
-                      ...styles.modeBadge,
-                      ...(project.mode === 'wizard' ? styles.wizardBadge : styles.manualBadge),
-                    } as React.CSSProperties}>
-                      {project.mode === 'wizard' ? 'Wizard' : 'Manual'}
-                    </span>
                   </div>
                   <div style={styles.cardBody}>
                     <h3 style={styles.cardTitle}>
                       {project.name || project.appName || 'Untitled Project'}
-                      {project.mode === 'wizard' && (
-                        <span style={{
-                          ...styles.statusBadge,
-                          color: status.color,
-                          backgroundColor: status.bg,
-                        }}>
-                          {status.label}
-                        </span>
-                      )}
+                      <span style={{
+                        ...styles.statusBadge,
+                        color: status.color,
+                        backgroundColor: status.bg,
+                      }}>
+                        {status.label}
+                      </span>
                     </h3>
                     <div style={styles.cardMeta as React.CSSProperties}>
-                      <span>
-                        {project.mode === 'wizard'
-                          ? `Step ${project.wizardCurrentStep}/9`
-                          : `${project.screenshotCount} screenshot${project.screenshotCount !== 1 ? 's' : ''}`
-                        }
-                      </span>
+                      <span>Step {project.wizardCurrentStep}/8</span>
                       <span>{formatDate(project.updatedAt)}</span>
                     </div>
                   </div>

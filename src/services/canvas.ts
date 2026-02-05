@@ -1455,8 +1455,8 @@ export const generateScreenshotImage = async (
     drawBackgroundPattern(ctx, canvas.width, canvas.height, style.pattern);
   }
 
-  // Calculate mockup dimensions - same as before for compatibility
-  const mockupScale = mockupSettings?.scale ?? style.mockupScale ?? 1.0;
+  // Calculate mockup dimensions - use global style.mockupScale as primary source
+  const mockupScale = style.mockupScale ?? 1.0;
   const rotation = mockupSettings?.rotation ?? style.mockupRotation ?? 0;
   const visibilityRatio = getVisibilityRatio(style.mockupVisibility);
 
@@ -1646,8 +1646,8 @@ export const generatePreviewCanvas = async (
     drawBackgroundPattern(ctx, dimensions.width, dimensions.height, style.pattern);
   }
 
-  // Calculate mockup dimensions - original calculation for compatibility
-  const mockupScalePreview = mockupSettings?.scale ?? style.mockupScale ?? 1.0;
+  // Calculate mockup dimensions - use global style.mockupScale as primary source
+  const mockupScalePreview = style.mockupScale ?? 1.0;
   const rotation = mockupSettings?.rotation ?? style.mockupRotation ?? 0;
   const visibilityRatio = getVisibilityRatio(style.mockupVisibility);
 

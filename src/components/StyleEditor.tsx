@@ -292,14 +292,6 @@ export const StyleEditor: React.FC<Props> = ({
     });
   };
 
-  // Get effective font size (per-language or global)
-  const getEffectiveFontSize = (): number => {
-    if (isEditingTranslation) {
-      return getPerLangStyle().fontSize ?? style.fontSize;
-    }
-    return style.fontSize;
-  };
-
   const hasPerLangOverride = isEditingTranslation && !!translationData?.perLanguageStyles?.[selectedLanguage]?.[selectedIndex];
 
   const updateStyle = <K extends keyof StyleConfig>(key: K, value: StyleConfig[K]) => {
@@ -833,21 +825,6 @@ export const StyleEditor: React.FC<Props> = ({
           onChange={(color) => updateStyle('highlightColor', color)}
         />
       </div>
-
-      <Slider
-        label={`Font Size${isEditingTranslation && getPerLangStyle().fontSize !== undefined ? ' (custom)' : ''}`}
-        min={40}
-        max={400}
-        value={getEffectiveFontSize()}
-        onChange={(value) => {
-          if (isEditingTranslation) {
-            updatePerLangStyle({ fontSize: value });
-          } else {
-            updateStyle('fontSize', value);
-          }
-        }}
-        unit="px"
-      />
 
       <button
         onClick={() => {

@@ -365,12 +365,47 @@ const LinkedPairCanvas: React.FC<{
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Pre-calculate mockup dimensions (capture current values before async image load)
-    const currentMockupScale = screen1.mockupSettings?.scale ?? style.mockupScale ?? 1.0;
-    const mockupCenterX = singleScreenWidth * (0.5 + localOffsetX / 100);
-    const mockupCenterY = previewHeight * (0.5 + localOffsetY / 100);
-    const mockupHeight = previewHeight * 0.7 * currentMockupScale;
+    // Pre-calculate mockup dimensions using exact same formulas as generatePreviewCanvas
+    const currentMockupScale = Math.max(0.3, Math.min(2.0, style.mockupScale ?? 1.0));
+    const visibilityRatio = style.mockupVisibility === '2/3' ? 2/3 : style.mockupVisibility === '1/2' ? 0.5 : 1;
+
+    // Calculate text area height (same as generatePreviewCanvas)
+    const textAreaHeight = style.textPosition === 'top'
+      ? (style.paddingTop + style.fontSize * 2.5) * (previewHeight / dimensions.height)
+      : (style.paddingBottom + style.fontSize * 2.5) * (previewHeight / dimensions.height);
+
+    const availableHeight = previewHeight - textAreaHeight - (80 * previewHeight / dimensions.height);
+    const baseMockupHeight = Math.min(availableHeight, previewHeight * 0.75);
+    const mockupHeight = baseMockupHeight * currentMockupScale;
     const mockupWidth = mockupHeight * 0.49;
+
+    // Calculate visible portion
+    const visiblePhoneHeight = mockupHeight * visibilityRatio;
+    const hiddenHeight = mockupHeight - visiblePhoneHeight;
+
+    // Calculate base position (exact same formula as generatePreviewCanvas)
+    let baseMockupCenterX = singleScreenWidth / 2;
+    let baseMockupCenterY: number;
+
+    // Scale factor for padding
+    const scaleFactor = previewHeight / dimensions.height;
+
+    switch (style.mockupAlignment) {
+      case 'top':
+        baseMockupCenterY = -hiddenHeight + mockupHeight / 2;
+        break;
+      case 'bottom':
+        baseMockupCenterY = previewHeight - visiblePhoneHeight - (40 * scaleFactor) + mockupHeight / 2;
+        break;
+      case 'center':
+      default:
+        baseMockupCenterY = (previewHeight - mockupHeight) / 2 + mockupHeight / 2;
+        break;
+    }
+
+    // Add percentage offset
+    const mockupCenterX = baseMockupCenterX + (localOffsetX / 100) * singleScreenWidth;
+    const mockupCenterY = baseMockupCenterY + (localOffsetY / 100) * previewHeight;
     const frameColor = style.mockupColor === 'white' ? '#F5F5F7' :
                       style.mockupColor === 'natural' ? '#E3D5C8' : '#1D1D1F';
     const currentRotation = localRotation;
@@ -410,7 +445,7 @@ const LinkedPairCanvas: React.FC<{
     return () => {
       isCancelled = true;
     };
-  }, [dimensions, style, style.mockupScale, screen1, screen2, localOffsetX, localOffsetY, localRotation, index1, index2, translationData, selectedLanguage]);
+  }, [dimensions, style, style.mockupScale, style.mockupAlignment, style.mockupVisibility, style.textPosition, style.paddingTop, style.paddingBottom, style.fontSize, screen1, screen2, localOffsetX, localOffsetY, localRotation, index1, index2, translationData, selectedLanguage]);
 
   // Handle drag
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -1088,10 +1123,47 @@ const SingleScreenPreview: React.FC<{
     if (mockupScreenshot && style.showMockup) {
       const img = new Image();
       img.onload = () => {
-        const mockupCenterX = previewWidth * (0.5 + settings.offsetX / 100);
-        const mockupCenterY = previewHeight * (0.5 + settings.offsetY / 100);
-        const mockupHeight = previewHeight * 0.7 * (screenshot.mockupSettings?.scale ?? style.mockupScale ?? 1);
+        // Use exact same formulas as generatePreviewCanvas
+        const mockupScale = Math.max(0.3, Math.min(2.0, style.mockupScale ?? 1));
+        const visibilityRatio = style.mockupVisibility === '2/3' ? 2/3 : style.mockupVisibility === '1/2' ? 0.5 : 1;
+
+        // Calculate text area height (same as generatePreviewCanvas)
+        const textAreaHeight = style.textPosition === 'top'
+          ? (style.paddingTop + style.fontSize * 2.5) * (previewHeight / dimensions.height)
+          : (style.paddingBottom + style.fontSize * 2.5) * (previewHeight / dimensions.height);
+
+        const availableHeight = previewHeight - textAreaHeight - (80 * previewHeight / dimensions.height);
+        const baseMockupHeight = Math.min(availableHeight, previewHeight * 0.75);
+        const mockupHeight = baseMockupHeight * mockupScale;
         const mockupWidth = mockupHeight * 0.49;
+
+        // Calculate visible portion
+        const visiblePhoneHeight = mockupHeight * visibilityRatio;
+        const hiddenHeight = mockupHeight - visiblePhoneHeight;
+
+        // Calculate base position (exact same formula as generatePreviewCanvas)
+        let baseMockupCenterX = previewWidth / 2;
+        let baseMockupCenterY: number;
+
+        // Scale factor for padding
+        const scaleFactor = previewHeight / dimensions.height;
+
+        switch (style.mockupAlignment) {
+          case 'top':
+            baseMockupCenterY = -hiddenHeight + mockupHeight / 2;
+            break;
+          case 'bottom':
+            baseMockupCenterY = previewHeight - visiblePhoneHeight - (40 * scaleFactor) + mockupHeight / 2;
+            break;
+          case 'center':
+          default:
+            baseMockupCenterY = (previewHeight - mockupHeight) / 2 + mockupHeight / 2;
+            break;
+        }
+
+        // Add percentage offset
+        const mockupCenterX = baseMockupCenterX + (settings.offsetX / 100) * previewWidth;
+        const mockupCenterY = baseMockupCenterY + (settings.offsetY / 100) * previewHeight;
         const frameColor = style.mockupColor === 'white' ? '#F5F5F7' :
                           style.mockupColor === 'natural' ? '#E3D5C8' : '#1D1D1F';
 
@@ -1116,7 +1188,7 @@ const SingleScreenPreview: React.FC<{
     } else {
       drawText(ctx, getDisplayText(), 0, previewHeight, previewWidth, style, screenshot.styleOverride, undefined);
     }
-  }, [screenshot, style, style.mockupScale, style.textColor, style.highlightColor, deviceSize, settings, translationData, selectedLanguage, allScreenshots]);
+  }, [screenshot, style, style.mockupScale, style.mockupAlignment, style.mockupVisibility, style.textPosition, style.paddingTop, style.paddingBottom, style.fontSize, style.textColor, style.highlightColor, deviceSize, settings, translationData, selectedLanguage, allScreenshots]);
 
   // Handle drag
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -1910,7 +1982,7 @@ export const ScreensFlowEditor: React.FC<Props> = ({
             if (isLastLinkedScreen) return null; // Skip - already rendered in pair
 
             return (
-              <div key={screen.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div key={`${screen.id}-scale-${style.mockupScale}`} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ position: 'relative' }}>
                   {/* Delete button */}
                   <button
@@ -1941,6 +2013,7 @@ export const ScreensFlowEditor: React.FC<Props> = ({
                     ×
                   </button>
                   <SingleScreenPreview
+                    key={`single-${item.index}-scale-${style.mockupScale}`}
                     screenshot={screen}
                     index={item.index}
                     isSelected={item.index === selectedIndex}

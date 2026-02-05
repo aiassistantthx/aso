@@ -302,6 +302,9 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
   // Translation tab
   const [activeLang, setActiveLang] = useState<string>('');
 
+  // Editor language selection (for step 6 editor tab)
+  const [editorLang, setEditorLang] = useState<string>('source');
+
   // Translated screenshot previews
   const [translatedPreviews, setTranslatedPreviews] = useState<HTMLCanvasElement[]>([]);
   const [translatedPreviewLoading, setTranslatedPreviewLoading] = useState(false);
@@ -1619,34 +1622,101 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
             )}
 
             {/* Editor tab */}
-            {step6Tab === 'editor' && editorStyle && editorInitialized && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <ScreensFlowEditor
-                  screenshots={editorScreenshots}
-                  selectedIndex={editorSelectedIndex}
-                  onSelectIndex={setEditorSelectedIndex}
-                  onScreenshotsChange={handleEditorScreenshotsChange}
-                  style={editorStyle}
-                  onStyleChange={handleEditorStyleChange}
-                  deviceSize="6.9"
-                />
-                <div style={{
-                  backgroundColor: '#fff',
-                  borderRadius: '16px',
-                  padding: '20px',
-                  border: '1px solid #e5e5ea'
-                }}>
-                  <StyleEditor
+            {step6Tab === 'editor' && editorStyle && editorInitialized && (() => {
+              // Build available languages for editor
+              const translatedLangs = project.translatedHeadlines ? Object.keys(project.translatedHeadlines) : [];
+              const hasTranslations = translatedLangs.length > 0;
+
+              // Build translation data for ScreensFlowEditor
+              const editorTranslationData = hasTranslations ? {
+                headlines: project.translatedHeadlines || {},
+                laurelTexts: {},
+              } : null;
+
+              // Get the selected language for ScreensFlowEditor ('all' means source language)
+              const selectedLangForEditor = editorLang === 'source' ? 'all' : editorLang;
+
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  {/* Language selector when translations exist */}
+                  {hasTranslations && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '12px 16px',
+                      backgroundColor: '#fff',
+                      borderRadius: '12px',
+                      border: '1px solid #e5e5ea',
+                    }}>
+                      <span style={{ fontSize: '13px', color: '#86868b', marginRight: '8px' }}>Language:</span>
+                      <button
+                        onClick={() => setEditorLang('source')}
+                        style={{
+                          padding: '6px 12px',
+                          fontSize: '13px',
+                          fontWeight: 500,
+                          border: `1px solid ${editorLang === 'source' ? '#FF6B4A' : '#e5e5ea'}`,
+                          borderRadius: '8px',
+                          backgroundColor: editorLang === 'source' ? '#FF6B4A' : '#fff',
+                          color: editorLang === 'source' ? '#fff' : '#1d1d1f',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {project.sourceLanguage ? APP_STORE_LANGUAGES.find(l => l.code === project.sourceLanguage)?.name || project.sourceLanguage : 'Source'}
+                      </button>
+                      {translatedLangs.map(lang => (
+                        <button
+                          key={lang}
+                          onClick={() => setEditorLang(lang)}
+                          style={{
+                            padding: '6px 12px',
+                            fontSize: '13px',
+                            fontWeight: 500,
+                            border: `1px solid ${editorLang === lang ? '#FF6B4A' : '#e5e5ea'}`,
+                            borderRadius: '8px',
+                            backgroundColor: editorLang === lang ? '#FF6B4A' : '#fff',
+                            color: editorLang === lang ? '#fff' : '#1d1d1f',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {APP_STORE_LANGUAGES.find(l => l.code === lang)?.name || lang}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <ScreensFlowEditor
+                    screenshots={editorScreenshots}
+                    selectedIndex={editorSelectedIndex}
+                    onSelectIndex={setEditorSelectedIndex}
+                    onScreenshotsChange={handleEditorScreenshotsChange}
                     style={editorStyle}
                     onStyleChange={handleEditorStyleChange}
                     deviceSize="6.9"
-                    screenshots={editorScreenshots}
-                    selectedIndex={editorSelectedIndex}
-                    onScreenshotsChange={handleEditorScreenshotsChange}
+                    translationData={editorTranslationData}
+                    selectedLanguage={selectedLangForEditor}
                   />
+                  <div style={{
+                    backgroundColor: '#fff',
+                    borderRadius: '16px',
+                    padding: '20px',
+                    border: '1px solid #e5e5ea'
+                  }}>
+                    <StyleEditor
+                      style={editorStyle}
+                      onStyleChange={handleEditorStyleChange}
+                      deviceSize="6.9"
+                      screenshots={editorScreenshots}
+                      selectedIndex={editorSelectedIndex}
+                      onScreenshotsChange={handleEditorScreenshotsChange}
+                      translationData={editorTranslationData}
+                      selectedLanguage={selectedLangForEditor}
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {step6Tab === 'editor' && !editorInitialized && (
               <div style={{ textAlign: 'center', padding: '60px 0', color: '#86868b' }}>

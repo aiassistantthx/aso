@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect } from 'react';
 import { AuthProvider, useAuth } from './services/authContext';
 import { AuthPage } from './components/AuthPage';
 import { Dashboard } from './components/Dashboard';
-import { Editor } from './components/Editor';
 import { Landing } from './components/Landing';
 import { ProfilePage } from './components/ProfilePage';
 import { WizardPage } from './components/WizardPage';
@@ -16,9 +15,8 @@ type Route =
   | { page: 'login' }
   | { page: 'register' }
   | { page: 'dashboard' }
-  | { page: 'editor'; projectId: string }
   | { page: 'profile' }
-  | { page: 'wizard-editor'; projectId: string }
+  | { page: 'project'; projectId: string }
   | { page: 'terms' }
   | { page: 'privacy' }
   | { page: 'refund' };
@@ -102,21 +100,13 @@ function AppRouter() {
       } else if (path.startsWith('/project/')) {
         const projectId = path.replace('/project/', '');
         if (projectId) {
-          // Unified route: /project/:id handles both wizard and manual
-          // The component will determine mode from the project data
-          setRoute({ page: 'wizard-editor', projectId });
+          setRoute({ page: 'project', projectId });
         }
-      } else if (path.startsWith('/editor/')) {
-        // Legacy route for manual editor - redirect to unified
-        const projectId = path.replace('/editor/', '');
+      } else if (path.startsWith('/editor/') || path.startsWith('/wizard/')) {
+        // Legacy routes - redirect to unified /project/
+        const projectId = path.replace(/^\/(editor|wizard)\//, '');
         if (projectId) {
-          setRoute({ page: 'editor', projectId });
-        }
-      } else if (path.startsWith('/wizard/')) {
-        // Legacy route for wizard - redirect to unified
-        const projectId = path.replace('/wizard/', '');
-        if (projectId) {
-          setRoute({ page: 'wizard-editor', projectId });
+          setRoute({ page: 'project', projectId });
         }
       } else if (path === '/terms') {
         setRoute({ page: 'terms' });
@@ -148,7 +138,7 @@ function AppRouter() {
         navigate('dashboard');
       }
     } else {
-      if (route.page === 'dashboard' || route.page === 'editor' || route.page === 'profile' || route.page === 'wizard-editor') {
+      if (route.page === 'dashboard' || route.page === 'profile' || route.page === 'project') {
         navigate('landing');
       }
     }
@@ -173,12 +163,9 @@ function AppRouter() {
     } else if (page === 'profile') {
       path = '/profile';
       newRoute = { page: 'profile' };
-    } else if (page === 'wizard-editor' && projectId) {
+    } else if (page === 'project' && projectId) {
       path = `/project/${projectId}`;
-      newRoute = { page: 'wizard-editor', projectId };
-    } else if (page === 'editor' && projectId) {
-      path = `/project/${projectId}`;
-      newRoute = { page: 'editor', projectId };
+      newRoute = { page: 'project', projectId };
     } else if (page === 'terms') {
       path = '/terms';
       newRoute = { page: 'terms' };
@@ -248,16 +235,9 @@ function AppRouter() {
     case 'dashboard':
       return (
         <Dashboard
-          onOpenProject={(id, mode) => {
-            // Route to appropriate page based on mode
-            if (mode === 'wizard') {
-              navigate('wizard-editor', id);
-            } else {
-              navigate('editor', id);
-            }
-          }}
+          onOpenProject={(id) => navigate('project', id)}
           onNewProject={() => {
-            // New project now handled in Dashboard via unified API
+            // New project handled in Dashboard via unified API
           }}
           onNavigate={(page, id) => navigate(page, id)}
         />
@@ -270,18 +250,9 @@ function AppRouter() {
         />
       );
 
-    case 'wizard-editor':
+    case 'project':
       return (
         <WizardPage
-          projectId={route.projectId}
-          onBack={() => navigate('dashboard')}
-          onNavigate={(page, id) => navigate(page, id)}
-        />
-      );
-
-    case 'editor':
-      return (
-        <Editor
           projectId={route.projectId}
           onBack={() => navigate('dashboard')}
           onNavigate={(page, id) => navigate(page, id)}
