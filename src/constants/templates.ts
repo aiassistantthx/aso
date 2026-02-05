@@ -423,6 +423,90 @@ export const THEME_PRESETS: ThemePreset[] = [
     ]
   },
 
+  // Pastel gradient themes with alternating colors
+  {
+    id: 'pastel-gradient-soft',
+    name: 'Pastel Soft',
+    backgroundColor: '#E0E7FF',
+    gradient: { enabled: true, color1: '#EDE9FE', color2: '#E0E7FF', angle: 135 },
+    textColor: '#4338ca',
+    highlightColor: '#7c3aed',
+    mockupColor: 'black',
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 76,
+    textAlign: 'center',
+    alternatingColors: [
+      { backgroundColor: '#FCE7F3', gradient: { enabled: true, color1: '#FDF2F8', color2: '#FCE7F3', angle: 135 }, textColor: '#be185d', highlightColor: '#ec4899' },
+      { backgroundColor: '#CCFBF1', gradient: { enabled: true, color1: '#D1FAE5', color2: '#CCFBF1', angle: 135 }, textColor: '#047857', highlightColor: '#10b981' }
+    ]
+  },
+  {
+    id: 'pastel-gradient-dreamy',
+    name: 'Pastel Dreamy',
+    backgroundColor: '#FECDD3',
+    gradient: { enabled: true, color1: '#FFE4E6', color2: '#FECDD3', angle: 180 },
+    textColor: '#9f1239',
+    highlightColor: '#f43f5e',
+    mockupColor: 'black',
+    fontFamily: 'Playfair Display, serif',
+    fontSize: 72,
+    textAlign: 'center',
+    alternatingColors: [
+      { backgroundColor: '#DDD6FE', gradient: { enabled: true, color1: '#EDE9FE', color2: '#DDD6FE', angle: 180 }, textColor: '#5b21b6', highlightColor: '#8b5cf6' },
+      { backgroundColor: '#A5F3FC', gradient: { enabled: true, color1: '#CFFAFE', color2: '#A5F3FC', angle: 180 }, textColor: '#0e7490', highlightColor: '#06b6d4' }
+    ]
+  },
+  {
+    id: 'pastel-gradient-candy',
+    name: 'Pastel Candy',
+    backgroundColor: '#FED7E2',
+    gradient: { enabled: true, color1: '#FED7E2', color2: '#FBCFE8', angle: 135 },
+    textColor: '#831843',
+    highlightColor: '#db2777',
+    mockupColor: 'black',
+    fontFamily: 'Montserrat, sans-serif',
+    fontSize: 78,
+    textAlign: 'center',
+    alternatingColors: [
+      { backgroundColor: '#C4B5FD', gradient: { enabled: true, color1: '#DDD6FE', color2: '#C4B5FD', angle: 135 }, textColor: '#4c1d95', highlightColor: '#7c3aed' },
+      { backgroundColor: '#99F6E4', gradient: { enabled: true, color1: '#A7F3D0', color2: '#99F6E4', angle: 135 }, textColor: '#065f46', highlightColor: '#10b981' },
+      { backgroundColor: '#FDE68A', gradient: { enabled: true, color1: '#FEF3C7', color2: '#FDE68A', angle: 135 }, textColor: '#92400e', highlightColor: '#f59e0b' }
+    ]
+  },
+  {
+    id: 'pastel-gradient-ocean',
+    name: 'Pastel Ocean',
+    backgroundColor: '#BAE6FD',
+    gradient: { enabled: true, color1: '#E0F2FE', color2: '#BAE6FD', angle: 180 },
+    textColor: '#075985',
+    highlightColor: '#0284c7',
+    mockupColor: 'black',
+    fontFamily: 'Inter, sans-serif',
+    fontSize: 74,
+    textAlign: 'center',
+    alternatingColors: [
+      { backgroundColor: '#A5F3FC', gradient: { enabled: true, color1: '#CFFAFE', color2: '#A5F3FC', angle: 180 }, textColor: '#155e75', highlightColor: '#0891b2' },
+      { backgroundColor: '#C7D2FE', gradient: { enabled: true, color1: '#E0E7FF', color2: '#C7D2FE', angle: 180 }, textColor: '#3730a3', highlightColor: '#4f46e5' }
+    ]
+  },
+  {
+    id: 'pastel-gradient-sunset',
+    name: 'Pastel Sunset',
+    backgroundColor: '#FED7AA',
+    gradient: { enabled: true, color1: '#FFEDD5', color2: '#FED7AA', angle: 135 },
+    textColor: '#9a3412',
+    highlightColor: '#ea580c',
+    mockupColor: 'black',
+    fontFamily: 'Raleway, sans-serif',
+    fontSize: 76,
+    textAlign: 'center',
+    alternatingColors: [
+      { backgroundColor: '#FECACA', gradient: { enabled: true, color1: '#FEE2E2', color2: '#FECACA', angle: 135 }, textColor: '#991b1b', highlightColor: '#dc2626' },
+      { backgroundColor: '#FDE68A', gradient: { enabled: true, color1: '#FEF3C7', color2: '#FDE68A', angle: 135 }, textColor: '#92400e', highlightColor: '#d97706' },
+      { backgroundColor: '#FECDD3', gradient: { enabled: true, color1: '#FFE4E6', color2: '#FECDD3', angle: 135 }, textColor: '#9f1239', highlightColor: '#e11d48' }
+    ]
+  },
+
   // Pastel themes - elegant, soft fonts
   {
     id: 'pastel-lavender',
@@ -880,17 +964,20 @@ export const TEMPLATE_CATEGORIES: { id: TemplateCategory; label: string; icon: s
   { id: 'colorful', label: 'Colorful', icon: '◆' }
 ];
 
-// Theme preset groups for UI - three rows
+// Theme preset groups for UI - four rows
 export const THEME_PRESET_GROUPS = [
   { id: 'multi', label: 'Multi-Color (alternating)', presets: ['rainbow', 'pastel-rainbow', 'neon-nights', 'messenger', 'instagram', 'sunset', 'aurora', 'ocean', 'forest'] },
+  { id: 'pastel-alt', label: 'Pastel Alternating', presets: ['pastel-gradient-soft', 'pastel-gradient-dreamy', 'pastel-gradient-candy', 'pastel-gradient-ocean', 'pastel-gradient-sunset'] },
   { id: 'gradient', label: 'Gradient', presets: [
     'purple-gradient', 'bright-magenta', 'tech-blue', 'deep-blue', 'indigo',
     'emerald', 'teal', 'cyan-fresh', 'hot-pink', 'rose'
   ]},
-  { id: 'solid', label: 'Solid', presets: [
+  { id: 'pastel', label: 'Pastel Solid', presets: [
+    'pastel-lavender', 'pastel-pink', 'pastel-mint', 'pastel-yellow', 'pastel-blue', 'pastel-peach'
+  ]},
+  { id: 'solid', label: 'Solid & Dark', presets: [
     'dark-navy', 'dark-purple', 'pure-black',
     'electric-violet', 'spotify-green', 'mint', 'orange', 'amber',
-    'pastel-lavender', 'pastel-pink', 'pastel-mint', 'pastel-yellow', 'pastel-blue', 'pastel-peach',
     'clean-white', 'warm-white', 'cool-gray'
   ]}
 ];

@@ -1597,19 +1597,22 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
 
             {/* Editor tab */}
             {step6Tab === 'editor' && editorStyle && editorInitialized && (
-              <div style={{ display: 'flex', gap: '16px', minHeight: '70vh' }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <ScreensFlowEditor
-                    screenshots={editorScreenshots}
-                    selectedIndex={editorSelectedIndex}
-                    onSelectIndex={setEditorSelectedIndex}
-                    onScreenshotsChange={handleEditorScreenshotsChange}
-                    style={editorStyle}
-                    onStyleChange={handleEditorStyleChange}
-                    deviceSize="6.9"
-                  />
-                </div>
-                <div style={{ width: '320px', flexShrink: 0, maxHeight: '80vh', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <ScreensFlowEditor
+                  screenshots={editorScreenshots}
+                  selectedIndex={editorSelectedIndex}
+                  onSelectIndex={setEditorSelectedIndex}
+                  onScreenshotsChange={handleEditorScreenshotsChange}
+                  style={editorStyle}
+                  onStyleChange={handleEditorStyleChange}
+                  deviceSize="6.9"
+                />
+                <div style={{
+                  backgroundColor: '#fff',
+                  borderRadius: '16px',
+                  padding: '20px',
+                  border: '1px solid #e5e5ea'
+                }}>
                   <StyleEditor
                     style={editorStyle}
                     onStyleChange={handleEditorStyleChange}

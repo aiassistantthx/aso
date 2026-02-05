@@ -130,83 +130,13 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
                 </div>
               </div>
 
-              {/* App Content */}
-              <div style={styles.appContent}>
-                {/* Wizard Steps */}
-                <div style={styles.wizardSteps}>
-                  {['App Info', 'Screenshots', 'Generate', 'Review', 'Translate', 'Export'].map((_, i) => (
-                    <div key={i} style={{
-                      ...styles.wizardStep,
-                      backgroundColor: i === 3 ? colors.accent : i < 3 ? colors.success : 'transparent',
-                      color: i <= 3 ? '#fff' : colors.textMuted,
-                      borderColor: i > 3 ? colors.border : 'transparent',
-                    }}>
-                      {i < 3 ? (
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
-                          <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      ) : (
-                        <span style={{ fontSize: 9, fontWeight: 600 }}>{i + 1}</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Main Content Area */}
-                <div style={styles.appMain}>
-                  {/* Left Panel - Headlines */}
-                  <div style={styles.headlinesPanel}>
-                    <div style={styles.panelTitle}>Generated Headlines</div>
-                    <div style={styles.headlinesList}>
-                      {[
-                        '[Create] Stunning Videos [Effortlessly]',
-                        '[Transform] Ideas into [Reality]',
-                        '[Save] Hours [Every Week]',
-                      ].map((headline, i) => (
-                        <div key={i} style={styles.headlineItem}>
-                          <span style={styles.headlineNum}>{i + 1}</span>
-                          <span style={styles.headlineText}>
-                            {headline.split(/(\[.*?\])/).map((part, k) => {
-                              if (part.startsWith('[') && part.endsWith(']')) {
-                                return (
-                                  <span key={k} style={styles.headlineHighlight}>
-                                    {part.slice(1, -1)}
-                                  </span>
-                                );
-                              }
-                              return <span key={k}>{part}</span>;
-                            })}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Right Panel - Preview */}
-                  <div style={styles.previewPanel}>
-                    <div style={styles.previewLanguages}>
-                      {['EN', 'DE', 'JA', 'ES'].map((lang, i) => (
-                        <span key={i} style={{
-                          ...styles.previewLangTab,
-                          backgroundColor: i === 0 ? colors.accent : 'transparent',
-                          color: i === 0 ? '#fff' : colors.textMuted,
-                        }}>{lang}</span>
-                      ))}
-                    </div>
-                    <div style={styles.previewScreenshots}>
-                      {[0, 1, 2].map((i) => (
-                        <div key={i} style={styles.previewCard}>
-                          <div style={styles.previewHeadline}>
-                            {i === 0 && <><span style={styles.hl}>[Create]</span> Stunning Videos <span style={styles.hl}>[Effortlessly]</span></>}
-                            {i === 1 && <><span style={styles.hl}>[Transform]</span> Ideas into <span style={styles.hl}>[Reality]</span></>}
-                            {i === 2 && <><span style={styles.hl}>[Save]</span> Hours <span style={styles.hl}>[Every Week]</span></>}
-                          </div>
-                          <div style={styles.previewPhone} />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+              {/* App Screenshot */}
+              <div style={styles.appScreenshot}>
+                <img
+                  src="/dashboard-preview.png"
+                  alt="LocalizeShots Dashboard"
+                  style={styles.screenshotImage}
+                />
               </div>
             </div>
           </div>
@@ -737,140 +667,15 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     border: `1px solid ${colors.borderLight}`,
   },
-  appContent: {
-    padding: 20,
+  appScreenshot: {
+    padding: 0,
     backgroundColor: colors.bg,
+    overflow: 'hidden',
   },
-  wizardSteps: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: 8,
-    marginBottom: 20,
-  },
-  wizardStep: {
-    width: 24,
-    height: 24,
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: 10,
-    fontWeight: 600,
-    border: '1px solid transparent',
-  },
-  appMain: {
-    display: 'flex',
-    gap: 16,
-    minHeight: 280,
-  },
-  headlinesPanel: {
-    width: 240,
-    backgroundColor: colors.card,
-    borderRadius: 10,
-    padding: 16,
-    border: `1px solid ${colors.borderLight}`,
-  },
-  panelTitle: {
-    fontSize: 11,
-    fontWeight: 600,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: '1px',
-    marginBottom: 14,
-  },
-  headlinesList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 10,
-  },
-  headlineItem: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: 10,
-    padding: '10px 12px',
-    backgroundColor: colors.bg,
-    borderRadius: 8,
-    border: `1px solid ${colors.borderLight}`,
-  },
-  headlineNum: {
-    width: 18,
-    height: 18,
-    borderRadius: '50%',
-    backgroundColor: colors.accentBg,
-    color: colors.accent,
-    fontSize: 9,
-    fontWeight: 700,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  headlineText: {
-    fontSize: 11,
-    lineHeight: 1.4,
-    color: colors.text,
-    fontWeight: 500,
-  },
-  headlineHighlight: {
-    backgroundColor: colors.accent,
-    color: '#fff',
-    padding: '1px 4px',
-    borderRadius: 3,
-    fontWeight: 600,
-  },
-  previewPanel: {
-    flex: 1,
-    backgroundColor: colors.card,
-    borderRadius: 10,
-    padding: 16,
-    border: `1px solid ${colors.borderLight}`,
-  },
-  previewLanguages: {
-    display: 'flex',
-    gap: 6,
-    marginBottom: 14,
-  },
-  previewLangTab: {
-    padding: '4px 10px',
-    borderRadius: 6,
-    fontSize: 10,
-    fontWeight: 600,
-    letterSpacing: '0.5px',
-  },
-  previewScreenshots: {
-    display: 'flex',
-    gap: 12,
-    justifyContent: 'center',
-  },
-  previewCard: {
-    width: 140,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 12,
-    padding: '14px 10px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  previewHeadline: {
-    fontSize: 9,
-    fontWeight: 500,
-    color: '#fff',
-    textAlign: 'center',
-    lineHeight: 1.5,
-    marginBottom: 10,
-  },
-  hl: {
-    backgroundColor: colors.accent,
-    color: '#fff',
-    padding: '1px 4px',
-    borderRadius: 3,
-    fontWeight: 600,
-  },
-  previewPhone: {
-    width: '85%',
-    aspectRatio: '9/16',
-    backgroundColor: '#fff',
-    borderRadius: 10,
+  screenshotImage: {
+    width: '100%',
+    height: 'auto',
+    display: 'block',
   },
 
   // Problem/Solution

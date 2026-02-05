@@ -896,6 +896,7 @@ function drawText(
   if (!text) return;
 
   const textColor = override?.textColor ?? style.textColor;
+  const highlightColor = override?.highlightColor ?? style.highlightColor ?? '#FFE135';
   const textPosition = override?.textPosition ?? style.textPosition;
   const maxWidth = width * 0.85;
 
@@ -966,7 +967,7 @@ function drawText(
         const radius = fontSize * 0.15;
 
         ctx.save();
-        ctx.fillStyle = style.highlightColor || '#FFE135';
+        ctx.fillStyle = highlightColor;
         ctx.beginPath();
         ctx.roundRect(
           lineX - paddingH,
@@ -1115,7 +1116,7 @@ const SingleScreenPreview: React.FC<{
     } else {
       drawText(ctx, getDisplayText(), 0, previewHeight, previewWidth, style, screenshot.styleOverride, undefined);
     }
-  }, [screenshot, style, style.mockupScale, deviceSize, settings, translationData, selectedLanguage, allScreenshots]);
+  }, [screenshot, style, style.mockupScale, style.textColor, style.highlightColor, deviceSize, settings, translationData, selectedLanguage, allScreenshots]);
 
   // Handle drag
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
