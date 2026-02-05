@@ -1045,7 +1045,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
         ))}
       </div>
 
-      <div style={step === 6 && step6Tab === 'editor' ? { ...pageStyles.content, maxWidth: '100%' } : pageStyles.content}>
+      <div style={pageStyles.content}>
         {error && (
           <div style={pageStyles.errorBanner}>
             {error}
@@ -1420,7 +1420,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
 
         {/* Step 6: Review & Editor */}
         {step === 6 && (
-          <div style={step6Tab === 'editor' ? { ...pageStyles.stepContent, maxWidth: '100%', padding: '16px' } : pageStyles.stepContent}>
+          <div style={pageStyles.stepContent}>
             <h2 style={pageStyles.stepTitle}>Review & Edit</h2>
             <p style={pageStyles.stepDesc}>Review generated content or fine-tune in the editor</p>
 

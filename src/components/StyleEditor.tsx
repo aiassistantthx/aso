@@ -60,34 +60,34 @@ const cssStyles: Record<string, React.CSSProperties> = {
   label: {
     display: 'flex',
     alignItems: 'center',
-    gap: '10px',
-    fontSize: '16px',
+    gap: '8px',
+    fontSize: '15px',
     fontWeight: 600,
     color: colors.text,
-    marginBottom: '16px'
+    marginBottom: '10px'
   },
   labelIcon: {
-    width: '36px',
-    height: '36px',
-    borderRadius: '10px',
+    width: '28px',
+    height: '28px',
+    borderRadius: '8px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '18px'
+    fontSize: '14px'
   },
   sectionTitle: {
-    fontSize: '13px',
+    fontSize: '12px',
     fontWeight: 600,
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
-    marginTop: '20px',
-    marginBottom: '12px',
-    paddingTop: '16px',
+    marginTop: '12px',
+    marginBottom: '8px',
+    paddingTop: '10px',
     borderTop: `1px solid ${colors.borderLight}`,
     display: 'flex',
     alignItems: 'center',
-    gap: '8px'
+    gap: '6px'
   },
   grid: {
     display: 'grid',
@@ -105,33 +105,33 @@ const cssStyles: Record<string, React.CSSProperties> = {
     color: colors.textSecondary
   },
   input: {
-    padding: '10px 12px',
-    fontSize: '14px',
+    padding: '8px 10px',
+    fontSize: '13px',
     border: `1px solid ${colors.borderLight}`,
-    borderRadius: '10px',
+    borderRadius: '8px',
     outline: 'none',
     transition: 'border-color 0.2s'
   },
   select: {
-    padding: '10px 12px',
-    fontSize: '14px',
+    padding: '8px 10px',
+    fontSize: '13px',
     border: `1px solid ${colors.borderLight}`,
-    borderRadius: '10px',
+    borderRadius: '8px',
     outline: 'none',
     backgroundColor: colors.white,
     cursor: 'pointer',
     appearance: 'none',
     backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2386868b' d='M6 8L2 4h8z'/%3E%3C/svg%3E")`,
     backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'right 12px center',
-    paddingRight: '36px'
+    backgroundPosition: 'right 10px center',
+    paddingRight: '32px'
   },
   colorInput: {
     width: '100%',
-    height: '40px',
-    padding: '4px',
+    height: '34px',
+    padding: '3px',
     border: `1px solid ${colors.borderLight}`,
-    borderRadius: '10px',
+    borderRadius: '8px',
     cursor: 'pointer'
   },
   rangeContainer: {
@@ -193,10 +193,10 @@ const cssStyles: Record<string, React.CSSProperties> = {
     cursor: 'pointer'
   },
   gradientPreview: {
-    height: '48px',
-    borderRadius: '12px',
+    height: '36px',
+    borderRadius: '10px',
     border: `1px solid ${colors.borderLight}`,
-    marginTop: '12px',
+    marginTop: '8px',
     boxShadow: 'inset 0 2px 6px rgba(0, 0, 0, 0.08)'
   }
 };
@@ -458,7 +458,7 @@ export const StyleEditor: React.FC<Props> = ({
         onChange={(checked) => updateStyle('showMockup', checked)}
       />
 
-      <div style={{ ...cssStyles.grid, marginTop: '12px' }}>
+      <div style={{ ...cssStyles.grid, marginTop: '8px' }}>
 
         {style.showMockup && (
           <SegmentedControl
@@ -492,7 +492,7 @@ export const StyleEditor: React.FC<Props> = ({
 
       {/* Screenshot in Mockup selector */}
       {style.showMockup && screenshots.length > 1 && selectedScreenshot && (
-        <div style={{ marginTop: '16px' }}>
+        <div style={{ marginTop: '10px' }}>
           <span style={{ ...cssStyles.fieldLabel, display: 'block', marginBottom: '8px' }}>
             Screenshot in Mockup
           </span>
@@ -562,14 +562,14 @@ export const StyleEditor: React.FC<Props> = ({
       </div>
 
       {/* Templates - Full presets with colors, fonts, patterns */}
-      <div style={{ marginBottom: '16px' }}>
-        <div style={{ marginTop: '8px' }}>
+      <div style={{ marginBottom: '10px' }}>
+        <div style={{ marginTop: '4px' }}>
           {THEME_PRESET_GROUPS.map((group) => (
-            <div key={group.id} style={{ marginBottom: '10px' }}>
-              <span style={{ fontSize: '10px', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <div key={group.id} style={{ marginBottom: '6px' }}>
+              <span style={{ fontSize: '9px', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 {group.label}
               </span>
-              <div style={{ display: 'flex', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '4px', marginTop: '3px', flexWrap: 'wrap' }}>
                 {group.presets.map((presetId) => {
                   const preset = THEME_PRESETS.find(p => p.id === presetId);
                   if (!preset) return null;
@@ -600,9 +600,9 @@ export const StyleEditor: React.FC<Props> = ({
                       key={preset.id}
                       onClick={() => applyThemePreset(preset)}
                       style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '8px',
+                        width: '26px',
+                        height: '26px',
+                        borderRadius: '6px',
                         border: '2px solid rgba(0,0,0,0.08)',
                         boxShadow: '0 1px 2px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.3)',
                         cursor: 'pointer',
@@ -611,7 +611,7 @@ export const StyleEditor: React.FC<Props> = ({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '10px',
+                        fontSize: '8px',
                         color: preset.textColor,
                         fontFamily: preset.fontFamily.split(',')[0],
                         fontWeight: 600,
@@ -671,7 +671,7 @@ export const StyleEditor: React.FC<Props> = ({
 
       {effectiveGradient.enabled ? (
         <>
-          <div style={{ ...cssStyles.grid, marginTop: '12px' }}>
+          <div style={{ ...cssStyles.grid, marginTop: '8px' }}>
             <ColorPicker
               label="Color 1"
               value={effectiveGradient.color1}
@@ -701,7 +701,7 @@ export const StyleEditor: React.FC<Props> = ({
           />
         </>
       ) : (
-        <div style={{ marginTop: '12px' }}>
+        <div style={{ marginTop: '8px' }}>
           <ColorPicker
             label="Background Color"
             value={effectiveBackgroundColor}
@@ -711,9 +711,9 @@ export const StyleEditor: React.FC<Props> = ({
       )}
 
       {/* Background Pattern */}
-      <div style={{ marginTop: '16px' }}>
+      <div style={{ marginTop: '10px' }}>
         <span style={cssStyles.fieldLabel}>Background Pattern</span>
-        <div style={{ display: 'flex', gap: '6px', marginTop: '8px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '4px', marginTop: '6px', flexWrap: 'wrap' }}>
           {PATTERN_OPTIONS.map((opt) => {
             const isActive = (style.pattern?.type || 'none') === opt.value;
             return (
@@ -740,7 +740,7 @@ export const StyleEditor: React.FC<Props> = ({
 
         {/* Pattern Settings */}
         {style.pattern && style.pattern.type !== 'none' && (
-          <div style={{ marginTop: '12px' }}>
+          <div style={{ marginTop: '8px' }}>
             <div style={cssStyles.grid}>
               <ColorPicker
                 label="Pattern Color"
