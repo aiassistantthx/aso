@@ -425,36 +425,6 @@ export const StyleEditor: React.FC<Props> = ({
 
   return (
     <div style={cssStyles.container}>
-      {/* Mockup row */}
-      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '12px' }}>
-        <Toggle
-          label="iPhone Frame"
-          checked={style.showMockup}
-          onChange={(checked) => updateStyle('showMockup', checked)}
-        />
-        {style.showMockup && (
-          <div style={{ display: 'flex', gap: '4px' }}>
-            {(['black', 'white', 'natural'] as const).map(c => (
-              <button
-                key={c}
-                onClick={() => updateStyle('mockupColor', c)}
-                style={{
-                  padding: '6px 12px',
-                  fontSize: '12px',
-                  border: style.mockupColor === c ? `2px solid ${colors.primary}` : `1px solid ${colors.borderLight}`,
-                  borderRadius: '6px',
-                  backgroundColor: style.mockupColor === c ? colors.primaryLight : colors.white,
-                  color: style.mockupColor === c ? colors.primary : colors.textSecondary,
-                  cursor: 'pointer',
-                  textTransform: 'capitalize',
-                  fontWeight: 500
-                }}
-              >{c}</button>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* Scale + Font row */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
         <Slider
