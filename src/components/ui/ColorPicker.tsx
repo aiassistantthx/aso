@@ -5,12 +5,43 @@ interface ColorPickerProps {
   value: string;
   onChange: (color: string) => void;
   label?: string;
+  compact?: boolean;
 }
 
-export const ColorPicker: React.FC<ColorPickerProps> = ({ value, onChange, label }) => {
+export const ColorPicker: React.FC<ColorPickerProps> = ({ value, onChange, label, compact }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+
+  if (compact) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        {label && <span style={{ fontSize: '9px', fontWeight: 500, color: colors.textSecondary }}>{label}</span>}
+        <div
+          onClick={() => inputRef.current?.click()}
+          style={{
+            width: '32px',
+            height: '24px',
+            borderRadius: '4px',
+            backgroundColor: value,
+            border: `1px solid ${isFocused ? colors.primary : colors.borderLight}`,
+            cursor: 'pointer',
+            position: 'relative'
+          }}
+        >
+          <input
+            ref={inputRef}
+            type="color"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            style={{ width: '0', height: '0', padding: '0', border: 'none', visibility: 'hidden', position: 'absolute' }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ marginBottom: '12px' }}>

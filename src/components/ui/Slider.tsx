@@ -9,6 +9,7 @@ interface SliderProps {
   label?: string;
   unit?: string;
   step?: number;
+  compact?: boolean;
 }
 
 export const Slider: React.FC<SliderProps> = ({
@@ -18,10 +19,38 @@ export const Slider: React.FC<SliderProps> = ({
   onChange,
   label,
   unit = '',
-  step = 1
+  step = 1,
+  compact
 }) => {
   const percentage = ((value - min) / (max - min)) * 100;
   const [isDragging, setIsDragging] = useState(false);
+
+  if (compact) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: '50px' }}>
+        {label && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '9px', fontWeight: 500, color: colors.textSecondary }}>{label}</span>
+            <span style={{ fontSize: '9px', fontWeight: 600, color: colors.text }}>{value}{unit}</span>
+          </div>
+        )}
+        <div style={{ position: 'relative', height: '14px', display: 'flex', alignItems: 'center' }}>
+          <div style={{ position: 'absolute', left: 0, right: 0, height: '4px', borderRadius: '2px', backgroundColor: colors.borderLight, overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${percentage}%`, background: colors.primary, borderRadius: '2px' }} />
+          </div>
+          <input
+            type="range"
+            min={min}
+            max={max}
+            step={step}
+            value={value}
+            onChange={(e) => onChange(Number(e.target.value))}
+            style={{ width: '100%', height: '14px', appearance: 'none', background: 'transparent', cursor: 'pointer', position: 'relative', zIndex: 1, margin: 0 }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ marginBottom: '12px' }}>

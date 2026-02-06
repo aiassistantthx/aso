@@ -1045,10 +1045,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
         ))}
       </div>
 
-      <div style={{
-        ...pageStyles.content,
-        ...(step === 6 && { maxWidth: '1400px' }),
-      }}>
+      <div style={pageStyles.content}>
         {error && (
           <div style={pageStyles.errorBanner}>
             {error}
