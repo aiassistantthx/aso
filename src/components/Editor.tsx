@@ -5,12 +5,13 @@ import { ScreensFlowEditor } from './ScreensFlowEditor';
 import { LanguageSelector } from './LanguageSelector';
 import { ExportButton } from './ExportButton';
 import { LanguageSidebar } from './LanguageSidebar';
-import { unified as unifiedApi, UnifiedProjectFull } from '../services/api';
+import { unified as unifiedApi, UnifiedProjectFull, billing } from '../services/api';
 import { useAuth } from '../services/authContext';
 import { AppHeader } from './AppHeader';
 
 // Type alias for compatibility
 type ProjectFull = UnifiedProjectFull;
+type DragMode = 'mockup' | 'text';
 
 interface Props {
   projectId: string;
@@ -179,6 +180,7 @@ export const Editor: React.FC<Props> = ({ projectId, onBack, onNavigate }) => {
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
+  const [dragMode, setDragMode] = useState<DragMode>('mockup');
 
   // Load project from API
   useEffect(() => {
@@ -378,6 +380,15 @@ export const Editor: React.FC<Props> = ({ projectId, onBack, onNavigate }) => {
     }
   }, [projectId, projectName, styleConfig, deviceSize, sourceLanguage, targetLanguages, translationData, screenshots]);
 
+  const handleUpgrade = useCallback(async () => {
+    try {
+      const { url } = await billing.checkout();
+      window.location.href = url;
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'Failed to start checkout');
+    }
+  }, []);
+
   const startEditingName = useCallback(() => {
     setNameDraft(projectName);
     setEditingName(true);
@@ -524,6 +535,8 @@ export const Editor: React.FC<Props> = ({ projectId, onBack, onNavigate }) => {
           translationData={translationData}
           selectedLanguage={selectedLanguage}
           onTranslationChange={setTranslationData}
+          dragMode={dragMode}
+          onDragModeChange={setDragMode}
         />
       </div>
 
@@ -550,6 +563,7 @@ export const Editor: React.FC<Props> = ({ projectId, onBack, onNavigate }) => {
                 translationData={translationData}
                 selectedLanguage={selectedLanguage}
                 onTranslationChange={setTranslationData}
+                dragMode={dragMode}
               />
             </div>
 
@@ -571,10 +585,7 @@ export const Editor: React.FC<Props> = ({ projectId, onBack, onNavigate }) => {
               translationData={translationData}
               onTranslationChange={setTranslationData}
               userPlan={user?.plan ?? 'FREE'}
-              onUpgrade={() => {
-                // TODO: Stripe checkout integration
-                window.alert('Stripe checkout coming soon!');
-              }}
+              onUpgrade={handleUpgrade}
             />
           </div>
         </div>

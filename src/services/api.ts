@@ -256,15 +256,6 @@ export const wizard = {
     }),
 };
 
-// Stripe
-export const stripe = {
-  checkout: () =>
-    request<{ url: string }>('/api/stripe/checkout', { method: 'POST' }),
-
-  portal: () =>
-    request<{ url: string }>('/api/stripe/portal', { method: 'POST' }),
-};
-
 // Polar
 export const polar = {
   checkout: () =>
@@ -272,6 +263,12 @@ export const polar = {
 
   portal: () =>
     request<{ url: string }>('/api/polar/portal', { method: 'POST' }),
+};
+
+// Unified billing helper (Polar only)
+export const billing = {
+  checkout: () => polar.checkout(),
+  portal: () => polar.portal(),
 };
 
 // Unified Projects API

@@ -21,7 +21,6 @@ const componentLoader = new ComponentLoader();
 // Register custom components
 const Components = {
   PolarLink: componentLoader.add('PolarLink', path.join(__dirname, '../admin/components/PolarLink')),
-  StripeLink: componentLoader.add('StripeLink', path.join(__dirname, '../admin/components/StripeLink')),
   Dashboard: componentLoader.add('Dashboard', path.join(__dirname, '../admin/components/Dashboard')),
 };
 
@@ -51,7 +50,7 @@ export async function setupAdmin(fastify: FastifyInstance, prisma: PrismaClient)
           listProperties: ['id', 'email', 'name', 'plan', 'projectCount', 'createdAt'],
           filterProperties: ['email', 'name', 'createdAt'],
           editProperties: ['email', 'name'],
-          showProperties: ['id', 'email', 'name', 'plan', 'projectCount', 'stripeCustomerId', 'polarCustomerId', 'polarLink', 'stripeLink', 'createdAt'],
+          showProperties: ['id', 'email', 'name', 'plan', 'projectCount', 'polarCustomerId', 'polarLink', 'createdAt'],
           properties: {
             plan: {
               isVisible: { list: true, filter: false, show: true, edit: false },
@@ -65,12 +64,6 @@ export async function setupAdmin(fastify: FastifyInstance, prisma: PrismaClient)
               isVisible: { list: false, filter: false, show: true, edit: false },
               components: {
                 show: Components.PolarLink,
-              },
-            },
-            stripeLink: {
-              isVisible: { list: false, filter: false, show: true, edit: false },
-              components: {
-                show: Components.StripeLink,
               },
             },
           },

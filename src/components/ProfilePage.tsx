@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../services/authContext';
 import { AppHeader } from './AppHeader';
-import { polar } from '../services/api';
+import { billing } from '../services/api';
 
 interface Props {
   onNavigate: (page: string, id?: string) => void;
@@ -156,7 +156,7 @@ export const ProfilePage: React.FC<Props> = ({ onNavigate }) => {
     setLoading(true);
     setError(null);
     try {
-      const { url } = await polar.checkout();
+      const { url } = await billing.checkout();
       window.location.href = url;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start checkout');
@@ -168,7 +168,7 @@ export const ProfilePage: React.FC<Props> = ({ onNavigate }) => {
     setLoading(true);
     setError(null);
     try {
-      const { url } = await polar.portal();
+      const { url } = await billing.portal();
       window.location.href = url;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to open subscription portal');

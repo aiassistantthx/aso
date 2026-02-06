@@ -11,6 +11,8 @@ import { ScreensFlowEditor } from './ScreensFlowEditor';
 import { StyleEditor } from './StyleEditor';
 import JSZip from 'jszip';
 
+type DragMode = 'mockup' | 'text';
+
 // Adapter type to map UnifiedProjectFull to legacy wizard project interface
 type WizardProjectData = {
   id: string;
@@ -277,6 +279,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
   const [editorScreenshots, setEditorScreenshots] = useState<Screenshot[]>([]);
   const [editorStyle, setEditorStyle] = useState<StyleConfig | null>(null);
   const [editorSelectedIndex, setEditorSelectedIndex] = useState(0);
+  const [editorDragMode, setEditorDragMode] = useState<DragMode>('mockup');
   const [editorInitialized, setEditorInitialized] = useState(false);
   const editorSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -1699,6 +1702,8 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                     deviceSize="6.9"
                     translationData={editorTranslationData}
                     selectedLanguage={selectedLangForEditor}
+                    dragMode={editorDragMode}
+                    onDragModeChange={setEditorDragMode}
                   />
                   <div style={{
                     backgroundColor: '#fff',
@@ -1715,6 +1720,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                       onScreenshotsChange={handleEditorScreenshotsChange}
                       translationData={editorTranslationData}
                       selectedLanguage={selectedLangForEditor}
+                      dragMode={editorDragMode}
                     />
                   </div>
                 </div>

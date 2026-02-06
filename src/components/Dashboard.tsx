@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { unified as unifiedApi, UnifiedProjectListItem, ApiError, polar } from '../services/api';
+import { unified as unifiedApi, UnifiedProjectListItem, ApiError, billing } from '../services/api';
 import { useAuth } from '../services/authContext';
 import { AppHeader } from './AppHeader';
 
@@ -202,10 +202,11 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
   const handleUpgrade = async () => {
     setUpgradeLoading(true);
     try {
-      const { url } = await polar.checkout();
+      const { url } = await billing.checkout();
       window.location.href = url;
     } catch (err) {
       console.error('Failed to start checkout:', err);
+      window.alert(err instanceof Error ? err.message : 'Failed to start checkout');
       setUpgradeLoading(false);
     }
   };

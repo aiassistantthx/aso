@@ -88,7 +88,6 @@ export default async function authRoutes(fastify: FastifyInstance) {
       await fastify.prisma.subscription.create({
         data: {
           userId: user.id,
-          stripeSubscriptionId: `test_${user.id}`,
           plan: newPlan,
           status: 'active',
           currentPeriodEnd: new Date('2099-12-31'),

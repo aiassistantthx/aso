@@ -47,7 +47,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack }) => {
           <h3 style={styles.subheading}>2.1 Information You Provide</h3>
           <ul style={styles.list}>
             <li><strong>Account Information:</strong> Email address, name, and password when you create an account</li>
-            <li><strong>Payment Information:</strong> Billing details processed securely through our payment providers (Stripe, Polar)</li>
+            <li><strong>Payment Information:</strong> Billing details processed securely through our payment provider (Polar)</li>
             <li><strong>User Content:</strong> Screenshots, images, app names, descriptions, and other content you upload</li>
             <li><strong>Communications:</strong> Information you provide when contacting support</li>
           </ul>

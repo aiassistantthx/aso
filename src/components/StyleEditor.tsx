@@ -46,6 +46,7 @@ interface Props {
   translationData?: TranslationData | null;
   selectedLanguage?: string;
   onTranslationChange?: (data: TranslationData) => void;
+  dragMode?: 'mockup' | 'text';
 }
 
 const getLanguageName = (code: string): string => {
@@ -241,7 +242,8 @@ export const StyleEditor: React.FC<Props> = ({
   onScreenshotsChange,
   translationData,
   selectedLanguage = 'all',
-  onTranslationChange
+  onTranslationChange,
+  dragMode = 'mockup'
 }) => {
   const selectedScreenshot = screenshots[selectedIndex];
   const styleOverride = selectedScreenshot?.styleOverride;
@@ -298,6 +300,15 @@ export const StyleEditor: React.FC<Props> = ({
   };
 
   const hasPerLangOverride = isEditingTranslation && !!translationData?.perLanguageStyles?.[selectedLanguage]?.[selectedIndex];
+  const isTextMode = dragMode === 'text';
+  const baseFontSize = 72;
+  const effectiveFontSize = isEditingTranslation
+    ? (getPerLangStyle().fontSize ?? style.fontSize)
+    : style.fontSize;
+  const textScaleValue = Math.round(((effectiveFontSize || baseFontSize) / baseFontSize) * 100);
+  const mockupScaleValue = Math.round((isEditingTranslation
+    ? (getPerLangStyle().mockupScale ?? style.mockupScale ?? 1.0)
+    : (style.mockupScale ?? 1.0)) * 100);
 
   const updateStyle = <K extends keyof StyleConfig>(key: K, value: StyleConfig[K]) => {
     onStyleChange({ ...style, [key]: value });
@@ -425,37 +436,32 @@ export const StyleEditor: React.FC<Props> = ({
 
   return (
     <div style={cssStyles.container}>
-      {/* Scale + Font row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
+      {/* Scale slider */}
+      <div style={{ marginBottom: '12px' }}>
         <Slider
-          label="Scale"
+          label={isTextMode ? 'Text Scale' : 'Mockup Scale'}
           min={30}
           max={200}
-          value={Math.round((isEditingTranslation ? (getPerLangStyle().mockupScale ?? style.mockupScale ?? 1.0) : (style.mockupScale ?? 1.0)) * 100)}
+          value={isTextMode ? textScaleValue : mockupScaleValue}
           onChange={(value) => {
-            const newScale = value / 100;
-            if (isEditingTranslation) {
-              updatePerLangStyle({ mockupScale: newScale });
+            if (isTextMode) {
+              const newFontSize = Math.max(8, Math.round((value / 100) * baseFontSize));
+              if (isEditingTranslation) {
+                updatePerLangStyle({ fontSize: newFontSize });
+              } else {
+                updateStyle('fontSize', newFontSize);
+              }
             } else {
-              updateStyle('mockupScale', newScale);
+              const newScale = value / 100;
+              if (isEditingTranslation) {
+                updatePerLangStyle({ mockupScale: newScale });
+              } else {
+                updateStyle('mockupScale', newScale);
+              }
             }
           }}
           unit="%"
         />
-        <div style={cssStyles.field as React.CSSProperties}>
-          <span style={cssStyles.fieldLabel}>Font</span>
-          <select
-            value={style.fontFamily}
-            onChange={(e) => updateStyle('fontFamily', e.target.value)}
-            style={cssStyles.select}
-          >
-            {FONT_OPTIONS.map((font) => (
-              <option key={font.value} value={font.value}>
-                {font.label}
-              </option>
-            ))}
-          </select>
-        </div>
       </div>
 
       {/* Screenshot in Mockup selector */}
@@ -592,6 +598,22 @@ export const StyleEditor: React.FC<Props> = ({
         </button>
       )}
 
+      {/* Font selector */}
+      <div style={{ marginBottom: '12px' }}>
+        <span style={cssStyles.fieldLabel}>Font Family</span>
+        <select
+          value={style.fontFamily}
+          onChange={(e) => updateStyle('fontFamily', e.target.value)}
+          style={{ ...cssStyles.select, width: '100%', marginTop: '4px' }}
+        >
+          {FONT_OPTIONS.map((font) => (
+            <option key={font.value} value={font.value}>
+              {font.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '12px' }}>
         <ColorPicker label="Text Color" value={effectiveTextColor} onChange={(color) => updateScreenshotStyle({ textColor: color })} />
         <ColorPicker label="Highlight" value={style.highlightColor || '#FFE135'} onChange={(color) => updateStyle('highlightColor', color)} />
@@ -620,7 +642,9 @@ export const StyleEditor: React.FC<Props> = ({
           <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
             <button
               onClick={() => {
-                const decorations = selectedScreenshot.decorations || [];
+                const decorations = Array.isArray(selectedScreenshot.decorations)
+                  ? selectedScreenshot.decorations
+                  : [];
                 const newDecoration = createDefaultStars(deviceSize);
                 const newScreenshots = screenshots.map((s, i) => i === selectedIndex ? { ...s, decorations: [...decorations, newDecoration] } : s);
                 onScreenshotsChange(newScreenshots);
@@ -631,7 +655,9 @@ export const StyleEditor: React.FC<Props> = ({
             </button>
             <button
               onClick={() => {
-                const decorations = selectedScreenshot.decorations || [];
+                const decorations = Array.isArray(selectedScreenshot.decorations)
+                  ? selectedScreenshot.decorations
+                  : [];
                 const newDecoration = createDefaultLaurel(deviceSize);
                 const newScreenshots = screenshots.map((s, i) => i === selectedIndex ? { ...s, decorations: [...decorations, newDecoration] } : s);
                 onScreenshotsChange(newScreenshots);

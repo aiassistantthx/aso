@@ -9,7 +9,6 @@ import { PrismaClient } from '@prisma/client';
 
 import prismaPlugin from './plugins/prisma.js';
 import authPlugin from './plugins/auth.js';
-import stripePlugin from './plugins/stripe.js';
 import polarPlugin from './plugins/polar.js';
 import { setupAdmin } from './plugins/admin.js';
 import { seedPrompts } from './utils/seedPrompts.js';
@@ -19,7 +18,6 @@ import authRoutes from './routes/auth.js';
 import projectRoutes from './routes/projects.js';
 import screenshotRoutes from './routes/screenshots.js';
 import translateRoutes from './routes/translate.js';
-import stripeRoutes from './routes/stripe.js';
 import polarRoutes from './routes/polar.js';
 import metadataRoutes from './routes/metadata.js';
 import wizardRoutes from './routes/wizard.js';
@@ -71,7 +69,6 @@ async function start() {
   // Plugins
   await fastify.register(prismaPlugin);
   await fastify.register(authPlugin);
-  await fastify.register(stripePlugin);
   await fastify.register(polarPlugin);
 
   // API Routes
@@ -79,7 +76,6 @@ async function start() {
   await fastify.register(projectRoutes);
   await fastify.register(screenshotRoutes);
   await fastify.register(translateRoutes);
-  await fastify.register(stripeRoutes);
   await fastify.register(polarRoutes);
   await fastify.register(metadataRoutes);
   await fastify.register(wizardRoutes);

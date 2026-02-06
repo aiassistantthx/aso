@@ -16,7 +16,8 @@
     "preview": "vite preview",
     "db:migrate": "npm run db:migrate -w server",
     "db:push": "npm run db:push -w server",
-    "db:generate": "npm run db:generate -w server"
+    "db:generate": "npm run db:generate -w server",
+    "test": "node --test --import tsx \"src/**/*.test.ts\" \"server/**/*.test.ts\""
   },
   "dependencies": {
     "@polar-sh/sdk": "^0.42.5",
