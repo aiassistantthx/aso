@@ -60,122 +60,122 @@ const cssStyles: Record<string, React.CSSProperties> = {
   label: {
     display: 'flex',
     alignItems: 'center',
-    gap: '6px',
-    fontSize: '13px',
+    gap: '8px',
+    fontSize: '14px',
     fontWeight: 600,
     color: colors.text,
-    marginBottom: '6px'
+    marginBottom: '12px'
   },
   labelIcon: {
-    width: '20px',
-    height: '20px',
-    borderRadius: '5px',
+    width: '24px',
+    height: '24px',
+    borderRadius: '6px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '11px'
+    fontSize: '13px'
   },
   sectionTitle: {
-    fontSize: '10px',
+    fontSize: '11px',
     fontWeight: 600,
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
-    marginTop: '8px',
-    marginBottom: '4px',
-    paddingTop: '6px',
+    marginTop: '16px',
+    marginBottom: '8px',
+    paddingTop: '12px',
     borderTop: `1px solid ${colors.borderLight}`,
     display: 'flex',
     alignItems: 'center',
-    gap: '4px'
+    gap: '6px'
   },
   grid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '6px'
+    gap: '10px'
   },
   grid3: {
     display: 'grid',
     gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: '6px'
+    gap: '10px'
   },
   field: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '3px'
+    gap: '4px'
   },
   fieldLabel: {
-    fontSize: '10px',
+    fontSize: '11px',
     fontWeight: 500,
     color: colors.textSecondary
   },
   input: {
-    padding: '5px 8px',
-    fontSize: '12px',
+    padding: '8px 10px',
+    fontSize: '13px',
     border: `1px solid ${colors.borderLight}`,
-    borderRadius: '6px',
+    borderRadius: '8px',
     outline: 'none',
     transition: 'border-color 0.2s'
   },
   select: {
-    padding: '5px 8px',
-    fontSize: '12px',
+    padding: '8px 10px',
+    fontSize: '13px',
     border: `1px solid ${colors.borderLight}`,
-    borderRadius: '6px',
+    borderRadius: '8px',
     outline: 'none',
     backgroundColor: colors.white,
     cursor: 'pointer',
     appearance: 'none',
     backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2386868b' d='M6 8L2 4h8z'/%3E%3C/svg%3E")`,
     backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'right 8px center',
-    paddingRight: '24px'
+    backgroundPosition: 'right 10px center',
+    paddingRight: '28px'
   },
   colorInput: {
     width: '100%',
-    height: '28px',
-    padding: '2px',
+    height: '32px',
+    padding: '3px',
     border: `1px solid ${colors.borderLight}`,
-    borderRadius: '6px',
+    borderRadius: '8px',
     cursor: 'pointer'
   },
   rangeContainer: {
     display: 'flex',
     alignItems: 'center',
-    gap: '6px'
+    gap: '10px'
   },
   range: {
     flex: 1,
-    height: '4px',
-    borderRadius: '2px',
+    height: '6px',
+    borderRadius: '3px',
     appearance: 'none',
     backgroundColor: colors.borderLight,
     cursor: 'pointer'
   },
   rangeValue: {
-    fontSize: '11px',
+    fontSize: '12px',
     fontWeight: 500,
     color: colors.text,
-    minWidth: '40px',
+    minWidth: '48px',
     textAlign: 'center',
     backgroundColor: colors.background,
-    padding: '2px 6px',
-    borderRadius: '4px'
+    padding: '4px 8px',
+    borderRadius: '6px'
   },
   buttonGroup: {
     display: 'flex',
-    gap: '2px',
+    gap: '3px',
     backgroundColor: colors.background,
-    borderRadius: '6px',
-    padding: '2px'
+    borderRadius: '8px',
+    padding: '3px'
   },
   button: {
     flex: 1,
-    padding: '4px 8px',
-    fontSize: '11px',
+    padding: '6px 12px',
+    fontSize: '12px',
     fontWeight: 500,
     border: 'none',
-    borderRadius: '5px',
+    borderRadius: '6px',
     backgroundColor: 'transparent',
     color: colors.textSecondary,
     cursor: 'pointer',
@@ -184,25 +184,25 @@ const cssStyles: Record<string, React.CSSProperties> = {
   buttonActive: {
     backgroundColor: colors.white,
     color: colors.text,
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+    boxShadow: '0 1px 4px rgba(0, 0, 0, 0.1)'
   },
   toggle: {
     display: 'flex',
     alignItems: 'center',
-    gap: '6px',
+    gap: '8px',
     cursor: 'pointer'
   },
   checkbox: {
-    width: '14px',
-    height: '14px',
+    width: '16px',
+    height: '16px',
     cursor: 'pointer'
   },
   gradientPreview: {
-    height: '24px',
-    borderRadius: '6px',
+    height: '32px',
+    borderRadius: '8px',
     border: `1px solid ${colors.borderLight}`,
-    marginTop: '4px',
-    boxShadow: 'inset 0 1px 4px rgba(0, 0, 0, 0.08)'
+    marginTop: '6px',
+    boxShadow: 'inset 0 2px 6px rgba(0, 0, 0, 0.08)'
   }
 };
 
@@ -425,31 +425,29 @@ export const StyleEditor: React.FC<Props> = ({
 
   return (
     <div style={cssStyles.container}>
-      {/* Mockup + Font row */}
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginBottom: '6px' }}>
-        <div style={{ flex: 1 }}>
-          <Toggle
-            label="iPhone Frame"
-            checked={style.showMockup}
-            onChange={(checked) => updateStyle('showMockup', checked)}
-            compact
-          />
-        </div>
+      {/* Mockup row */}
+      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '12px' }}>
+        <Toggle
+          label="iPhone Frame"
+          checked={style.showMockup}
+          onChange={(checked) => updateStyle('showMockup', checked)}
+        />
         {style.showMockup && (
-          <div style={{ display: 'flex', gap: '2px' }}>
+          <div style={{ display: 'flex', gap: '4px' }}>
             {(['black', 'white', 'natural'] as const).map(c => (
               <button
                 key={c}
                 onClick={() => updateStyle('mockupColor', c)}
                 style={{
-                  padding: '3px 8px',
-                  fontSize: '10px',
-                  border: style.mockupColor === c ? `1px solid ${colors.primary}` : `1px solid ${colors.borderLight}`,
-                  borderRadius: '4px',
+                  padding: '6px 12px',
+                  fontSize: '12px',
+                  border: style.mockupColor === c ? `2px solid ${colors.primary}` : `1px solid ${colors.borderLight}`,
+                  borderRadius: '6px',
                   backgroundColor: style.mockupColor === c ? colors.primaryLight : colors.white,
                   color: style.mockupColor === c ? colors.primary : colors.textSecondary,
                   cursor: 'pointer',
-                  textTransform: 'capitalize'
+                  textTransform: 'capitalize',
+                  fontWeight: 500
                 }}
               >{c}</button>
             ))}
@@ -458,7 +456,7 @@ export const StyleEditor: React.FC<Props> = ({
       </div>
 
       {/* Scale + Font row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '6px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
         <Slider
           label="Scale"
           min={30}
@@ -473,7 +471,6 @@ export const StyleEditor: React.FC<Props> = ({
             }
           }}
           unit="%"
-          compact
         />
         <div style={cssStyles.field as React.CSSProperties}>
           <span style={cssStyles.fieldLabel}>Font</span>
@@ -491,10 +488,10 @@ export const StyleEditor: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Screenshot in Mockup selector - compact */}
+      {/* Screenshot in Mockup selector */}
       {style.showMockup && screenshots.length > 1 && selectedScreenshot && (
-        <div style={{ marginBottom: '6px' }}>
-          <span style={{ ...cssStyles.fieldLabel, display: 'block', marginBottom: '4px' }}>
+        <div style={{ marginBottom: '12px' }}>
+          <span style={{ ...cssStyles.fieldLabel, display: 'block', marginBottom: '6px' }}>
             Screenshot in Mockup
           </span>
           <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
@@ -534,13 +531,13 @@ export const StyleEditor: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Theme Presets - compact horizontal */}
+      {/* Theme Presets */}
       <div style={cssStyles.sectionTitle as React.CSSProperties}>
         <span>🎨</span> Theme
-        {selectedIndex > 0 && <span style={{ fontWeight: 400, fontSize: '9px', color: colors.primary, marginLeft: '4px' }}>Screen {selectedIndex + 1}</span>}
+        {selectedIndex > 0 && <span style={{ fontWeight: 400, fontSize: '10px', color: colors.primary, marginLeft: '6px' }}>Screen {selectedIndex + 1}</span>}
       </div>
 
-      <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap', marginBottom: '6px' }}>
+      <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '12px' }}>
         {THEME_PRESET_GROUPS.flatMap((group) => group.presets.map((presetId) => {
           const preset = THEME_PRESETS.find(p => p.id === presetId);
           if (!preset) return null;
@@ -557,43 +554,47 @@ export const StyleEditor: React.FC<Props> = ({
             <button
               key={preset.id}
               onClick={() => applyThemePreset(preset)}
-              style={{ width: '22px', height: '22px', borderRadius: '5px', border: '1px solid rgba(0,0,0,0.1)', cursor: 'pointer', background }}
+              style={{ width: '28px', height: '28px', borderRadius: '6px', border: '2px solid rgba(0,0,0,0.1)', cursor: 'pointer', background, transition: 'transform 0.15s' }}
               title={preset.name}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
             />
           );
         }))}
       </div>
 
       {hasOverride && selectedIndex > 0 && (
-        <button onClick={resetToGlobal} style={{ padding: '4px 8px', fontSize: '10px', border: `1px solid ${colors.warning}`, borderRadius: '6px', backgroundColor: '#fff8e6', color: '#996300', cursor: 'pointer', marginBottom: '6px', width: '100%' }}>
-          ↩️ Reset to global
+        <button onClick={resetToGlobal} style={{ padding: '8px 12px', fontSize: '12px', border: `1px solid ${colors.warning}`, borderRadius: '8px', backgroundColor: '#fff8e6', color: '#996300', cursor: 'pointer', marginBottom: '12px', width: '100%', fontWeight: 500 }}>
+          ↩️ Reset to global style
         </button>
       )}
 
-      {/* Background: Gradient toggle + colors in one row */}
-      <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-end', marginBottom: '4px' }}>
-        <Toggle label="Gradient" checked={effectiveGradient.enabled} onChange={(checked) => updateScreenshotGradient({ enabled: checked })} compact />
+      {/* Background: Gradient toggle + colors */}
+      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap' }}>
+        <Toggle label="Gradient" checked={effectiveGradient.enabled} onChange={(checked) => updateScreenshotGradient({ enabled: checked })} />
         {effectiveGradient.enabled ? (
           <>
-            <ColorPicker label="C1" value={effectiveGradient.color1} onChange={(color) => updateScreenshotGradient({ color1: color })} compact />
-            <ColorPicker label="C2" value={effectiveGradient.color2} onChange={(color) => updateScreenshotGradient({ color2: color })} compact />
-            <Slider label="°" min={0} max={360} value={effectiveGradient.angle} onChange={(value) => updateScreenshotGradient({ angle: value })} unit="" compact />
+            <ColorPicker label="Color 1" value={effectiveGradient.color1} onChange={(color) => updateScreenshotGradient({ color1: color })} />
+            <ColorPicker label="Color 2" value={effectiveGradient.color2} onChange={(color) => updateScreenshotGradient({ color2: color })} />
+            <div style={{ width: '120px' }}>
+              <Slider label="Angle" min={0} max={360} value={effectiveGradient.angle} onChange={(value) => updateScreenshotGradient({ angle: value })} unit="°" />
+            </div>
           </>
         ) : (
-          <ColorPicker label="BG" value={effectiveBackgroundColor} onChange={(color) => updateScreenshotStyle({ backgroundColor: color })} compact />
+          <ColorPicker label="Background" value={effectiveBackgroundColor} onChange={(color) => updateScreenshotStyle({ backgroundColor: color })} />
         )}
       </div>
 
-      {/* Pattern - compact */}
-      <div style={{ display: 'flex', gap: '3px', alignItems: 'center', marginBottom: '4px', flexWrap: 'wrap' }}>
-        <span style={{ ...cssStyles.fieldLabel, marginRight: '4px' }}>Pattern:</span>
+      {/* Pattern */}
+      <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap' }}>
+        <span style={{ ...cssStyles.fieldLabel, marginRight: '6px' }}>Pattern:</span>
         {PATTERN_OPTIONS.map((opt) => {
           const isActive = (style.pattern?.type || 'none') === opt.value;
           return (
             <button
               key={opt.value}
               onClick={() => updatePattern({ type: opt.value as BackgroundPatternType })}
-              style={{ padding: '2px 8px', fontSize: '10px', border: `1px solid ${isActive ? colors.primary : colors.borderLight}`, borderRadius: '4px', backgroundColor: isActive ? colors.primaryLight : colors.white, color: isActive ? colors.primary : colors.textSecondary, cursor: 'pointer' }}
+              style={{ padding: '6px 12px', fontSize: '12px', fontWeight: 500, border: `1px solid ${isActive ? colors.primary : colors.borderLight}`, borderRadius: '6px', backgroundColor: isActive ? colors.primaryLight : colors.white, color: isActive ? colors.primary : colors.textSecondary, cursor: 'pointer' }}
             >
               {opt.label}
             </button>
@@ -602,28 +603,28 @@ export const StyleEditor: React.FC<Props> = ({
       </div>
 
       {style.pattern && style.pattern.type !== 'none' && (
-        <div style={{ display: 'flex', gap: '6px', marginBottom: '4px' }}>
-          <ColorPicker label="Color" value={style.pattern.color} onChange={(color) => updatePattern({ color })} compact />
-          <Slider label="Op" min={1} max={50} value={Math.round((style.pattern.opacity || 0.1) * 100)} onChange={(value) => updatePattern({ opacity: value / 100 })} unit="%" compact />
-          <Slider label="Sz" min={1} max={20} value={style.pattern.size || 4} onChange={(value) => updatePattern({ size: value })} unit="" compact />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '12px' }}>
+          <ColorPicker label="Pattern Color" value={style.pattern.color} onChange={(color) => updatePattern({ color })} />
+          <Slider label="Opacity" min={1} max={50} value={Math.round((style.pattern.opacity || 0.1) * 100)} onChange={(value) => updatePattern({ opacity: value / 100 })} unit="%" />
+          <Slider label="Size" min={1} max={20} value={style.pattern.size || 4} onChange={(value) => updatePattern({ size: value })} unit="px" />
         </div>
       )}
 
-      {/* Text Section - compact */}
+      {/* Text Section */}
       <div style={cssStyles.sectionTitle as React.CSSProperties}>
         <span>✏️</span> Text
-        {isEditingTranslation && <span style={{ fontWeight: 400, fontSize: '9px', color: colors.primary, marginLeft: '4px' }}>{getLanguageName(selectedLanguage)}</span>}
+        {isEditingTranslation && <span style={{ fontWeight: 400, fontSize: '10px', color: colors.primary, marginLeft: '6px' }}>{getLanguageName(selectedLanguage)}</span>}
       </div>
 
       {hasPerLangOverride && (
-        <button onClick={resetPerLangStyle} style={{ padding: '4px 8px', fontSize: '10px', border: `1px solid ${colors.primary}`, borderRadius: '6px', backgroundColor: colors.primaryLight, color: colors.primary, cursor: 'pointer', marginBottom: '6px', width: '100%' }}>
-          ↩️ Reset to global
+        <button onClick={resetPerLangStyle} style={{ padding: '8px 12px', fontSize: '12px', fontWeight: 500, border: `1px solid ${colors.primary}`, borderRadius: '8px', backgroundColor: colors.primaryLight, color: colors.primary, cursor: 'pointer', marginBottom: '12px', width: '100%' }}>
+          ↩️ Reset to global style
         </button>
       )}
 
-      <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-end', marginBottom: '6px' }}>
-        <ColorPicker label="Text" value={effectiveTextColor} onChange={(color) => updateScreenshotStyle({ textColor: color })} compact />
-        <ColorPicker label="Highlight" value={style.highlightColor || '#FFE135'} onChange={(color) => updateStyle('highlightColor', color)} compact />
+      <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '12px' }}>
+        <ColorPicker label="Text Color" value={effectiveTextColor} onChange={(color) => updateScreenshotStyle({ textColor: color })} />
+        <ColorPicker label="Highlight" value={style.highlightColor || '#FFE135'} onChange={(color) => updateStyle('highlightColor', color)} />
         <button
           onClick={() => {
             if (isEditingTranslation) {
@@ -632,21 +633,21 @@ export const StyleEditor: React.FC<Props> = ({
               updateStyle('textOffset', { ...style.textOffset, x: 0 });
             }
           }}
-          style={{ padding: '4px 10px', fontSize: '10px', border: `1px solid ${colors.borderLight}`, borderRadius: '6px', backgroundColor: colors.white, color: colors.text, cursor: 'pointer', whiteSpace: 'nowrap' }}
+          style={{ padding: '8px 16px', fontSize: '12px', fontWeight: 500, border: `1px solid ${colors.borderLight}`, borderRadius: '8px', backgroundColor: colors.white, color: colors.text, cursor: 'pointer', whiteSpace: 'nowrap' }}
         >
-          ↔️ Center
+          ↔️ Center Text
         </button>
       </div>
 
-      {/* Decorations - compact */}
+      {/* Decorations */}
       {selectedScreenshot && (
         <>
           <div style={cssStyles.sectionTitle as React.CSSProperties}>
             <span>✨</span> Decorations
-            <span style={{ fontWeight: 400, fontSize: '9px', color: colors.textSecondary, marginLeft: '4px' }}>Screen {selectedIndex + 1}</span>
+            <span style={{ fontWeight: 400, fontSize: '10px', color: colors.textSecondary, marginLeft: '6px' }}>Screen {selectedIndex + 1}</span>
           </div>
 
-          <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
             <button
               onClick={() => {
                 const decorations = selectedScreenshot.decorations || [];
@@ -654,9 +655,9 @@ export const StyleEditor: React.FC<Props> = ({
                 const newScreenshots = screenshots.map((s, i) => i === selectedIndex ? { ...s, decorations: [...decorations, newDecoration] } : s);
                 onScreenshotsChange(newScreenshots);
               }}
-              style={{ flex: 1, padding: '6px 10px', fontSize: '11px', border: `1px solid ${colors.borderLight}`, borderRadius: '6px', backgroundColor: colors.white, color: colors.text, cursor: 'pointer' }}
+              style={{ flex: 1, padding: '10px 16px', fontSize: '13px', fontWeight: 500, border: `1px solid ${colors.borderLight}`, borderRadius: '8px', backgroundColor: colors.white, color: colors.text, cursor: 'pointer' }}
             >
-              ⭐ Stars
+              ⭐ Add Stars
             </button>
             <button
               onClick={() => {
@@ -665,26 +666,26 @@ export const StyleEditor: React.FC<Props> = ({
                 const newScreenshots = screenshots.map((s, i) => i === selectedIndex ? { ...s, decorations: [...decorations, newDecoration] } : s);
                 onScreenshotsChange(newScreenshots);
               }}
-              style={{ flex: 1, padding: '6px 10px', fontSize: '11px', border: `1px solid ${colors.borderLight}`, borderRadius: '6px', backgroundColor: colors.white, color: colors.text, cursor: 'pointer' }}
+              style={{ flex: 1, padding: '10px 16px', fontSize: '13px', fontWeight: 500, border: `1px solid ${colors.borderLight}`, borderRadius: '8px', backgroundColor: colors.white, color: colors.text, cursor: 'pointer' }}
             >
-              🏆 Laurel
+              🏆 Add Laurel
             </button>
           </div>
 
           {selectedScreenshot.decorations && selectedScreenshot.decorations.length > 0 && (
-            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               {selectedScreenshot.decorations.map((dec, decIndex) => (
-                <div key={decIndex} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', backgroundColor: colors.background, borderRadius: '6px', fontSize: '11px' }}>
-                  <span>{dec.type === 'stars' ? '⭐' : '🏆'}</span>
+                <div key={decIndex} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', backgroundColor: colors.background, borderRadius: '8px', fontSize: '13px' }}>
+                  <span>{dec.type === 'stars' ? '⭐ Stars' : '🏆 Laurel'}</span>
                   <button
                     onClick={() => {
                       const newDecorations = selectedScreenshot.decorations!.filter((_, i) => i !== decIndex);
                       const newScreenshots = screenshots.map((s, i) => i === selectedIndex ? { ...s, decorations: newDecorations } : s);
                       onScreenshotsChange(newScreenshots);
                     }}
-                    style={{ padding: '2px 6px', fontSize: '9px', border: 'none', borderRadius: '4px', backgroundColor: '#ff3b30', color: '#fff', cursor: 'pointer' }}
+                    style={{ padding: '4px 8px', fontSize: '11px', border: 'none', borderRadius: '6px', backgroundColor: '#ff3b30', color: '#fff', cursor: 'pointer', fontWeight: 500 }}
                   >
-                    ✕
+                    Remove
                   </button>
                 </div>
               ))}
