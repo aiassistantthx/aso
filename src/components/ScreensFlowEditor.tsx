@@ -445,7 +445,7 @@ const LinkedPairCanvas: React.FC<{
     return () => {
       isCancelled = true;
     };
-  }, [dimensions, style, style.mockupScale, style.mockupAlignment, style.mockupVisibility, style.textPosition, style.paddingTop, style.paddingBottom, style.fontSize, screen1, screen2, localOffsetX, localOffsetY, localRotation, index1, index2, translationData, selectedLanguage]);
+  }, [dimensions, style, style.mockupScale, style.mockupAlignment, style.mockupVisibility, style.textPosition, style.paddingTop, style.paddingBottom, style.fontSize, style.textOffset, screen1, screen2, localOffsetX, localOffsetY, localRotation, index1, index2, translationData, selectedLanguage]);
 
   // Handle drag
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -1188,7 +1188,7 @@ const SingleScreenPreview: React.FC<{
     } else {
       drawText(ctx, getDisplayText(), 0, previewHeight, previewWidth, style, screenshot.styleOverride, undefined);
     }
-  }, [screenshot, style, style.mockupScale, style.mockupAlignment, style.mockupVisibility, style.textPosition, style.paddingTop, style.paddingBottom, style.fontSize, style.textColor, style.highlightColor, deviceSize, settings, translationData, selectedLanguage, allScreenshots]);
+  }, [screenshot, style, style.mockupScale, style.mockupAlignment, style.mockupVisibility, style.textPosition, style.paddingTop, style.paddingBottom, style.fontSize, style.textColor, style.highlightColor, style.textOffset, deviceSize, settings, translationData, selectedLanguage, allScreenshots]);
 
   // Handle drag
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -1413,13 +1413,9 @@ const UploadCard: React.FC<{
     // Compact version - just an add button card
     return (
       <div
-        onClick={() => inputRef.current?.click()}
-        onDrop={handleDrop}
-        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-        onDragLeave={() => setIsDragging(false)}
         style={{
           width: `${previewWidth}px`,
-          height: `${previewHeight}px`,
+          minHeight: `${previewHeight}px`,
           borderRadius: '16px',
           border: isDragging ? '3px solid #FF6B4A' : '3px dashed #d1d1d6',
           backgroundColor: isDragging ? '#f0f7ff' : '#fafafa',
@@ -1427,8 +1423,9 @@ const UploadCard: React.FC<{
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '12px',
-          cursor: 'pointer',
+          gap: '16px',
+          padding: '20px',
+          boxSizing: 'border-box',
           transition: 'all 0.2s'
         }}
       >
@@ -1440,35 +1437,56 @@ const UploadCard: React.FC<{
           style={{ display: 'none' }}
           onChange={(e) => e.target.files && onFilesSelected(e.target.files)}
         />
-        <div style={{
-          width: '48px',
-          height: '48px',
-          borderRadius: '50%',
-          backgroundColor: '#e8f5e9',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '24px'
-        }}>
-          +
+        <div
+          onClick={() => inputRef.current?.click()}
+          onDrop={handleDrop}
+          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+          onDragLeave={() => setIsDragging(false)}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '8px',
+            cursor: 'pointer',
+            padding: '16px',
+            borderRadius: '12px',
+            backgroundColor: 'rgba(255,255,255,0.5)',
+            width: '100%'
+          }}
+        >
+          <div style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            backgroundColor: '#e8f5e9',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '20px',
+            color: '#4caf50'
+          }}>
+            +
+          </div>
+          <span style={{ fontSize: '12px', fontWeight: 500, color: '#666' }}>
+            Add Screenshot
+          </span>
         </div>
-        <span style={{ fontSize: '13px', fontWeight: 500, color: '#666' }}>
-          Add Screenshot
-        </span>
         <button
           onClick={(e) => {
             e.stopPropagation();
             onAddTextSlide();
           }}
           style={{
-            padding: '8px 14px',
-            fontSize: '12px',
+            padding: '8px 16px',
+            fontSize: '11px',
             fontWeight: 500,
             border: '1px solid #FF6B4A',
             borderRadius: '8px',
             backgroundColor: '#fff',
             color: '#FF6B4A',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            width: '100%',
+            maxWidth: '120px'
           }}
         >
           📝 Text Slide
