@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleConfig, DeviceSize, DEVICE_SIZES, Screenshot, ScreenshotStyleOverride, TranslationData, PerLanguageScreenshotStyle, StarRatingDecoration, LaurelDecoration, BackgroundPatternType } from '../types';
 import { APP_STORE_LANGUAGES } from '../constants/languages';
-import { Toggle, Slider, ColorPicker, SegmentedControl } from './ui';
+import { Toggle, Slider, ColorPicker } from './ui';
 import { colors } from '../styles/common';
 import { THEME_PRESETS, THEME_PRESET_GROUPS, ThemePreset, PATTERN_OPTIONS } from '../constants/templates';
 
@@ -422,10 +422,6 @@ export const StyleEditor: React.FC<Props> = ({
     });
     onScreenshotsChange(newScreenshots);
   };
-
-  const gradientBackground = effectiveGradient.enabled
-    ? `linear-gradient(${effectiveGradient.angle}deg, ${effectiveGradient.color1}, ${effectiveGradient.color2})`
-    : effectiveBackgroundColor;
 
   return (
     <div style={cssStyles.container}>
