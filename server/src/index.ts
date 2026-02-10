@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
+import rawBody from 'fastify-raw-body';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -64,6 +65,14 @@ async function start() {
     limits: {
       fileSize: 10 * 1024 * 1024, // 10MB
     },
+  });
+
+  // Raw body for webhook signature verification
+  await fastify.register(rawBody, {
+    field: 'rawBody',
+    global: false,
+    encoding: false,
+    runFirst: true,
   });
 
   // Plugins
