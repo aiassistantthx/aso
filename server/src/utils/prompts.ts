@@ -19,8 +19,9 @@ Target keywords: "{{targetKeywords}}"
 IMPORTANT: Generate all headlines in English (en-US), regardless of the language of the app name or description provided.
 
 Rules:
-- Each headline: 3-8 words
-- Use [brackets] to highlight key words — place brackets around ACTION VERBS and separately around BENEFITS/OUTCOMES. Examples: "[Create] Stunning Videos [Effortlessly]", "[Generate] Engaging Content [in Minutes]", "[Transform] Ideas into [Reality]", "[Save] Hours [Every Week]"
+- Each headline: 3-5 words MAXIMUM (shorter is better!)
+- Headlines MUST fit on 2-3 lines of a mobile screen - keep them extremely concise
+- Use [brackets] to highlight key words — place brackets around ACTION VERBS and separately around BENEFITS/OUTCOMES. Examples: "[Create] Videos [Effortlessly]", "[Save] Hours [Daily]", "[Transform] Your [Ideas]", "[Boost] Your [Productivity]"
 - Each headline MUST have at least TWO separate bracketed sections: one for the action verb, one for the benefit
 - Each headline MUST be unique in meaning — cover different features, benefits, or use cases. No repetition or paraphrasing of the same idea.
 - Use power words that drive downloads
