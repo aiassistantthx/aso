@@ -233,7 +233,7 @@ const calculateAdaptiveFontSize = (
   maxHeight: number,
   fontFamily: string
 ): number => {
-  const minFontSize = Math.max(36, baseFontSize * 0.3); // Don't go below 30% of original or 36px
+  const minFontSize = Math.max(24, baseFontSize * 0.25); // Don't go below 25% of original or 24px
   const maxFontSize = Math.min(baseFontSize * 2, 200); // Can grow up to 2x or 200px max
 
   // Binary search for optimal font size

@@ -10,9 +10,11 @@ datasource db {
 model User {
   id               String           @id @default(cuid())
   email            String           @unique
-  passwordHash     String
+  passwordHash     String?
   name             String?
   polarCustomerId  String?          @unique
+  firebaseUid      String?          @unique
+  authProvider     String           @default("legacy") // "legacy" | "firebase"
   createdAt        DateTime         @default(now())
   projects         Project[]
   metadataProjects MetadataProject[]

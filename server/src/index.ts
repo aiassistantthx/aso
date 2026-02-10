@@ -9,6 +9,7 @@ import fs from 'fs';
 import { PrismaClient } from '@prisma/client';
 
 import prismaPlugin from './plugins/prisma.js';
+import firebasePlugin from './plugins/firebase.js';
 import authPlugin from './plugins/auth.js';
 import polarPlugin from './plugins/polar.js';
 import { setupAdmin } from './plugins/admin.js';
@@ -77,6 +78,7 @@ async function start() {
 
   // Plugins
   await fastify.register(prismaPlugin);
+  await fastify.register(firebasePlugin);
   await fastify.register(authPlugin);
   await fastify.register(polarPlugin);
 

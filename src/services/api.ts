@@ -1,22 +1,48 @@
+import { getIdToken as getFirebaseIdToken, isFirebaseEnabled } from './firebase';
+
 const API_BASE = '';
 
-function getToken(): string | null {
+// Token source: 'firebase' or 'legacy'
+let tokenSource: 'firebase' | 'legacy' = 'legacy';
+
+function getLegacyToken(): string | null {
   return localStorage.getItem('auth_token');
 }
 
-function setToken(token: string) {
+function setLegacyToken(token: string) {
   localStorage.setItem('auth_token', token);
 }
 
-function clearToken() {
+function clearLegacyToken() {
   localStorage.removeItem('auth_token');
+}
+
+export function setTokenSource(source: 'firebase' | 'legacy') {
+  tokenSource = source;
+}
+
+export function getTokenSource(): 'firebase' | 'legacy' {
+  return tokenSource;
+}
+
+async function getToken(): Promise<string | null> {
+  // If using Firebase, try to get Firebase token first
+  if (tokenSource === 'firebase' && isFirebaseEnabled()) {
+    const firebaseToken = await getFirebaseIdToken();
+    if (firebaseToken) {
+      return firebaseToken;
+    }
+  }
+
+  // Fallback to legacy token
+  return getLegacyToken();
 }
 
 async function request<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  const token = getToken();
+  const token = await getToken();
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string> || {}),
   };
@@ -66,7 +92,8 @@ export const auth = {
       method: 'POST',
       body: JSON.stringify({ email, password, name }),
     });
-    setToken(data.token);
+    setLegacyToken(data.token);
+    setTokenSource('legacy');
     return data;
   },
 
@@ -75,7 +102,20 @@ export const auth = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
-    setToken(data.token);
+    setLegacyToken(data.token);
+    setTokenSource('legacy');
+    return data;
+  },
+
+  firebaseVerify: async (idToken: string) => {
+    const data = await request<{ user: UserWithPlan }>('/api/auth/firebase', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ idToken }),
+    });
+    setTokenSource('firebase');
     return data;
   },
 
@@ -84,10 +124,17 @@ export const auth = {
   },
 
   logout: () => {
-    clearToken();
+    clearLegacyToken();
+    setTokenSource('legacy');
   },
 
-  hasToken: () => !!getToken(),
+  hasToken: () => {
+    // Check for legacy token synchronously
+    // Firebase token check happens asynchronously in getToken()
+    return !!getLegacyToken() || (isFirebaseEnabled() && tokenSource === 'firebase');
+  },
+
+  hasLegacyToken: () => !!getLegacyToken(),
 
   togglePlan: () =>
     request<{ plan: 'FREE' | 'PRO' }>('/api/auth/toggle-plan', {

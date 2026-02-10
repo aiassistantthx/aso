@@ -97,13 +97,14 @@ Rules:
     systemMessage: `You are a professional translator for App Store screenshots. Translate the following texts to {{targetLanguage}}.
 
 IMPORTANT RULES:
-1. Keep translations concise and impactful - they appear as headlines on app screenshots
-2. PRESERVE all [brackets] around text - these mark highlighted words
-3. PRESERVE the | character for line breaks
-4. Keep numbers and special characters as-is
-5. Return ONLY the translations, one per line, in the exact same order
-6. Do not add numbers, quotes, or any other formatting
-7. For short promotional phrases, keep them punchy and marketing-style`,
+1. Keep translations EXTREMELY SHORT - maximum 5-7 words per headline! These appear on mobile screenshots with limited space.
+2. If a direct translation is too long, REWRITE it shorter while keeping the same meaning. Brevity is more important than literal accuracy.
+3. PRESERVE all [brackets] around text - these mark highlighted words
+4. PRESERVE the | character for line breaks
+5. Keep numbers and special characters as-is
+6. Return ONLY the translations, one per line, in the exact same order
+7. Do not add numbers, quotes, or any other formatting
+8. For short promotional phrases, keep them punchy and marketing-style`,
     userTemplate: '{{headlines}}',
     model: 'gpt-4o-mini',
     temperature: 0.3,

@@ -1,5 +1,13 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { auth as authApi, UserWithPlan } from './api';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { auth as authApi, UserWithPlan, setTokenSource } from './api';
+import {
+  signInWithGoogle as firebaseSignInWithGoogle,
+  sendMagicLink as firebaseSendMagicLink,
+  completeMagicLinkSignIn,
+  firebaseSignOut,
+  subscribeToAuthState,
+  isFirebaseEnabled,
+} from './firebase';
 
 interface AuthState {
   user: UserWithPlan | null;
@@ -10,8 +18,11 @@ interface AuthState {
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  sendMagicLink: (email: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  isFirebaseAvailable: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -23,12 +34,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     error: null,
   });
 
-  const refreshUser = useCallback(async () => {
-    if (!authApi.hasToken()) {
-      setState({ user: null, loading: false, error: null });
-      return;
-    }
+  const firebaseAuthInitialized = useRef(false);
 
+  const refreshUser = useCallback(async () => {
     try {
       const user = await authApi.me();
       setState({ user, loading: false, error: null });
@@ -38,17 +46,81 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Handle magic link completion on page load
   useEffect(() => {
-    refreshUser();
+    async function handleMagicLinkCallback() {
+      try {
+        const idToken = await completeMagicLinkSignIn();
+        if (idToken) {
+          const { user } = await authApi.firebaseVerify(idToken);
+          setState({ user, loading: false, error: null });
+        }
+      } catch (err) {
+        console.error('Magic link sign-in failed:', err);
+        setState(s => ({
+          ...s,
+          loading: false,
+          error: err instanceof Error ? err.message : 'Magic link sign-in failed',
+        }));
+      }
+    }
+
+    if (isFirebaseEnabled()) {
+      handleMagicLinkCallback();
+    }
+  }, []);
+
+  // Firebase auth state listener
+  useEffect(() => {
+    if (!isFirebaseEnabled()) {
+      // No Firebase - check for legacy token
+      if (authApi.hasLegacyToken()) {
+        refreshUser();
+      } else {
+        setState({ user: null, loading: false, error: null });
+      }
+      return;
+    }
+
+    const unsubscribe = subscribeToAuthState(async (firebaseUser) => {
+      if (firebaseUser) {
+        // User is signed in with Firebase
+        if (!firebaseAuthInitialized.current) {
+          firebaseAuthInitialized.current = true;
+          try {
+            const idToken = await firebaseUser.getIdToken();
+            const { user } = await authApi.firebaseVerify(idToken);
+            setState({ user, loading: false, error: null });
+          } catch (err) {
+            console.error('Firebase auth verification failed:', err);
+            // Fallback to legacy token check
+            if (authApi.hasLegacyToken()) {
+              refreshUser();
+            } else {
+              setState({ user: null, loading: false, error: null });
+            }
+          }
+        }
+      } else {
+        // No Firebase user - check for legacy token
+        firebaseAuthInitialized.current = false;
+        if (authApi.hasLegacyToken()) {
+          refreshUser();
+        } else {
+          setState({ user: null, loading: false, error: null });
+        }
+      }
+    });
+
+    return () => unsubscribe();
   }, [refreshUser]);
 
   const login = useCallback(async (email: string, password: string) => {
     setState((s) => ({ ...s, error: null }));
     try {
-      const { user } = await authApi.login(email, password);
-      // Fetch full user with plan info
+      await authApi.login(email, password);
       const fullUser = await authApi.me();
-      setState({ user: fullUser || (user as unknown as UserWithPlan), loading: false, error: null });
+      setState({ user: fullUser, loading: false, error: null });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
       setState((s) => ({ ...s, error: message }));
@@ -59,9 +131,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = useCallback(async (email: string, password: string, name?: string) => {
     setState((s) => ({ ...s, error: null }));
     try {
-      const { user } = await authApi.register(email, password, name);
+      await authApi.register(email, password, name);
       const fullUser = await authApi.me();
-      setState({ user: fullUser || (user as unknown as UserWithPlan), loading: false, error: null });
+      setState({ user: fullUser, loading: false, error: null });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Registration failed';
       setState((s) => ({ ...s, error: message }));
@@ -69,13 +141,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const logout = useCallback(() => {
+  const loginWithGoogle = useCallback(async () => {
+    setState((s) => ({ ...s, error: null }));
+    try {
+      const idToken = await firebaseSignInWithGoogle();
+      const { user } = await authApi.firebaseVerify(idToken);
+      setState({ user, loading: false, error: null });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Google sign-in failed';
+      setState((s) => ({ ...s, error: message }));
+      throw err;
+    }
+  }, []);
+
+  const sendMagicLink = useCallback(async (email: string) => {
+    setState((s) => ({ ...s, error: null }));
+    try {
+      await firebaseSendMagicLink(email);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to send magic link';
+      setState((s) => ({ ...s, error: message }));
+      throw err;
+    }
+  }, []);
+
+  const logout = useCallback(async () => {
     authApi.logout();
+    if (isFirebaseEnabled()) {
+      await firebaseSignOut();
+    }
+    setTokenSource('legacy');
+    firebaseAuthInitialized.current = false;
     setState({ user: null, loading: false, error: null });
   }, []);
 
   return (
-    <AuthContext.Provider value={{ ...state, login, register, logout, refreshUser }}>
+    <AuthContext.Provider
+      value={{
+        ...state,
+        login,
+        register,
+        loginWithGoogle,
+        sendMagicLink,
+        logout,
+        refreshUser,
+        isFirebaseAvailable: isFirebaseEnabled(),
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -2,6 +2,84 @@ import { FastifyInstance } from 'fastify';
 import bcrypt from 'bcrypt';
 
 export default async function authRoutes(fastify: FastifyInstance) {
+  // Firebase Auth - verify Firebase token and return/create user
+  fastify.post('/api/auth/firebase', async (request, reply) => {
+    const { idToken } = request.body as { idToken: string };
+
+    if (!idToken) {
+      return reply.status(400).send({ error: 'Firebase ID token is required' });
+    }
+
+    if (!fastify.firebaseAuth) {
+      return reply.status(503).send({ error: 'Firebase Auth is not configured' });
+    }
+
+    try {
+      // Verify Firebase token
+      const decodedToken = await fastify.firebaseAuth.verifyIdToken(idToken);
+      const { uid, email, name } = decodedToken;
+
+      if (!email) {
+        return reply.status(400).send({ error: 'Email is required for authentication' });
+      }
+
+      // Try to find user by Firebase UID first
+      let user = await fastify.prisma.user.findUnique({
+        where: { firebaseUid: uid },
+        include: { subscription: true },
+      });
+
+      if (!user) {
+        // Try to find by email (existing legacy user)
+        user = await fastify.prisma.user.findUnique({
+          where: { email },
+          include: { subscription: true },
+        });
+
+        if (user) {
+          // Link Firebase UID to existing user (migration)
+          user = await fastify.prisma.user.update({
+            where: { id: user.id },
+            data: {
+              firebaseUid: uid,
+              authProvider: 'firebase',
+              name: user.name || name || undefined,
+            },
+            include: { subscription: true },
+          });
+        } else {
+          // Create new user
+          user = await fastify.prisma.user.create({
+            data: {
+              email,
+              firebaseUid: uid,
+              authProvider: 'firebase',
+              name: name || undefined,
+            },
+            include: { subscription: true },
+          });
+        }
+      }
+
+      return reply.send({
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          plan: user.subscription?.plan ?? 'FREE',
+          subscription: user.subscription ? {
+            status: user.subscription.status,
+            plan: user.subscription.plan,
+            currentPeriodEnd: user.subscription.currentPeriodEnd,
+          } : null,
+        },
+      });
+    } catch (error) {
+      fastify.log.error({ err: error }, 'Firebase auth error');
+      return reply.status(401).send({ error: 'Invalid Firebase token' });
+    }
+  });
+
   // Register
   fastify.post('/api/auth/register', async (request, reply) => {
     const { email, password, name } = request.body as {
@@ -49,6 +127,11 @@ export default async function authRoutes(fastify: FastifyInstance) {
     const user = await fastify.prisma.user.findUnique({ where: { email } });
     if (!user) {
       return reply.status(401).send({ error: 'Invalid email or password' });
+    }
+
+    // Users without passwordHash are Firebase-only users
+    if (!user.passwordHash) {
+      return reply.status(401).send({ error: 'Please sign in with Google or Magic Link' });
     }
 
     const valid = await bcrypt.compare(password, user.passwordHash);
