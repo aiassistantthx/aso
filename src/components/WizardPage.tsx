@@ -217,6 +217,7 @@ function buildEditorScreenshots(project: WizardProjectData): Screenshot[] {
       if (i === 0) {
         styleOverride = {
           textPosition: layoutStyle.textPosition,
+          mockupAlignment: layoutStyle.mockupAlignment,
         };
       } else if (themePreset.alternatingColors) {
         // For subsequent screenshots, use alternating colors
@@ -228,10 +229,12 @@ function buildEditorScreenshots(project: WizardProjectData): Screenshot[] {
           textColor: alt.textColor,
           highlightColor: alt.highlightColor,
           textPosition: layoutStyle.textPosition,
+          mockupAlignment: layoutStyle.mockupAlignment,
         };
       } else {
         styleOverride = {
           textPosition: layoutStyle.textPosition,
+          mockupAlignment: layoutStyle.mockupAlignment,
         };
       }
     }

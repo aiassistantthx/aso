@@ -1264,8 +1264,9 @@ const SingleScreenPreview: React.FC<{
         const mockupScale = Math.max(0.3, Math.min(2.0, style.mockupScale ?? 1));
         const visibilityRatio = style.mockupVisibility === '2/3' ? 2/3 : style.mockupVisibility === '1/2' ? 0.5 : 1;
 
-        // Get effective text position (per-screenshot override takes precedence)
+        // Get effective text position and mockup alignment (per-screenshot override takes precedence)
         const effectiveTextPosition = screenshot.styleOverride?.textPosition ?? style.textPosition;
+        const effectiveMockupAlignment = screenshot.styleOverride?.mockupAlignment ?? style.mockupAlignment;
 
         // Calculate text area height - use fixed percentage for reliable spacing
         const textAreaHeight = effectiveTextPosition === 'top'
@@ -1288,9 +1289,9 @@ const SingleScreenPreview: React.FC<{
         // Scale factor for padding
         const scaleFactor = previewHeight / dimensions.height;
 
-        switch (style.mockupAlignment) {
+        switch (effectiveMockupAlignment) {
           case 'top':
-            // When text is at top, offset mockup down to leave room for text
+            // When text is at bottom, mockup goes to top
             const textAreaOffsetTop = effectiveTextPosition === 'top' ? textAreaHeight : 0;
             baseMockupCenterY = textAreaOffsetTop - hiddenHeight + mockupHeight / 2;
             break;
