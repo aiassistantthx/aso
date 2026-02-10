@@ -55,6 +55,7 @@ export interface LayoutPresetStyle {
   mockupOffset: { x: number; y: number };
   mockupContinuation?: 'left-start' | 'left-end';
   mockupRotation?: number;
+  mockupScale?: number;
   // For spanning: which screenshot index to use for mockup
   mockupScreenshotIndex?: number;
 }
@@ -69,13 +70,24 @@ export interface LayoutPreset {
 export const LAYOUT_PRESETS: LayoutPreset[] = [
   {
     id: 'bottom',
-    name: 'Bottom',
+    name: 'Classic',
     description: 'Text on top, mockup at the bottom',
     getStyle: (_index: number) => ({
       textPosition: 'top' as const,
       mockupAlignment: 'bottom' as const,
       mockupVisibility: 'full' as const,
       mockupOffset: { x: 0, y: 60 },
+    }),
+  },
+  {
+    id: 'text-bottom',
+    name: 'Text Bottom',
+    description: 'Mockup on top, text at the bottom',
+    getStyle: (_index: number) => ({
+      textPosition: 'bottom' as const,
+      mockupAlignment: 'top' as const,
+      mockupVisibility: 'full' as const,
+      mockupOffset: { x: 0, y: -60 },
     }),
   },
   {
@@ -108,7 +120,8 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
       textPosition: 'top' as const,
       mockupAlignment: 'bottom' as const,
       mockupVisibility: 'full' as const,
-      mockupOffset: { x: 0, y: 200 },
+      mockupOffset: { x: 0, y: 300 },
+      mockupScale: 1.3,
     }),
   },
   {
