@@ -1021,13 +1021,27 @@ function drawText(
     textAreaY = textPosition === 'top' ? 8 : canvasHeight - availableHeight - 8;
   }
 
-  // Calculate font scale first, then adaptive font size with scaled available height
-  const referenceFontSize = 72;
-  const fontScale = Math.max(0.5, (style.fontSize ?? referenceFontSize) / referenceFontSize);
-  // Reduce available height by fontScale so adaptive sizing accounts for the final scaled size
-  const scaledAvailableHeight = availableHeight / fontScale;
-  const baseFontSize = calculatePreviewFontSize(ctx, text, maxWidth, scaledAvailableHeight, style.fontFamily);
-  const fontSize = Math.max(8, baseFontSize * fontScale);
+  // Use consistent font size based on style, only shrink if text doesn't fit
+  // Preview scale: convert full-size font (72px) to preview size (~18px)
+  const previewScaleFactor = 0.25;
+  const targetFontSize = Math.max(12, (style.fontSize ?? 72) * previewScaleFactor);
+
+  // Check if text fits at target size
+  ctx.font = `bold ${targetFontSize}px ${style.fontFamily}`;
+  let testLines = wrapFormattedText(ctx, text, maxWidth);
+  let testLineHeight = targetFontSize * 1.3;
+  let testTotalHeight = testLines.length * testLineHeight;
+
+  let fontSize: number;
+  if (testTotalHeight <= availableHeight) {
+    // Text fits at target size - use it (consistent across all screenshots)
+    fontSize = targetFontSize;
+  } else {
+    // Text doesn't fit - shrink to fit (but maintain minimum readability)
+    fontSize = Math.max(10, calculatePreviewFontSize(ctx, text, maxWidth, availableHeight, style.fontFamily));
+    // Don't exceed target size
+    fontSize = Math.min(fontSize, targetFontSize);
+  }
 
   ctx.font = `bold ${fontSize}px ${style.fontFamily}`;
 
