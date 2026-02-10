@@ -10,7 +10,14 @@ declare module 'fastify' {
 }
 
 async function firebasePlugin(fastify: FastifyInstance) {
-  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
+  // Support both direct JSON and base64-encoded JSON
+  let serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
+  const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+
+  if (serviceAccountBase64) {
+    // Decode from base64
+    serviceAccountJson = Buffer.from(serviceAccountBase64, 'base64').toString('utf-8');
+  }
 
   if (!serviceAccountJson) {
     fastify.log.warn('FIREBASE_SERVICE_ACCOUNT not set - Firebase Auth disabled');
