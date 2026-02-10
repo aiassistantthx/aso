@@ -1260,7 +1260,8 @@ const SingleScreenPreview: React.FC<{
       const img = new Image();
       img.onload = () => {
         // Use exact same formulas as generatePreviewCanvas
-        const mockupScale = Math.max(0.3, Math.min(2.0, style.mockupScale ?? 1));
+        // Per-screenshot scale (settings.scale) takes precedence over global style.mockupScale
+        const mockupScale = Math.max(0.3, Math.min(2.0, settings.scale ?? style.mockupScale ?? 1));
         const visibilityRatio = style.mockupVisibility === '2/3' ? 2/3 : style.mockupVisibility === '1/2' ? 0.5 : 1;
 
         // Get effective text position and mockup alignment (per-screenshot override takes precedence)

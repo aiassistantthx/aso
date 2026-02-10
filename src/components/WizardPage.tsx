@@ -252,6 +252,12 @@ function buildEditorScreenshots(project: WizardProjectData): Screenshot[] {
       } as ScreenshotMockupSettings;
     }
 
+    // Use saved linkedMockupIndex or get from layout preset (for spanning layout)
+    const linkedMockupIndex = editorData[i]?.linkedMockupIndex ??
+      (layoutStyle.mockupScreenshotIndex !== undefined && layoutStyle.mockupScreenshotIndex !== i
+        ? layoutStyle.mockupScreenshotIndex
+        : undefined);
+
     return {
       id: `wizard-${i}`,
       file: null,
@@ -260,7 +266,8 @@ function buildEditorScreenshots(project: WizardProjectData): Screenshot[] {
       decorations: editorData[i]?.decorations as Decoration[] | undefined,
       styleOverride,
       mockupSettings,
-      linkedMockupIndex: editorData[i]?.linkedMockupIndex,
+      mockupContinuation: layoutStyle.mockupContinuation,
+      linkedMockupIndex,
     };
   });
 }
