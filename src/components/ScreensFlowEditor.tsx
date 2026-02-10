@@ -1070,10 +1070,24 @@ function drawText(
     textAreaY = textPosition === 'top' ? paddingTop : canvasHeight - availableHeight - 8;
   }
 
-  // Use consistent font size based on style, only shrink if text doesn't fit
+  // Adaptive font sizing based on available space
   // Preview scale: convert full-size font (72px) to preview size (~18px)
   const previewScaleFactor = 0.25;
-  const targetFontSize = Math.max(12, (style.fontSize ?? 72) * previewScaleFactor);
+  const baseFontSize = (style.fontSize ?? 72) * previewScaleFactor;
+
+  // Calculate base available height (at mockup scale 1.0 with default positioning)
+  // This is our reference point - 35% of canvas is the "normal" text space
+  const baseAvailableHeight = canvasHeight * 0.35;
+
+  // Scale factor: how much space we have compared to base
+  // When mockup is bigger (scale > 1) → less space → factor < 1 → smaller text
+  // When mockup is smaller (scale < 1) → more space → factor > 1 → larger text
+  const spaceRatio = availableHeight / baseAvailableHeight;
+
+  // Apply scaling with dampening (sqrt) to avoid extreme changes
+  // Also clamp between 0.6 and 1.4 to keep text readable
+  const adaptiveScale = Math.max(0.6, Math.min(1.4, Math.sqrt(spaceRatio)));
+  const targetFontSize = Math.max(10, Math.min(baseFontSize * adaptiveScale, baseFontSize * 1.5));
 
   // Check if text fits at target size
   ctx.font = `bold ${targetFontSize}px ${style.fontFamily}`;
@@ -1083,13 +1097,11 @@ function drawText(
 
   let fontSize: number;
   if (testTotalHeight <= availableHeight) {
-    // Text fits at target size - use it (consistent across all screenshots)
+    // Text fits at adaptive target size
     fontSize = targetFontSize;
   } else {
     // Text doesn't fit - shrink to fit (but maintain minimum readability)
     fontSize = Math.max(10, calculatePreviewFontSize(ctx, text, maxWidth, availableHeight, style.fontFamily));
-    // Don't exceed target size
-    fontSize = Math.min(fontSize, targetFontSize);
   }
 
   ctx.font = `bold ${fontSize}px ${style.fontFamily}`;
