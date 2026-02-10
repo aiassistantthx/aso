@@ -115,10 +115,12 @@ API endpoints (`server/src/routes/unified.ts`):
 
 ## Deployment Commands
 
+**Coolify API Token** is stored in `/Users/ivorobyev/projects/.claude/settings.local.json` (in permissions allow list).
+
 ```bash
 # Deploy to Coolify (restart)
 curl -s -X POST "http://46.225.26.104:8000/api/v1/applications/agk8kwowcc48kkwkcsk844wo/restart" \
-  -H "Authorization: Bearer $(cat /tmp/coolify_token.txt)"
+  -H "Authorization: Bearer 2|hjAbdUPchFI55QuEEHIpxJinD2xqtO59gOSPJIvB8736c446"
 
 # Run DB migrations on production
 ssh -i ~/.ssh/id_ed25519_hetzner root@46.225.26.104 '

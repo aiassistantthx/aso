@@ -47,6 +47,8 @@ interface Props {
   translationData?: TranslationData | null;
   selectedLanguage?: string;
   onTranslationChange?: (data: TranslationData) => void;
+  /** Read-only mode: hides all editing controls, just displays previews */
+  readOnly?: boolean;
 }
 
 const DEFAULT_MOCKUP_SETTINGS: ScreenshotMockupSettings = {
@@ -316,6 +318,7 @@ const LinkedPairCanvas: React.FC<{
   onUnlink: () => void;
   translationData?: TranslationData | null;
   selectedLanguage?: string;
+  readOnly?: boolean;
 }> = ({
   screen1,
   screen2,
@@ -328,7 +331,8 @@ const LinkedPairCanvas: React.FC<{
   onBothSettingsChange,
   onUnlink,
   translationData,
-  selectedLanguage = 'all'
+  selectedLanguage = 'all',
+  readOnly = false
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -567,27 +571,29 @@ const LinkedPairCanvas: React.FC<{
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      {/* Position indicator - above canvas */}
-      <div style={{
-        backgroundColor: 'rgba(0,0,0,0.7)',
-        color: '#fff',
-        padding: '4px 12px',
-        borderRadius: '8px',
-        fontSize: '11px',
-        marginBottom: '8px'
-      }}>
-        {`X:${Math.round(localOffsetX)}% Y:${Math.round(localOffsetY)}% R:${localRotation}°`}
-      </div>
+      {/* Position indicator - above canvas - hide in readOnly */}
+      {!readOnly && (
+        <div style={{
+          backgroundColor: 'rgba(0,0,0,0.7)',
+          color: '#fff',
+          padding: '4px 12px',
+          borderRadius: '8px',
+          fontSize: '11px',
+          marginBottom: '8px'
+        }}>
+          {`X:${Math.round(localOffsetX)}% Y:${Math.round(localOffsetY)}% R:${localRotation}°`}
+        </div>
+      )}
 
       <div
         ref={containerRef}
-        onMouseDown={handleMouseDown}
+        onMouseDown={readOnly ? undefined : handleMouseDown}
         style={{
-          cursor: isDragging ? 'grabbing' : 'grab',
+          cursor: readOnly ? 'default' : (isDragging ? 'grabbing' : 'grab'),
           borderRadius: '16px',
           overflow: 'hidden',
-          border: '3px solid #FF6B4A',
-          boxShadow: '0 8px 24px rgba(255, 107, 74, 0.3)',
+          border: readOnly ? '3px solid transparent' : '3px solid #FF6B4A',
+          boxShadow: readOnly ? '0 4px 16px rgba(0,0,0,0.1)' : '0 8px 24px rgba(255, 107, 74, 0.3)',
           position: 'relative'
         }}
       >
@@ -600,109 +606,113 @@ const LinkedPairCanvas: React.FC<{
           }}
         />
 
-        {/* Screen labels */}
+        {/* Screen labels - hide in readOnly */}
+        {!readOnly && (
+          <div style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            display: 'flex'
+          }}>
+            <div
+              onClick={() => onSelectIndex(index1)}
+              style={{
+                flex: 1,
+                padding: '8px',
+                backgroundColor: selectedIndex === index1 ? '#FF6B4A' : 'rgba(255,255,255,0.9)',
+                textAlign: 'center',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: selectedIndex === index1 ? '#fff' : '#1d1d1f',
+                cursor: 'pointer',
+                borderRight: '1px solid rgba(0,0,0,0.1)'
+              }}
+            >
+              {index1 + 1}
+            </div>
+            <div
+              onClick={() => onSelectIndex(index2)}
+              style={{
+                flex: 1,
+                padding: '8px',
+                backgroundColor: selectedIndex === index2 ? '#FF6B4A' : 'rgba(255,255,255,0.9)',
+                textAlign: 'center',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: selectedIndex === index2 ? '#fff' : '#1d1d1f',
+                cursor: 'pointer'
+              }}
+            >
+              {index2 + 1}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Controls below canvas - hide in readOnly */}
+      {!readOnly && (
         <div style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          display: 'flex'
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          marginTop: '8px'
         }}>
-          <div
-            onClick={() => onSelectIndex(index1)}
+          {/* Rotation controls */}
+          <button
+            onClick={() => handleRotationChange(-5)}
             style={{
-              flex: 1,
-              padding: '8px',
-              backgroundColor: selectedIndex === index1 ? '#FF6B4A' : 'rgba(255,255,255,0.9)',
-              textAlign: 'center',
-              fontSize: '13px',
-              fontWeight: 600,
-              color: selectedIndex === index1 ? '#fff' : '#1d1d1f',
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              border: '1px solid #d1d1d6',
+              backgroundColor: '#fff',
               cursor: 'pointer',
-              borderRight: '1px solid rgba(0,0,0,0.1)'
+              fontSize: '14px'
             }}
           >
-            {index1 + 1}
-          </div>
-          <div
-            onClick={() => onSelectIndex(index2)}
+            ↺
+          </button>
+          <span style={{ fontSize: '13px', color: '#666', minWidth: '40px', textAlign: 'center' }}>
+            {localRotation}°
+          </span>
+          <button
+            onClick={() => handleRotationChange(5)}
             style={{
-              flex: 1,
-              padding: '8px',
-              backgroundColor: selectedIndex === index2 ? '#FF6B4A' : 'rgba(255,255,255,0.9)',
-              textAlign: 'center',
-              fontSize: '13px',
-              fontWeight: 600,
-              color: selectedIndex === index2 ? '#fff' : '#1d1d1f',
-              cursor: 'pointer'
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              border: '1px solid #d1d1d6',
+              backgroundColor: '#fff',
+              cursor: 'pointer',
+              fontSize: '14px'
             }}
           >
-            {index2 + 1}
-          </div>
+            ↻
+          </button>
+
+          {/* Unlink button */}
+          <button
+            onClick={onUnlink}
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              border: '2px solid #d1d1d6',
+              backgroundColor: '#fff',
+              color: '#FF6B4A',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '14px'
+            }}
+            title="Unlink screens"
+          >
+            🔗
+          </button>
         </div>
-      </div>
-
-      {/* Controls below canvas */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        marginTop: '8px'
-      }}>
-        {/* Rotation controls */}
-        <button
-          onClick={() => handleRotationChange(-5)}
-          style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '8px',
-            border: '1px solid #d1d1d6',
-            backgroundColor: '#fff',
-            cursor: 'pointer',
-            fontSize: '14px'
-          }}
-        >
-          ↺
-        </button>
-        <span style={{ fontSize: '13px', color: '#666', minWidth: '40px', textAlign: 'center' }}>
-          {localRotation}°
-        </span>
-        <button
-          onClick={() => handleRotationChange(5)}
-          style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '8px',
-            border: '1px solid #d1d1d6',
-            backgroundColor: '#fff',
-            cursor: 'pointer',
-            fontSize: '14px'
-          }}
-        >
-          ↻
-        </button>
-
-        {/* Unlink button */}
-        <button
-          onClick={onUnlink}
-          style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            border: '2px solid #d1d1d6',
-            backgroundColor: '#fff',
-            color: '#FF6B4A',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '14px'
-          }}
-          title="Unlink screens"
-        >
-          🔗
-        </button>
-      </div>
+      )}
     </div>
   );
 };
@@ -1095,6 +1105,7 @@ const SingleScreenPreview: React.FC<{
   translationData?: TranslationData | null;
   selectedLanguage?: string;
   allScreenshots: Screenshot[];
+  readOnly?: boolean;
 }> = ({
   screenshot,
   index,
@@ -1107,7 +1118,8 @@ const SingleScreenPreview: React.FC<{
   showLinkButton,
   translationData,
   selectedLanguage = 'all',
-  allScreenshots
+  allScreenshots,
+  readOnly = false
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1282,30 +1294,32 @@ const SingleScreenPreview: React.FC<{
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        {/* Position indicator - above canvas - always reserve space for consistent alignment */}
-        <div style={{
-          backgroundColor: hasOffset ? 'rgba(0,0,0,0.7)' : 'transparent',
-          color: '#fff',
-          padding: '3px 8px',
-          borderRadius: '6px',
-          fontSize: '10px',
-          marginBottom: '6px',
-          minHeight: '18px',
-          visibility: hasOffset ? 'visible' : 'hidden'
-        }}>
-          {`X:${Math.round(settings.offsetX)}% Y:${Math.round(settings.offsetY)}%`}
-        </div>
+        {/* Position indicator - above canvas - only show in edit mode */}
+        {!readOnly && (
+          <div style={{
+            backgroundColor: hasOffset ? 'rgba(0,0,0,0.7)' : 'transparent',
+            color: '#fff',
+            padding: '3px 8px',
+            borderRadius: '6px',
+            fontSize: '10px',
+            marginBottom: '6px',
+            minHeight: '18px',
+            visibility: hasOffset ? 'visible' : 'hidden'
+          }}>
+            {`X:${Math.round(settings.offsetX)}% Y:${Math.round(settings.offsetY)}%`}
+          </div>
+        )}
 
         <div
           ref={containerRef}
           onClick={onClick}
-          onMouseDown={handleMouseDown}
+          onMouseDown={readOnly ? undefined : handleMouseDown}
           style={{
-            cursor: isDragging ? 'grabbing' : 'grab',
+            cursor: readOnly ? 'default' : (isDragging ? 'grabbing' : 'grab'),
             borderRadius: '16px',
             overflow: 'hidden',
-            border: isSelected ? '3px solid #FF6B4A' : '3px solid transparent',
-            boxShadow: isSelected ? '0 8px 24px rgba(255, 107, 74, 0.3)' : '0 4px 16px rgba(0,0,0,0.1)',
+            border: isSelected && !readOnly ? '3px solid #FF6B4A' : '3px solid transparent',
+            boxShadow: isSelected && !readOnly ? '0 8px 24px rgba(255, 107, 74, 0.3)' : '0 4px 16px rgba(0,0,0,0.1)',
             position: 'relative'
           }}
         >
@@ -1318,72 +1332,76 @@ const SingleScreenPreview: React.FC<{
             }}
           />
 
-          {/* Screen number */}
-          <div style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            padding: '8px',
-            backgroundColor: isSelected ? '#FF6B4A' : 'rgba(255,255,255,0.9)',
-            textAlign: 'center',
-            fontSize: '13px',
-            fontWeight: 600,
-            color: isSelected ? '#fff' : '#1d1d1f'
-          }}>
-            {index + 1}
-          </div>
+          {/* Screen number - hide in readOnly mode */}
+          {!readOnly && (
+            <div style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              padding: '8px',
+              backgroundColor: isSelected ? '#FF6B4A' : 'rgba(255,255,255,0.9)',
+              textAlign: 'center',
+              fontSize: '13px',
+              fontWeight: 600,
+              color: isSelected ? '#fff' : '#1d1d1f'
+            }}>
+              {index + 1}
+            </div>
+          )}
         </div>
 
-        {/* Rotation controls */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '4px',
-          marginTop: '8px'
-        }}>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onSettingsChange({ ...settings, rotation: settings.rotation - 5 });
-            }}
-            style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '6px',
-              border: '1px solid #d1d1d6',
-              backgroundColor: '#fff',
-              cursor: 'pointer',
-              fontSize: '12px'
-            }}
-          >
-            ↺
-          </button>
-          <span style={{ fontSize: '12px', color: '#666', minWidth: '36px', textAlign: 'center' }}>
-            {settings.rotation}°
-          </span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onSettingsChange({ ...settings, rotation: settings.rotation + 5 });
-            }}
-            style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '6px',
-              border: '1px solid #d1d1d6',
-              backgroundColor: '#fff',
-              cursor: 'pointer',
-              fontSize: '12px'
-            }}
-          >
-            ↻
-          </button>
-        </div>
+        {/* Rotation controls - hide in readOnly mode */}
+        {!readOnly && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            marginTop: '8px'
+          }}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onSettingsChange({ ...settings, rotation: settings.rotation - 5 });
+              }}
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '6px',
+                border: '1px solid #d1d1d6',
+                backgroundColor: '#fff',
+                cursor: 'pointer',
+                fontSize: '12px'
+              }}
+            >
+              ↺
+            </button>
+            <span style={{ fontSize: '12px', color: '#666', minWidth: '36px', textAlign: 'center' }}>
+              {settings.rotation}°
+            </span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onSettingsChange({ ...settings, rotation: settings.rotation + 5 });
+              }}
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '6px',
+                border: '1px solid #d1d1d6',
+                backgroundColor: '#fff',
+                cursor: 'pointer',
+                fontSize: '12px'
+              }}
+            >
+              ↻
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Link button */}
-      {showLinkButton && (
+      {/* Link button - hide in readOnly mode */}
+      {showLinkButton && !readOnly && (
         <button
           onClick={onLinkToNext}
           style={{
@@ -1617,7 +1635,8 @@ export const ScreensFlowEditor: React.FC<Props> = ({
   deviceSize,
   translationData,
   selectedLanguage = 'all',
-  onTranslationChange
+  onTranslationChange,
+  readOnly = false
 }) => {
   const maxScreenshots = 10;
 
@@ -1838,88 +1857,90 @@ export const ScreensFlowEditor: React.FC<Props> = ({
 
   return (
     <div style={{
-      padding: '20px 24px',
-      paddingTop: '28px',
-      marginTop: '16px',
+      padding: readOnly ? '16px 0' : '20px 24px',
+      paddingTop: readOnly ? '16px' : '28px',
+      marginTop: readOnly ? '0' : '16px',
       backgroundColor: '#fff',
-      borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
+      borderBottom: readOnly ? 'none' : '1px solid rgba(0, 0, 0, 0.06)'
     }}>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        marginBottom: '16px'
-      }}>
-        <span style={{ fontSize: '14px', fontWeight: 600, color: '#1d1d1f' }}>
-          Screens ({screenshots.length}/{maxScreenshots})
-        </span>
+      {!readOnly && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          marginBottom: '16px'
+        }}>
+          <span style={{ fontSize: '14px', fontWeight: 600, color: '#1d1d1f' }}>
+            Screens ({screenshots.length}/{maxScreenshots})
+          </span>
 
-        <span style={{ fontSize: '12px', color: '#86868b', flex: 1 }}>
-          Drag mockups to position • Click ○ to link screens
-        </span>
+          <span style={{ fontSize: '12px', color: '#86868b', flex: 1 }}>
+            Drag mockups to position • Click ○ to link screens
+          </span>
 
-        {/* Align to first button - only aligns Y position, keeps rotation */}
-        <button
-          onClick={() => {
-            if (screenshots.length < 2) return;
-            const firstSettings = screenshots[0].mockupSettings || DEFAULT_MOCKUP_SETTINGS;
-            const newScreenshots = screenshots.map((s, i) => {
-              if (i === 0) return s;
-              // Skip linked screens (they share settings with previous)
-              if (s.linkedMockupIndex !== undefined) return s;
+          {/* Align to first button - only aligns Y position, keeps rotation */}
+          <button
+            onClick={() => {
+              if (screenshots.length < 2) return;
+              const firstSettings = screenshots[0].mockupSettings || DEFAULT_MOCKUP_SETTINGS;
+              const newScreenshots = screenshots.map((s, i) => {
+                if (i === 0) return s;
+                // Skip linked screens (they share settings with previous)
+                if (s.linkedMockupIndex !== undefined) return s;
 
-              // Only update offsetY, preserve everything else including not setting scale
-              const currentSettings = s.mockupSettings;
-              return {
-                ...s,
-                mockupSettings: {
-                  offsetX: currentSettings?.offsetX ?? 0,
-                  offsetY: firstSettings.offsetY,
-                  rotation: currentSettings?.rotation ?? 0,
-                  linkedToNext: currentSettings?.linkedToNext
-                  // Don't set scale - let it fall back to style.mockupScale
-                }
-              };
-            });
-            onScreenshotsChange(newScreenshots);
-          }}
-          style={{
-            padding: '6px 12px',
-            fontSize: '11px',
-            fontWeight: 500,
-            border: '1px solid #FF6B4A',
-            borderRadius: '6px',
-            backgroundColor: '#f0f7ff',
-            color: '#FF6B4A',
-            cursor: 'pointer'
-          }}
-        >
-          Align to First
-        </button>
+                // Only update offsetY, preserve everything else including not setting scale
+                const currentSettings = s.mockupSettings;
+                return {
+                  ...s,
+                  mockupSettings: {
+                    offsetX: currentSettings?.offsetX ?? 0,
+                    offsetY: firstSettings.offsetY,
+                    rotation: currentSettings?.rotation ?? 0,
+                    linkedToNext: currentSettings?.linkedToNext
+                    // Don't set scale - let it fall back to style.mockupScale
+                  }
+                };
+              });
+              onScreenshotsChange(newScreenshots);
+            }}
+            style={{
+              padding: '6px 12px',
+              fontSize: '11px',
+              fontWeight: 500,
+              border: '1px solid #FF6B4A',
+              borderRadius: '6px',
+              backgroundColor: '#f0f7ff',
+              color: '#FF6B4A',
+              cursor: 'pointer'
+            }}
+          >
+            Align to First
+          </button>
 
-        {/* Reset button */}
-        <button
-          onClick={() => {
-            const newScreenshots = screenshots.map(s => {
-              const { mockupSettings: _, linkedMockupIndex: __, ...rest } = s;
-              return rest;
-            });
-            onScreenshotsChange(newScreenshots);
-          }}
-          style={{
-            padding: '6px 12px',
-            fontSize: '11px',
-            fontWeight: 500,
-            border: '1px solid #d1d1d6',
-            borderRadius: '6px',
-            backgroundColor: '#fff',
-            color: '#666',
-            cursor: 'pointer'
-          }}
-        >
-          Reset Layout
-        </button>
-      </div>
+          {/* Reset button */}
+          <button
+            onClick={() => {
+              const newScreenshots = screenshots.map(s => {
+                const { mockupSettings: _, linkedMockupIndex: __, ...rest } = s;
+                return rest;
+              });
+              onScreenshotsChange(newScreenshots);
+            }}
+            style={{
+              padding: '6px 12px',
+              fontSize: '11px',
+              fontWeight: 500,
+              border: '1px solid #d1d1d6',
+              borderRadius: '6px',
+              backgroundColor: '#fff',
+              color: '#666',
+              cursor: 'pointer'
+            }}
+          >
+            Reset Layout
+          </button>
+        </div>
+      )}
 
       <div style={{
         display: 'flex',
@@ -1947,43 +1968,46 @@ export const ScreensFlowEditor: React.FC<Props> = ({
                     onUnlink={() => unlinkScreens(item.index1)}
                     translationData={translationData}
                     selectedLanguage={selectedLanguage}
+                    readOnly={readOnly}
                   />
                 </div>
-                {/* Text inputs for linked pair */}
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  {[item.index1, item.index2].map((idx) => (
-                    <input
-                      key={idx}
-                      type="text"
-                      value={getTextValue(screenshots[idx], idx)}
-                      onChange={(e) => {
-                        if (isEditingTranslation) {
-                          handleTranslatedTextChange(idx, e.target.value);
-                        } else {
-                          handleTextChange(screenshots[idx].id, e.target.value);
-                        }
-                      }}
-                      placeholder={`Screen ${idx + 1} headline`}
-                      style={{
-                        flex: 1,
-                        padding: '8px 10px',
-                        fontSize: '12px',
-                        border: '1px solid #e0e0e5',
-                        borderRadius: '8px',
-                        outline: 'none',
-                        minWidth: 0
-                      }}
-                      onFocus={(e) => {
-                        e.target.style.borderColor = '#FF6B4A';
-                        e.target.style.boxShadow = '0 0 0 2px rgba(255, 107, 74, 0.1)';
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.borderColor = '#e0e0e5';
-                        e.target.style.boxShadow = 'none';
-                      }}
-                    />
-                  ))}
-                </div>
+                {/* Text inputs for linked pair - hide in readOnly mode */}
+                {!readOnly && (
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    {[item.index1, item.index2].map((idx) => (
+                      <input
+                        key={idx}
+                        type="text"
+                        value={getTextValue(screenshots[idx], idx)}
+                        onChange={(e) => {
+                          if (isEditingTranslation) {
+                            handleTranslatedTextChange(idx, e.target.value);
+                          } else {
+                            handleTextChange(screenshots[idx].id, e.target.value);
+                          }
+                        }}
+                        placeholder={`Screen ${idx + 1} headline`}
+                        style={{
+                          flex: 1,
+                          padding: '8px 10px',
+                          fontSize: '12px',
+                          border: '1px solid #e0e0e5',
+                          borderRadius: '8px',
+                          outline: 'none',
+                          minWidth: 0
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = '#FF6B4A';
+                          e.target.style.boxShadow = '0 0 0 2px rgba(255, 107, 74, 0.1)';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = '#e0e0e5';
+                          e.target.style.boxShadow = 'none';
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             );
           } else {
@@ -1992,36 +2016,38 @@ export const ScreensFlowEditor: React.FC<Props> = ({
             if (isLastLinkedScreen) return null; // Skip - already rendered in pair
 
             return (
-              <div key={`${screen.id}-scale-${style.mockupScale}`} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div key={`${screen.id}-scale-${style.mockupScale}`} style={{ display: 'flex', flexDirection: 'column', gap: readOnly ? '0' : '8px' }}>
                 <div style={{ position: 'relative' }}>
-                  {/* Delete button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemoveScreenshot(screen.id);
-                    }}
-                    style={{
-                      position: 'absolute',
-                      top: '-8px',
-                      right: '-8px',
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: '50%',
-                      border: 'none',
-                      backgroundColor: '#ff3b30',
-                      color: '#fff',
-                      fontSize: '14px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      zIndex: 10,
-                      boxShadow: '0 2px 6px rgba(255,59,48,0.4)'
-                    }}
-                    title="Remove screenshot"
-                  >
-                    ×
-                  </button>
+                  {/* Delete button - hide in readOnly mode */}
+                  {!readOnly && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveScreenshot(screen.id);
+                      }}
+                      style={{
+                        position: 'absolute',
+                        top: '-8px',
+                        right: '-8px',
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        border: 'none',
+                        backgroundColor: '#ff3b30',
+                        color: '#fff',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 10,
+                        boxShadow: '0 2px 6px rgba(255,59,48,0.4)'
+                      }}
+                      title="Remove screenshot"
+                    >
+                      ×
+                    </button>
+                  )}
                   <SingleScreenPreview
                     key={`single-${item.index}-scale-${style.mockupScale}`}
                     screenshot={screen}
@@ -2036,45 +2062,48 @@ export const ScreensFlowEditor: React.FC<Props> = ({
                     translationData={translationData}
                     selectedLanguage={selectedLanguage}
                     allScreenshots={screenshots}
+                    readOnly={readOnly}
                   />
                 </div>
-                {/* Text input below preview */}
-                <input
-                  type="text"
-                  value={getTextValue(screen, item.index)}
-                  onChange={(e) => {
-                    if (isEditingTranslation) {
-                      handleTranslatedTextChange(item.index, e.target.value);
-                    } else {
-                      handleTextChange(screen.id, e.target.value);
-                    }
-                  }}
-                  placeholder={`Screen ${item.index + 1} headline`}
-                  style={{
-                    width: '100%',
-                    padding: '8px 10px',
-                    fontSize: '12px',
-                    border: '1px solid #e0e0e5',
-                    borderRadius: '8px',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = '#FF6B4A';
-                    e.target.style.boxShadow = '0 0 0 2px rgba(255, 107, 74, 0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = '#e0e0e5';
-                    e.target.style.boxShadow = 'none';
-                  }}
-                />
+                {/* Text input below preview - hide in readOnly mode */}
+                {!readOnly && (
+                  <input
+                    type="text"
+                    value={getTextValue(screen, item.index)}
+                    onChange={(e) => {
+                      if (isEditingTranslation) {
+                        handleTranslatedTextChange(item.index, e.target.value);
+                      } else {
+                        handleTextChange(screen.id, e.target.value);
+                      }
+                    }}
+                    placeholder={`Screen ${item.index + 1} headline`}
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      fontSize: '12px',
+                      border: '1px solid #e0e0e5',
+                      borderRadius: '8px',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#FF6B4A';
+                      e.target.style.boxShadow = '0 0 0 2px rgba(255, 107, 74, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#e0e0e5';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                  />
+                )}
               </div>
             );
           }
         })}
 
-        {/* Add more screenshots */}
-        {screenshots.length < maxScreenshots && (
+        {/* Add more screenshots - hide in readOnly mode */}
+        {!readOnly && screenshots.length < maxScreenshots && (
           <UploadCard
             onFilesSelected={handleFilesSelected}
             onAddTextSlide={handleAddTextSlide}

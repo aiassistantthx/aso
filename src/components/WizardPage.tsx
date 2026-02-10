@@ -454,6 +454,13 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
     prevProjectRef.current = key;
   }, [project?.selectedTemplateId, project?.generatedHeadlines?.length, project?.uploadedScreenshots?.length]);
 
+  // Initialize editor data when reaching step 6 (for both Review and Editor tabs)
+  useEffect(() => {
+    if (step === 6 && !editorInitialized) {
+      initializeEditor();
+    }
+  }, [step, editorInitialized, initializeEditor]);
+
   // Debounced autosave from editor changes
   const scheduleEditorSave = useCallback((data: Record<string, unknown>) => {
     if (!project) return;
@@ -2214,44 +2221,51 @@ if (typeof document !== 'undefined') {
     /* Wizard responsive styles */
     @media (max-width: 768px) {
       .wizard-content {
-        padding: 16px !important;
+        padding: 12px !important;
       }
       .wizard-step-content {
-        padding: 20px !important;
-        border-radius: 16px !important;
+        padding: 16px !important;
+        border-radius: 14px !important;
       }
       .wizard-step-title {
-        font-size: 20px !important;
+        font-size: 18px !important;
       }
       .wizard-step-desc {
-        font-size: 14px !important;
+        font-size: 13px !important;
+        margin-bottom: 16px !important;
       }
       .wizard-step-bar {
-        gap: 4px !important;
-        padding: 12px 16px !important;
+        gap: 2px !important;
+        padding: 8px 10px !important;
+        overflow-x: auto !important;
+        justify-content: flex-start !important;
+        -webkit-overflow-scrolling: touch;
       }
       .wizard-step-item {
-        min-width: 50px !important;
+        min-width: 36px !important;
+        flex-shrink: 0 !important;
       }
       .wizard-step-label {
-        font-size: 9px !important;
+        display: none !important;
       }
       .wizard-step-actions {
         flex-direction: column-reverse !important;
-        gap: 12px !important;
+        gap: 10px !important;
+        margin-top: 20px !important;
+        padding-top: 16px !important;
       }
       .wizard-step-actions > button {
         width: 100% !important;
       }
       .wizard-screenshots-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 8px !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 6px !important;
       }
       .wizard-headline-item {
-        padding: 12px !important;
+        padding: 10px !important;
       }
       .wizard-headline-text {
-        font-size: 14px !important;
+        font-size: 13px !important;
       }
       .wizard-tabs {
         flex-wrap: wrap !important;
@@ -2272,9 +2286,11 @@ if (typeof document !== 'undefined') {
       }
       .wizard-template-grid {
         grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
       }
       .wizard-layout-grid {
         grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
       }
       .wizard-metadata-panel {
         max-width: 100% !important;
@@ -2282,10 +2298,10 @@ if (typeof document !== 'undefined') {
     }
     @media (max-width: 480px) {
       .wizard-step-title {
-        font-size: 18px !important;
+        font-size: 16px !important;
       }
       .wizard-screenshots-grid {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: repeat(3, 1fr) !important;
       }
       .wizard-language-grid {
         grid-template-columns: 1fr !important;
