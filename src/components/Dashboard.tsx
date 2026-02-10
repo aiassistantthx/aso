@@ -241,7 +241,7 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
   const handleNewProject = async () => {
     try {
       const project = await unifiedApi.create('wizard');
-      onNavigate('wizard-editor', project.id);
+      onNavigate('project', project.id);
     } catch (err) {
       if (err instanceof ApiError && err.limit === 'wizardProjects') {
         window.alert(err.message);

@@ -11,7 +11,6 @@ import { AppHeader } from './AppHeader';
 
 // Type alias for compatibility
 type ProjectFull = UnifiedProjectFull;
-type DragMode = 'mockup' | 'text';
 
 interface Props {
   projectId: string;
@@ -180,7 +179,6 @@ export const Editor: React.FC<Props> = ({ projectId, onBack, onNavigate }) => {
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
-  const [dragMode, setDragMode] = useState<DragMode>('mockup');
 
   // Load project from API
   useEffect(() => {
@@ -530,13 +528,10 @@ export const Editor: React.FC<Props> = ({ projectId, onBack, onNavigate }) => {
           onSelectIndex={setSelectedPreviewIndex}
           onScreenshotsChange={handleScreenshotsChange}
           style={styleConfig}
-          onStyleChange={setStyleConfig}
           deviceSize={deviceSize}
           translationData={translationData}
           selectedLanguage={selectedLanguage}
           onTranslationChange={setTranslationData}
-          dragMode={dragMode}
-          onDragModeChange={setDragMode}
         />
       </div>
 
@@ -563,7 +558,6 @@ export const Editor: React.FC<Props> = ({ projectId, onBack, onNavigate }) => {
                 translationData={translationData}
                 selectedLanguage={selectedLanguage}
                 onTranslationChange={setTranslationData}
-                dragMode={dragMode}
               />
             </div>
 

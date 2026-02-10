@@ -1,40 +1,9 @@
 import React from 'react';
-import { StyleConfig, DeviceSize, DEVICE_SIZES, Screenshot, ScreenshotStyleOverride, TranslationData, PerLanguageScreenshotStyle, StarRatingDecoration, LaurelDecoration, BackgroundPatternType } from '../types';
+import { StyleConfig, DeviceSize, Screenshot, ScreenshotStyleOverride, TranslationData, PerLanguageScreenshotStyle, BackgroundPatternType } from '../types';
 import { APP_STORE_LANGUAGES } from '../constants/languages';
 import { Toggle, Slider, ColorPicker } from './ui';
 import { colors } from '../styles/common';
 import { THEME_PRESETS, THEME_PRESET_GROUPS, ThemePreset, PATTERN_OPTIONS } from '../constants/templates';
-
-// Default decorations
-const createDefaultStars = (deviceSize: DeviceSize): StarRatingDecoration => {
-  const dimensions = DEVICE_SIZES[deviceSize];
-  return {
-    type: 'stars',
-    enabled: true,
-    count: 5,
-    size: 120,
-    color: '#FFD700',
-    position: { x: dimensions.width / 2, y: dimensions.height * 0.15 }
-  };
-};
-
-const createDefaultLaurel = (deviceSize: DeviceSize): LaurelDecoration => {
-  const dimensions = DEVICE_SIZES[deviceSize];
-  return {
-    type: 'laurel',
-    enabled: true,
-    size: 1.5,
-    color: '#E91E8B',
-    position: { x: dimensions.width / 2, y: dimensions.height * 0.5 },
-    textBlocks: [
-      { text: 'You need only', size: 60, bold: false },
-      { text: '1', size: 200, bold: true },
-      { text: 'App to create|Viral Video', size: 50, bold: false }
-    ],
-    textColor: '#000000',
-    fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif'
-  };
-};
 
 interface Props {
   style: StyleConfig;
@@ -46,7 +15,6 @@ interface Props {
   translationData?: TranslationData | null;
   selectedLanguage?: string;
   onTranslationChange?: (data: TranslationData) => void;
-  dragMode?: 'mockup' | 'text';
 }
 
 const getLanguageName = (code: string): string => {
@@ -236,14 +204,13 @@ const FONT_OPTIONS = [
 export const StyleEditor: React.FC<Props> = ({
   style,
   onStyleChange,
-  deviceSize,
+  deviceSize: _deviceSize,
   screenshots,
   selectedIndex,
   onScreenshotsChange,
   translationData,
   selectedLanguage = 'all',
-  onTranslationChange,
-  dragMode = 'mockup'
+  onTranslationChange
 }) => {
   const selectedScreenshot = screenshots[selectedIndex];
   const styleOverride = selectedScreenshot?.styleOverride;
@@ -300,12 +267,6 @@ export const StyleEditor: React.FC<Props> = ({
   };
 
   const hasPerLangOverride = isEditingTranslation && !!translationData?.perLanguageStyles?.[selectedLanguage]?.[selectedIndex];
-  const isTextMode = dragMode === 'text';
-  const baseFontSize = 72;
-  const effectiveFontSize = isEditingTranslation
-    ? (getPerLangStyle().fontSize ?? style.fontSize)
-    : style.fontSize;
-  const textScaleValue = Math.round(((effectiveFontSize || baseFontSize) / baseFontSize) * 100);
   const mockupScaleValue = Math.round((isEditingTranslation
     ? (getPerLangStyle().mockupScale ?? style.mockupScale ?? 1.0)
     : (style.mockupScale ?? 1.0)) * 100);
@@ -436,28 +397,19 @@ export const StyleEditor: React.FC<Props> = ({
 
   return (
     <div style={cssStyles.container}>
-      {/* Scale slider */}
+      {/* Mockup Scale slider */}
       <div style={{ marginBottom: '12px' }}>
         <Slider
-          label={isTextMode ? 'Text Scale' : 'Mockup Scale'}
+          label="Mockup Scale"
           min={30}
           max={200}
-          value={isTextMode ? textScaleValue : mockupScaleValue}
+          value={mockupScaleValue}
           onChange={(value) => {
-            if (isTextMode) {
-              const newFontSize = Math.max(8, Math.round((value / 100) * baseFontSize));
-              if (isEditingTranslation) {
-                updatePerLangStyle({ fontSize: newFontSize });
-              } else {
-                updateStyle('fontSize', newFontSize);
-              }
+            const newScale = value / 100;
+            if (isEditingTranslation) {
+              updatePerLangStyle({ mockupScale: newScale });
             } else {
-              const newScale = value / 100;
-              if (isEditingTranslation) {
-                updatePerLangStyle({ mockupScale: newScale });
-              } else {
-                updateStyle('mockupScale', newScale);
-              }
+              updateStyle('mockupScale', newScale);
             }
           }}
           unit="%"
@@ -617,78 +569,7 @@ export const StyleEditor: React.FC<Props> = ({
       <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '12px' }}>
         <ColorPicker label="Text Color" value={effectiveTextColor} onChange={(color) => updateScreenshotStyle({ textColor: color })} />
         <ColorPicker label="Highlight" value={style.highlightColor || '#FFE135'} onChange={(color) => updateStyle('highlightColor', color)} />
-        <button
-          onClick={() => {
-            if (isEditingTranslation) {
-              updatePerLangStyle({ textOffset: { x: 0, y: getPerLangStyle().textOffset?.y ?? style.textOffset.y } });
-            } else {
-              updateStyle('textOffset', { ...style.textOffset, x: 0 });
-            }
-          }}
-          style={{ padding: '8px 16px', fontSize: '12px', fontWeight: 500, border: `1px solid ${colors.borderLight}`, borderRadius: '8px', backgroundColor: colors.white, color: colors.text, cursor: 'pointer', whiteSpace: 'nowrap' }}
-        >
-          ↔️ Center Text
-        </button>
       </div>
-
-      {/* Decorations */}
-      {selectedScreenshot && (
-        <>
-          <div style={cssStyles.sectionTitle as React.CSSProperties}>
-            <span>✨</span> Decorations
-            <span style={{ fontWeight: 400, fontSize: '10px', color: colors.textSecondary, marginLeft: '6px' }}>Screen {selectedIndex + 1}</span>
-          </div>
-
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-            <button
-              onClick={() => {
-                const decorations = Array.isArray(selectedScreenshot.decorations)
-                  ? selectedScreenshot.decorations
-                  : [];
-                const newDecoration = createDefaultStars(deviceSize);
-                const newScreenshots = screenshots.map((s, i) => i === selectedIndex ? { ...s, decorations: [...decorations, newDecoration] } : s);
-                onScreenshotsChange(newScreenshots);
-              }}
-              style={{ flex: 1, padding: '10px 16px', fontSize: '13px', fontWeight: 500, border: `1px solid ${colors.borderLight}`, borderRadius: '8px', backgroundColor: colors.white, color: colors.text, cursor: 'pointer' }}
-            >
-              ⭐ Add Stars
-            </button>
-            <button
-              onClick={() => {
-                const decorations = Array.isArray(selectedScreenshot.decorations)
-                  ? selectedScreenshot.decorations
-                  : [];
-                const newDecoration = createDefaultLaurel(deviceSize);
-                const newScreenshots = screenshots.map((s, i) => i === selectedIndex ? { ...s, decorations: [...decorations, newDecoration] } : s);
-                onScreenshotsChange(newScreenshots);
-              }}
-              style={{ flex: 1, padding: '10px 16px', fontSize: '13px', fontWeight: 500, border: `1px solid ${colors.borderLight}`, borderRadius: '8px', backgroundColor: colors.white, color: colors.text, cursor: 'pointer' }}
-            >
-              🏆 Add Laurel
-            </button>
-          </div>
-
-          {selectedScreenshot.decorations && selectedScreenshot.decorations.length > 0 && (
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {selectedScreenshot.decorations.map((dec, decIndex) => (
-                <div key={decIndex} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', backgroundColor: colors.background, borderRadius: '8px', fontSize: '13px' }}>
-                  <span>{dec.type === 'stars' ? '⭐ Stars' : '🏆 Laurel'}</span>
-                  <button
-                    onClick={() => {
-                      const newDecorations = selectedScreenshot.decorations!.filter((_, i) => i !== decIndex);
-                      const newScreenshots = screenshots.map((s, i) => i === selectedIndex ? { ...s, decorations: newDecorations } : s);
-                      onScreenshotsChange(newScreenshots);
-                    }}
-                    style={{ padding: '4px 8px', fontSize: '11px', border: 'none', borderRadius: '6px', backgroundColor: '#ff3b30', color: '#fff', cursor: 'pointer', fontWeight: 500 }}
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
     </div>
   );
 };

@@ -1,7 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Screenshot, StyleConfig, DeviceSize, DEVICE_SIZES, TranslationData, ScreenshotMockupSettings, MockupStyle, Decoration, StarRatingDecoration, LaurelDecoration } from '../types';
-
-type DragMode = 'mockup' | 'text';
+import { Screenshot, StyleConfig, DeviceSize, DEVICE_SIZES, TranslationData, ScreenshotMockupSettings, MockupStyle } from '../types';
 
 interface Props {
   screenshots: Screenshot[];
@@ -9,13 +7,10 @@ interface Props {
   onSelectIndex: (index: number) => void;
   onScreenshotsChange: (screenshots: Screenshot[]) => void;
   style: StyleConfig;
-  onStyleChange: (style: StyleConfig) => void;
   deviceSize: DeviceSize;
   translationData?: TranslationData | null;
   selectedLanguage?: string;
   onTranslationChange?: (data: TranslationData) => void;
-  dragMode?: DragMode;
-  onDragModeChange?: (mode: DragMode) => void;
 }
 
 const DEFAULT_MOCKUP_SETTINGS: ScreenshotMockupSettings = {
@@ -279,14 +274,12 @@ const LinkedPairCanvas: React.FC<{
   index2: number;
   selectedIndex: number;
   style: StyleConfig;
-  onStyleChange: (style: StyleConfig) => void;
   deviceSize: DeviceSize;
   onSelectIndex: (index: number) => void;
   onBothSettingsChange: (s1: ScreenshotMockupSettings, s2: ScreenshotMockupSettings) => void;
   onUnlink: () => void;
   translationData?: TranslationData | null;
   selectedLanguage?: string;
-  dragMode: DragMode;
 }> = ({
   screen1,
   screen2,
@@ -294,14 +287,12 @@ const LinkedPairCanvas: React.FC<{
   index2,
   selectedIndex,
   style,
-  onStyleChange,
   deviceSize,
   onSelectIndex,
   onBothSettingsChange,
   onUnlink,
   translationData,
-  selectedLanguage = 'all',
-  dragMode
+  selectedLanguage = 'all'
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -444,11 +435,6 @@ const LinkedPairCanvas: React.FC<{
         };
         drawText(ctx, getDisplayText(screen1, index1), 0, previewHeight, singleScreenWidth, style, screen1.styleOverride, mockupInfo, screen1TextOffset);
         drawText(ctx, getDisplayText(screen2, index2), singleScreenWidth, previewHeight, singleScreenWidth, style, screen2.styleOverride, mockupInfo, screen2TextOffset);
-
-        // Draw decorations for both screens
-        const decorationScale = previewHeight / dimensions.height;
-        drawDecorations(ctx, screen1.decorations, decorationScale, 0);
-        drawDecorations(ctx, screen2.decorations, decorationScale, singleScreenWidth);
       };
       img.src = screen1.preview;
     } else {
@@ -463,17 +449,12 @@ const LinkedPairCanvas: React.FC<{
       };
       drawText(ctx, getDisplayText(screen1, index1), 0, previewHeight, singleScreenWidth, style, screen1.styleOverride, undefined, screen1TextOffset);
       drawText(ctx, getDisplayText(screen2, index2), singleScreenWidth, previewHeight, singleScreenWidth, style, screen2.styleOverride, undefined, screen2TextOffset);
-
-      // Draw decorations for both screens
-      const decorationScale = previewHeight / dimensions.height;
-      drawDecorations(ctx, screen1.decorations, decorationScale, 0);
-      drawDecorations(ctx, screen2.decorations, decorationScale, singleScreenWidth);
     }
 
     return () => {
       isCancelled = true;
     };
-  }, [dimensions, style, style.mockupScale, style.mockupAlignment, style.mockupVisibility, style.textPosition, style.paddingTop, style.paddingBottom, style.fontSize, style.textOffset, screen1, screen1.decorations, screen2, screen2.decorations, localOffsetX, localOffsetY, localRotation, index1, index2, translationData, selectedLanguage]);
+  }, [dimensions, style, style.mockupScale, style.mockupAlignment, style.mockupVisibility, style.textPosition, style.paddingTop, style.paddingBottom, style.fontSize, style.textOffset, screen1, screen2, localOffsetX, localOffsetY, localRotation, index1, index2, translationData, selectedLanguage]);
 
   // Handle drag
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -490,25 +471,13 @@ const LinkedPairCanvas: React.FC<{
     const deltaX = ((e.clientX - dragStart.x) / (rect.width / 2)) * 100;
     const deltaY = ((e.clientY - dragStart.y) / rect.height) * 100;
 
-    if (dragMode === 'text') {
-      // Update text offset in style
-      onStyleChange({
-        ...style,
-        textOffset: {
-          x: Math.max(-50, Math.min(50, (style.textOffset?.x || 0) + deltaX)),
-          y: Math.max(-50, Math.min(50, (style.textOffset?.y || 0) + deltaY))
-        }
-      });
-      setDragStart({ x: e.clientX, y: e.clientY });
-    } else {
-      const newOffsetX = Math.max(-50, Math.min(150, localOffsetX + deltaX));
-      const newOffsetY = Math.max(-30, Math.min(30, localOffsetY + deltaY));
+    const newOffsetX = Math.max(-50, Math.min(150, localOffsetX + deltaX));
+    const newOffsetY = Math.max(-30, Math.min(30, localOffsetY + deltaY));
 
-      setLocalOffsetX(newOffsetX);
-      setLocalOffsetY(newOffsetY);
-      setDragStart({ x: e.clientX, y: e.clientY });
-    }
-  }, [isDragging, dragStart, localOffsetX, localOffsetY, dragMode, style, onStyleChange]);
+    setLocalOffsetX(newOffsetX);
+    setLocalOffsetY(newOffsetY);
+    setDragStart({ x: e.clientX, y: e.clientY });
+  }, [isDragging, dragStart, localOffsetX, localOffsetY]);
 
   const handleMouseUp = useCallback(() => {
     if (isDragging) {
@@ -564,16 +533,14 @@ const LinkedPairCanvas: React.FC<{
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       {/* Position indicator - above canvas */}
       <div style={{
-        backgroundColor: dragMode === 'text' ? 'rgba(0,113,227,0.85)' : 'rgba(0,0,0,0.7)',
+        backgroundColor: 'rgba(0,0,0,0.7)',
         color: '#fff',
         padding: '4px 12px',
         borderRadius: '8px',
         fontSize: '11px',
         marginBottom: '8px'
       }}>
-        {dragMode === 'text'
-          ? `Text: X:${Math.round(style.textOffset?.x || 0)}% Y:${Math.round(style.textOffset?.y || 0)}%`
-          : `X:${Math.round(localOffsetX)}% Y:${Math.round(localOffsetY)}% R:${localRotation}°`}
+        {`X:${Math.round(localOffsetX)}% Y:${Math.round(localOffsetY)}% R:${localRotation}°`}
       </div>
 
       <div
@@ -1076,143 +1043,6 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
   return lines;
 }
 
-// Draw star shape
-function drawStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, outerRadius: number, innerRadius: number) {
-  ctx.beginPath();
-  for (let i = 0; i < 5; i++) {
-    const outerAngle = (i * 72 - 90) * Math.PI / 180;
-    const innerAngle = ((i * 72) + 36 - 90) * Math.PI / 180;
-
-    if (i === 0) {
-      ctx.moveTo(cx + outerRadius * Math.cos(outerAngle), cy + outerRadius * Math.sin(outerAngle));
-    } else {
-      ctx.lineTo(cx + outerRadius * Math.cos(outerAngle), cy + outerRadius * Math.sin(outerAngle));
-    }
-    ctx.lineTo(cx + innerRadius * Math.cos(innerAngle), cy + innerRadius * Math.sin(innerAngle));
-  }
-  ctx.closePath();
-  ctx.fill();
-}
-
-// Draw stars decoration
-function drawStarsDecoration(
-  ctx: CanvasRenderingContext2D,
-  decoration: StarRatingDecoration,
-  scale: number,
-  offsetX: number = 0
-) {
-  if (decoration.enabled === false) return;
-
-  const starSize = decoration.size * scale;
-  const starSpacing = starSize * 1.2;
-  const totalWidth = (decoration.count - 1) * starSpacing;
-  const startX = (decoration.position.x * scale + offsetX) - totalWidth / 2;
-  const y = decoration.position.y * scale;
-
-  ctx.fillStyle = decoration.color;
-
-  for (let i = 0; i < decoration.count; i++) {
-    const x = startX + i * starSpacing;
-    drawStar(ctx, x, y, starSize / 2, starSize / 4);
-  }
-}
-
-// Draw laurel wreath
-function drawLaurelWreath(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string) {
-  ctx.save();
-  ctx.fillStyle = color;
-
-  const leafCount = 6;
-  const baseRadius = 40 * size;
-
-  // Left wreath
-  for (let i = 0; i < leafCount; i++) {
-    const angle = -Math.PI / 2 + (i - leafCount / 2 + 0.5) * 0.35;
-    const leafX = x - baseRadius + Math.cos(angle) * baseRadius * 0.3;
-    const leafY = y + Math.sin(angle) * baseRadius;
-
-    ctx.save();
-    ctx.translate(leafX, leafY);
-    ctx.rotate(angle + Math.PI / 4);
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 8 * size, 16 * size, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  // Right wreath (mirrored)
-  for (let i = 0; i < leafCount; i++) {
-    const angle = -Math.PI / 2 + (i - leafCount / 2 + 0.5) * 0.35;
-    const leafX = x + baseRadius - Math.cos(angle) * baseRadius * 0.3;
-    const leafY = y + Math.sin(angle) * baseRadius;
-
-    ctx.save();
-    ctx.translate(leafX, leafY);
-    ctx.rotate(-angle - Math.PI / 4);
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 8 * size, 16 * size, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  ctx.restore();
-}
-
-// Draw laurel decoration with text
-function drawLaurelDecoration(
-  ctx: CanvasRenderingContext2D,
-  decoration: LaurelDecoration,
-  scale: number,
-  offsetX: number = 0
-) {
-  if (decoration.enabled === false) return;
-
-  const x = decoration.position.x * scale + offsetX;
-  const y = decoration.position.y * scale;
-  const size = decoration.size * scale;
-
-  // Draw wreath
-  drawLaurelWreath(ctx, x, y, size, decoration.color);
-
-  // Draw text blocks
-  if (decoration.textBlocks && decoration.textBlocks.length > 0) {
-    ctx.textAlign = 'center';
-    ctx.fillStyle = decoration.textColor;
-
-    let textY = y - (decoration.textBlocks.length * 20 * scale) / 2;
-
-    for (const block of decoration.textBlocks) {
-      const fontSize = block.size * scale * 0.15;
-      ctx.font = `${block.bold ? 'bold' : 'normal'} ${fontSize}px ${decoration.fontFamily}`;
-
-      // Handle multi-line text with | separator
-      const lines = block.text.split('|');
-      for (const line of lines) {
-        ctx.fillText(line.trim(), x, textY);
-        textY += fontSize * 1.2;
-      }
-    }
-  }
-}
-
-// Draw all decorations for a screenshot
-function drawDecorations(
-  ctx: CanvasRenderingContext2D,
-  decorations: Decoration[] | undefined,
-  scale: number,
-  offsetX: number = 0
-) {
-  if (!decorations || decorations.length === 0) return;
-
-  for (const decoration of decorations) {
-    if (decoration.type === 'stars') {
-      drawStarsDecoration(ctx, decoration as StarRatingDecoration, scale, offsetX);
-    } else if (decoration.type === 'laurel') {
-      drawLaurelDecoration(ctx, decoration as LaurelDecoration, scale, offsetX);
-    }
-  }
-}
-
 // Single screen preview (for unlinked screens)
 const SingleScreenPreview: React.FC<{
   screenshot: Screenshot;
@@ -1222,13 +1052,11 @@ const SingleScreenPreview: React.FC<{
   deviceSize: DeviceSize;
   onClick: () => void;
   onSettingsChange: (settings: ScreenshotMockupSettings) => void;
-  onStyleChange: (style: StyleConfig) => void;
   onLinkToNext: () => void;
   showLinkButton: boolean;
   translationData?: TranslationData | null;
   selectedLanguage?: string;
   allScreenshots: Screenshot[];
-  dragMode: DragMode;
 }> = ({
   screenshot,
   index,
@@ -1237,13 +1065,11 @@ const SingleScreenPreview: React.FC<{
   deviceSize,
   onClick,
   onSettingsChange,
-  onStyleChange,
   onLinkToNext,
   showLinkButton,
   translationData,
   selectedLanguage = 'all',
-  allScreenshots,
-  dragMode
+  allScreenshots
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1357,10 +1183,6 @@ const SingleScreenPreview: React.FC<{
           y: settings.textOffsetY ?? style.textOffset?.y ?? 0
         };
         drawText(ctx, getDisplayText(), 0, previewHeight, previewWidth, style, screenshot.styleOverride, mockupInfo, textOffsetOverride);
-
-        // Draw decorations
-        const decorationScale = previewHeight / dimensions.height;
-        drawDecorations(ctx, screenshot.decorations, decorationScale, 0);
       };
       img.src = mockupScreenshot;
     } else {
@@ -1369,12 +1191,8 @@ const SingleScreenPreview: React.FC<{
         y: settings.textOffsetY ?? style.textOffset?.y ?? 0
       };
       drawText(ctx, getDisplayText(), 0, previewHeight, previewWidth, style, screenshot.styleOverride, undefined, textOffsetOverride);
-
-      // Draw decorations
-      const decorationScale = previewHeight / dimensions.height;
-      drawDecorations(ctx, screenshot.decorations, decorationScale, 0);
     }
-  }, [screenshot, screenshot.decorations, style, style.mockupScale, style.mockupAlignment, style.mockupVisibility, style.textPosition, style.paddingTop, style.paddingBottom, style.fontSize, style.textColor, style.highlightColor, style.textOffset, deviceSize, settings, translationData, selectedLanguage, allScreenshots]);
+  }, [screenshot, style, style.mockupScale, style.mockupAlignment, style.mockupVisibility, style.textPosition, style.paddingTop, style.paddingBottom, style.fontSize, style.textColor, style.highlightColor, style.textOffset, deviceSize, settings, translationData, selectedLanguage, allScreenshots]);
 
   // Handle drag
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -1391,26 +1209,15 @@ const SingleScreenPreview: React.FC<{
     const deltaX = ((e.clientX - dragStart.x) / rect.width) * 100;
     const deltaY = ((e.clientY - dragStart.y) / rect.height) * 100;
 
-    if (dragMode === 'text') {
-      // Update per-screenshot text offset in mockupSettings
-      const currentTextX = settings.textOffsetX ?? style.textOffset?.x ?? 0;
-      const currentTextY = settings.textOffsetY ?? style.textOffset?.y ?? 0;
-      onSettingsChange({
-        ...settings,
-        textOffsetX: Math.max(-50, Math.min(50, currentTextX + deltaX)),
-        textOffsetY: Math.max(-50, Math.min(50, currentTextY + deltaY))
-      });
-    } else {
-      // Update mockup offset
-      onSettingsChange({
-        ...settings,
-        offsetX: Math.max(-80, Math.min(80, settings.offsetX + deltaX)),
-        offsetY: Math.max(-30, Math.min(30, settings.offsetY + deltaY))
-      });
-    }
+    // Update mockup offset
+    onSettingsChange({
+      ...settings,
+      offsetX: Math.max(-80, Math.min(80, settings.offsetX + deltaX)),
+      offsetY: Math.max(-30, Math.min(30, settings.offsetY + deltaY))
+    });
 
     setDragStart({ x: e.clientX, y: e.clientY });
-  }, [isDragging, dragStart, settings, onSettingsChange, dragMode, style, onStyleChange]);
+  }, [isDragging, dragStart, settings, onSettingsChange]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -1432,18 +1239,14 @@ const SingleScreenPreview: React.FC<{
   const previewWidth = previewHeight * aspectRatio;
 
   // Check if there's any offset to show
-  const textOffsetX = settings.textOffsetX ?? style.textOffset?.x ?? 0;
-  const textOffsetY = settings.textOffsetY ?? style.textOffset?.y ?? 0;
-  const hasOffset = dragMode === 'mockup'
-    ? (settings.offsetX !== 0 || settings.offsetY !== 0 || settings.rotation !== 0)
-    : (textOffsetX !== 0 || textOffsetY !== 0);
+  const hasOffset = settings.offsetX !== 0 || settings.offsetY !== 0 || settings.rotation !== 0;
 
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         {/* Position indicator - above canvas - always reserve space for consistent alignment */}
         <div style={{
-          backgroundColor: hasOffset ? (dragMode === 'text' ? 'rgba(0,113,227,0.85)' : 'rgba(0,0,0,0.7)') : 'transparent',
+          backgroundColor: hasOffset ? 'rgba(0,0,0,0.7)' : 'transparent',
           color: '#fff',
           padding: '3px 8px',
           borderRadius: '6px',
@@ -1452,9 +1255,7 @@ const SingleScreenPreview: React.FC<{
           minHeight: '18px',
           visibility: hasOffset ? 'visible' : 'hidden'
         }}>
-          {dragMode === 'text'
-            ? `Text: X:${Math.round(textOffsetX)}% Y:${Math.round(textOffsetY)}%`
-            : `X:${Math.round(settings.offsetX)}% Y:${Math.round(settings.offsetY)}%`}
+          {`X:${Math.round(settings.offsetX)}% Y:${Math.round(settings.offsetY)}%`}
         </div>
 
         <div
@@ -1775,17 +1576,11 @@ export const ScreensFlowEditor: React.FC<Props> = ({
   onSelectIndex,
   onScreenshotsChange,
   style,
-  onStyleChange,
   deviceSize,
   translationData,
   selectedLanguage = 'all',
-  onTranslationChange,
-  dragMode: dragModeProp,
-  onDragModeChange
+  onTranslationChange
 }) => {
-  const [internalDragMode, setInternalDragMode] = useState<DragMode>('mockup');
-  const dragMode = dragModeProp ?? internalDragMode;
-  const setDragMode = onDragModeChange ?? setInternalDragMode;
   const maxScreenshots = 10;
 
   // Handle file upload
@@ -2021,51 +1816,8 @@ export const ScreensFlowEditor: React.FC<Props> = ({
           Screens ({screenshots.length}/{maxScreenshots})
         </span>
 
-        {/* Drag mode toggle */}
-        <div style={{
-          display: 'flex',
-          backgroundColor: '#f0f0f5',
-          borderRadius: '8px',
-          padding: '2px'
-        }}>
-          <button
-            onClick={() => setDragMode('mockup')}
-            style={{
-              padding: '6px 12px',
-              fontSize: '12px',
-              fontWeight: 500,
-              border: 'none',
-              borderRadius: '6px',
-              backgroundColor: dragMode === 'mockup' ? '#fff' : 'transparent',
-              color: dragMode === 'mockup' ? '#FF6B4A' : '#666',
-              cursor: 'pointer',
-              boxShadow: dragMode === 'mockup' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-              transition: 'all 0.2s'
-            }}
-          >
-            Mockup
-          </button>
-          <button
-            onClick={() => setDragMode('text')}
-            style={{
-              padding: '6px 12px',
-              fontSize: '12px',
-              fontWeight: 500,
-              border: 'none',
-              borderRadius: '6px',
-              backgroundColor: dragMode === 'text' ? '#fff' : 'transparent',
-              color: dragMode === 'text' ? '#FF6B4A' : '#666',
-              cursor: 'pointer',
-              boxShadow: dragMode === 'text' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-              transition: 'all 0.2s'
-            }}
-          >
-            Text
-          </button>
-        </div>
-
         <span style={{ fontSize: '12px', color: '#86868b', flex: 1 }}>
-          Drag {dragMode === 'mockup' ? 'mockups' : 'text'} to position • Click ○ to link screens
+          Drag mockups to position • Click ○ to link screens
         </span>
 
         {/* Align to first button - only aligns Y position, keeps rotation */}
@@ -2151,14 +1903,12 @@ export const ScreensFlowEditor: React.FC<Props> = ({
                     index2={item.index2}
                     selectedIndex={selectedIndex}
                     style={style}
-                    onStyleChange={onStyleChange}
                     deviceSize={deviceSize}
                     onSelectIndex={onSelectIndex}
                     onBothSettingsChange={(s1, s2) => updateBothSettings(item.index1, item.index2, s1, s2)}
                     onUnlink={() => unlinkScreens(item.index1)}
                     translationData={translationData}
                     selectedLanguage={selectedLanguage}
-                    dragMode={dragMode}
                   />
                 </div>
                 {/* Text inputs for linked pair */}
@@ -2243,13 +1993,11 @@ export const ScreensFlowEditor: React.FC<Props> = ({
                     deviceSize={deviceSize}
                     onClick={() => onSelectIndex(item.index)}
                     onSettingsChange={(settings) => updateSettings(item.index, settings)}
-                    onStyleChange={onStyleChange}
                     onLinkToNext={() => linkScreens(item.index)}
                     showLinkButton={item.index < screenshots.length - 1}
                     translationData={translationData}
                     selectedLanguage={selectedLanguage}
                     allScreenshots={screenshots}
-                    dragMode={dragMode}
                   />
                 </div>
                 {/* Text input below preview */}
