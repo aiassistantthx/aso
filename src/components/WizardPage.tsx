@@ -2069,18 +2069,25 @@ if (typeof document !== 'undefined') {
         margin-bottom: 16px !important;
       }
       .wizard-step-bar {
-        gap: 2px !important;
-        padding: 8px 10px !important;
+        gap: 4px !important;
+        padding: 12px 16px !important;
         overflow-x: auto !important;
-        justify-content: flex-start !important;
+        justify-content: space-between !important;
         -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      .wizard-step-bar::-webkit-scrollbar {
+        display: none;
       }
       .wizard-step-item {
-        min-width: 36px !important;
+        min-width: 55px !important;
         flex-shrink: 0 !important;
       }
       .wizard-step-label {
-        display: none !important;
+        display: block !important;
+        font-size: 9px !important;
+        white-space: nowrap !important;
       }
       .wizard-step-actions {
         flex-direction: column-reverse !important;
