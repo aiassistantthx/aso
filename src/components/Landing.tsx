@@ -32,9 +32,9 @@ const SectionDivider: React.FC<{ style?: React.CSSProperties }> = ({ style }) =>
 
 // Section header with decorative lines
 const SectionHeader: React.FC<{ label: string; title: string; subtitle: string }> = ({ label, title, subtitle }) => (
-  <div style={styles.sectionHeader}>
+  <div style={styles.sectionHeader} className="landing-section-header">
     <span style={styles.sectionLabel}>{label}</span>
-    <h2 style={styles.sectionTitle}>{title}</h2>
+    <h2 style={styles.sectionTitle} className="landing-section-title">{title}</h2>
     <div style={styles.sectionTitleLine} />
     <p style={styles.sectionSubtitle}>{subtitle}</p>
   </div>
@@ -58,7 +58,7 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
         backdropFilter: scrolled ? 'blur(20px)' : 'none',
         borderBottom: scrolled ? `1px solid ${colors.borderLight}` : 'none',
       }}>
-        <div style={styles.navInner}>
+        <div style={styles.navInner} className="landing-nav-inner">
           <div style={styles.logo}>
             <div style={styles.logoIcon}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -67,62 +67,62 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
                 <rect x="6" y="10" width="12" height="8" rx="1" fill={colors.accent} fillOpacity="0.3"/>
               </svg>
             </div>
-            <span style={styles.logoText}>LocalizeShots</span>
+            <span style={styles.logoText} className="landing-logo-text">LocalizeShots</span>
           </div>
-          <div style={styles.navLinks}>
+          <div style={styles.navLinks} className="landing-nav-links">
             <a href="#features" style={styles.navLink}>Features</a>
             <a href="#how-it-works" style={styles.navLink}>How it works</a>
             <a href="#pricing" style={styles.navLink}>Pricing</a>
           </div>
-          <div style={styles.navButtons}>
-            <button style={styles.loginBtn} onClick={onLogin}>Sign In</button>
-            <button style={styles.ctaBtn} onClick={onGetStarted}>Get Started</button>
+          <div style={styles.navButtons} className="landing-nav-buttons">
+            <button style={styles.loginBtn} className="landing-login-btn" onClick={onLogin}>Sign In</button>
+            <button style={styles.ctaBtn} className="landing-cta-btn" onClick={onGetStarted}>Get Started</button>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section style={styles.hero}>
+      <section style={styles.hero} className="landing-hero">
         <div style={styles.heroContent}>
-          <div style={styles.heroBadge}>
+          <div style={styles.heroBadge} className="landing-hero-badge">
             <span style={styles.heroBadgeLine} />
             <span style={styles.heroBadgeText}>AI-Powered ASO Tool</span>
             <span style={styles.heroBadgeLine} />
           </div>
-          <h1 style={styles.heroTitle}>
+          <h1 style={styles.heroTitle} className="landing-hero-title">
             Localize App Store<br />
             screenshots <span style={styles.heroAccent}>in minutes</span>
           </h1>
-          <p style={styles.heroSubtitle}>
+          <p style={styles.heroSubtitle} className="landing-hero-subtitle">
             AI generates headlines and metadata, translates to 40+ languages.<br />
             Export ready-to-upload assets with one click.
           </p>
-          <div style={styles.heroCtas}>
-            <button style={styles.heroCtaPrimary} onClick={onGetStarted}>
+          <div style={styles.heroCtas} className="landing-hero-ctas">
+            <button style={styles.heroCtaPrimary} className="landing-hero-cta-primary" onClick={onGetStarted}>
               Start Free
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ marginLeft: 10 }}>
                 <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
-            <button style={styles.heroCtaSecondary} onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}>
+            <button style={styles.heroCtaSecondary} className="landing-hero-cta-secondary" onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}>
               See How It Works
             </button>
           </div>
         </div>
 
         {/* Hero Visual - App Interface Preview */}
-        <div style={styles.heroVisual}>
+        <div style={styles.heroVisual} className="landing-hero-visual">
           <div style={styles.appPreview}>
             {/* Browser Window */}
             <div style={styles.browserWindow}>
               {/* Browser Header */}
-              <div style={styles.browserHeader}>
+              <div style={styles.browserHeader} className="landing-browser-header">
                 <div style={styles.browserDots}>
                   <span style={{ ...styles.browserDot, backgroundColor: '#FF5F57' }} />
                   <span style={{ ...styles.browserDot, backgroundColor: '#FFBD2E' }} />
                   <span style={{ ...styles.browserDot, backgroundColor: '#28C840' }} />
                 </div>
-                <div style={styles.browserUrl}>
+                <div style={styles.browserUrl} className="landing-browser-url">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ marginRight: 6 }}>
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#9A9A9A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
@@ -147,8 +147,8 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
 
       {/* Problem → Solution */}
       <section style={styles.problemSolution}>
-        <div style={styles.psContainer}>
-          <div style={styles.psCard}>
+        <div style={styles.psContainer} className="landing-ps-container">
+          <div style={styles.psCard} className="landing-ps-card">
             <div style={styles.psIconBad}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="12" r="10" stroke="#DC2626" strokeWidth="1.5"/>
@@ -164,14 +164,14 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
               <li>Days or weeks of work</li>
             </ul>
           </div>
-          <div style={styles.psArrow}>
+          <div style={styles.psArrow} className="landing-ps-arrow">
             <div style={styles.psArrowLine} />
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path d="M5 12h14M12 5l7 7-7 7" stroke={colors.accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             <div style={styles.psArrowLine} />
           </div>
-          <div style={{ ...styles.psCard, ...styles.psCardGood }}>
+          <div style={{ ...styles.psCard, ...styles.psCardGood }} className="landing-ps-card">
             <div style={styles.psIconGood}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="12" r="10" stroke={colors.success} strokeWidth="1.5"/>
@@ -198,7 +198,7 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
           subtitle="Four simple steps to localized screenshots"
         />
 
-        <div style={styles.stepsGrid}>
+        <div style={styles.stepsGrid} className="landing-steps-grid">
           {[
             {
               num: '01',
@@ -242,12 +242,12 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
               )
             },
           ].map((step, i) => (
-            <div key={i} style={styles.stepCard}>
+            <div key={i} style={styles.stepCard} className="landing-step-card">
               <div style={styles.stepNum}>{step.num}</div>
               <div style={styles.stepIcon}>{step.icon}</div>
               <h3 style={styles.stepTitle}>{step.title}</h3>
               <p style={styles.stepDesc}>{step.desc}</p>
-              {i < 3 && <div style={styles.stepConnector} />}
+              {i < 3 && <div style={styles.stepConnector} className="landing-step-connector" />}
             </div>
           ))}
         </div>
@@ -261,7 +261,7 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
           subtitle="Powerful tools for App Store optimization"
         />
 
-        <div style={styles.featuresGrid}>
+        <div style={styles.featuresGrid} className="landing-features-grid">
           {[
             {
               icon: (
@@ -323,7 +323,7 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
               description: 'Download organized ZIP with all languages and devices.',
             },
           ].map((feature, i) => (
-            <div key={i} style={styles.featureCard}>
+            <div key={i} style={styles.featureCard} className="landing-feature-card">
               <div style={styles.featureIcon}>{feature.icon}</div>
               <h3 style={styles.featureTitle}>{feature.title}</h3>
               <div style={styles.featureDivider} />
@@ -341,9 +341,9 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
           subtitle="Start free, upgrade when you need more"
         />
 
-        <div style={styles.pricingCards}>
+        <div style={styles.pricingCards} className="landing-pricing-cards">
           {/* Free Plan */}
-          <div style={styles.pricingCard}>
+          <div style={styles.pricingCard} className="landing-pricing-card">
             <div style={styles.pricingHeader}>
               <span style={styles.pricingPlan}>Free</span>
               <div style={styles.pricingPriceRow}>
@@ -368,7 +368,7 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
           </div>
 
           {/* Pro Plan */}
-          <div style={{ ...styles.pricingCard, ...styles.pricingCardPro }}>
+          <div style={{ ...styles.pricingCard, ...styles.pricingCardPro }} className="landing-pricing-card">
             <div style={styles.pricingPopular}>Popular</div>
             <div style={styles.pricingHeader}>
               <span style={{ ...styles.pricingPlan, color: colors.accent }}>Pro</span>
@@ -397,13 +397,13 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
       </section>
 
       {/* Final CTA */}
-      <section style={styles.finalCta}>
+      <section style={styles.finalCta} className="landing-final-cta">
         <div style={styles.finalCtaInner}>
           <div style={styles.finalCtaLines}>
             <div style={styles.finalCtaLine} />
             <div style={styles.finalCtaLine} />
           </div>
-          <h2 style={styles.finalCtaTitle}>Ready to localize your app?</h2>
+          <h2 style={styles.finalCtaTitle} className="landing-final-cta-title">Ready to localize your app?</h2>
           <p style={styles.finalCtaSubtitle}>Join developers who save hours on App Store assets</p>
           <button style={styles.finalCtaBtn} onClick={onGetStarted}>
             Get Started Free
@@ -416,7 +416,7 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
 
       {/* Footer */}
       <footer style={styles.footer}>
-        <div style={styles.footerInner}>
+        <div style={styles.footerInner} className="landing-footer-inner">
           <div style={styles.footerLogo}>
             <div style={{ ...styles.logoIcon, width: 28, height: 28 }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -427,7 +427,7 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
             </div>
             <span style={{ ...styles.logoText, fontSize: 15, color: colors.textSecondary }}>LocalizeShots</span>
           </div>
-          <div style={styles.footerLinks}>
+          <div style={styles.footerLinks} className="landing-footer-links">
             <button
               onClick={() => onNavigate?.('terms')}
               style={styles.footerLink}
@@ -1112,7 +1112,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
 };
 
-// Add CSS animations and Google Fonts
+// Add CSS animations, Google Fonts, and responsive styles
 const styleSheet = document.createElement('style');
 styleSheet.textContent = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
@@ -1125,6 +1125,147 @@ styleSheet.textContent = `
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+
+  /* Mobile Responsive Styles */
+  @media (max-width: 768px) {
+    /* Navigation */
+    .landing-nav-links {
+      display: none !important;
+    }
+    .landing-nav-inner {
+      padding: 12px 16px !important;
+    }
+    .landing-logo-text {
+      font-size: 15px !important;
+    }
+    .landing-nav-buttons .landing-login-btn {
+      display: none !important;
+    }
+    .landing-nav-buttons .landing-cta-btn {
+      padding: 8px 16px !important;
+      font-size: 12px !important;
+    }
+
+    /* Hero */
+    .landing-hero {
+      padding-top: 80px !important;
+      padding-bottom: 40px !important;
+    }
+    .landing-hero-title {
+      font-size: 32px !important;
+      line-height: 1.2 !important;
+      margin-bottom: 16px !important;
+    }
+    .landing-hero-subtitle {
+      font-size: 15px !important;
+      margin-bottom: 24px !important;
+    }
+    .landing-hero-subtitle br {
+      display: none;
+    }
+    .landing-hero-ctas {
+      flex-direction: column !important;
+      gap: 10px !important;
+    }
+    .landing-hero-cta-primary,
+    .landing-hero-cta-secondary {
+      width: 100% !important;
+      justify-content: center !important;
+      padding: 12px 20px !important;
+    }
+    .landing-hero-visual {
+      margin-top: 32px !important;
+      padding: 0 12px !important;
+    }
+    .landing-browser-header {
+      padding: 8px 12px !important;
+    }
+    .landing-browser-url {
+      font-size: 10px !important;
+      padding: 4px 8px !important;
+    }
+
+    /* Problem/Solution */
+    .landing-ps-container {
+      flex-direction: column !important;
+      gap: 16px !important;
+    }
+    .landing-ps-arrow {
+      transform: rotate(90deg) !important;
+      padding: 8px 0 !important;
+    }
+    .landing-ps-card {
+      padding: 20px !important;
+    }
+
+    /* Section Headers */
+    .landing-section-title {
+      font-size: 26px !important;
+    }
+    .landing-section-header {
+      margin-bottom: 32px !important;
+    }
+
+    /* Steps Grid */
+    .landing-steps-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 12px !important;
+    }
+    .landing-step-card {
+      padding: 20px 14px !important;
+    }
+    .landing-step-connector {
+      display: none !important;
+    }
+
+    /* Features Grid */
+    .landing-features-grid {
+      grid-template-columns: 1fr !important;
+      gap: 14px !important;
+    }
+    .landing-feature-card {
+      padding: 20px !important;
+    }
+
+    /* Pricing */
+    .landing-pricing-cards {
+      flex-direction: column !important;
+      gap: 16px !important;
+    }
+    .landing-pricing-card {
+      max-width: 100% !important;
+    }
+
+    /* Final CTA */
+    .landing-final-cta {
+      padding: 60px 20px !important;
+    }
+    .landing-final-cta-title {
+      font-size: 24px !important;
+    }
+
+    /* Footer */
+    .landing-footer-inner {
+      flex-direction: column !important;
+      gap: 12px !important;
+    }
+    .landing-footer-links {
+      flex-wrap: wrap !important;
+      justify-content: center !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .landing-hero-title {
+      font-size: 28px !important;
+    }
+    .landing-steps-grid {
+      grid-template-columns: 1fr !important;
+    }
+    .landing-hero-badge {
+      display: none !important;
     }
   }
 `;

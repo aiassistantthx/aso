@@ -5,6 +5,34 @@ import { Toggle, Slider, ColorPicker } from './ui';
 import { colors } from '../styles/common';
 import { THEME_PRESETS, THEME_PRESET_GROUPS, ThemePreset, PATTERN_OPTIONS } from '../constants/templates';
 
+// Inject responsive styles for StyleEditor
+if (typeof document !== 'undefined' && !document.getElementById('style-editor-responsive')) {
+  const styleEl = document.createElement('style');
+  styleEl.id = 'style-editor-responsive';
+  styleEl.textContent = `
+    @media (max-width: 768px) {
+      .style-editor-container {
+        padding: 16px !important;
+      }
+      .style-editor-section {
+        padding: 14px !important;
+      }
+      .style-editor-grid {
+        grid-template-columns: 1fr !important;
+      }
+      .style-editor-color-row {
+        flex-direction: column !important;
+        gap: 12px !important;
+      }
+      .style-editor-slider-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+      }
+    }
+  `;
+  document.head.appendChild(styleEl);
+}
+
 interface Props {
   style: StyleConfig;
   onStyleChange: (style: StyleConfig) => void;

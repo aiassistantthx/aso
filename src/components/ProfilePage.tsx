@@ -3,6 +3,26 @@ import { useAuth } from '../services/authContext';
 import { AppHeader } from './AppHeader';
 import { billing } from '../services/api';
 
+// Inject responsive styles for ProfilePage
+if (typeof document !== 'undefined' && !document.getElementById('profile-page-responsive')) {
+  const styleEl = document.createElement('style');
+  styleEl.id = 'profile-page-responsive';
+  styleEl.textContent = `
+    @media (max-width: 768px) {
+      .profile-content {
+        padding: 24px 16px !important;
+      }
+      .profile-card {
+        padding: 20px !important;
+      }
+      .profile-title {
+        font-size: 26px !important;
+      }
+    }
+  `;
+  document.head.appendChild(styleEl);
+}
+
 interface Props {
   onNavigate: (page: string, id?: string) => void;
 }

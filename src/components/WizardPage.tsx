@@ -1014,7 +1014,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
       />
 
       {/* Step indicator */}
-      <div style={pageStyles.stepBar}>
+      <div style={pageStyles.stepBar} className="wizard-step-bar">
         {STEPS.map(s => (
           <div
             key={s.num}
@@ -1023,6 +1023,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
               cursor: s.num <= (project.currentStep || step) ? 'pointer' : 'default',
               opacity: s.num <= (project.currentStep || step) ? 1 : 0.4,
             }}
+            className="wizard-step-item"
             onClick={() => s.num <= (project.currentStep || step) && goToStep(s.num)}
           >
             <div style={{
@@ -1039,7 +1040,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
               fontSize: '11px', fontWeight: 500,
               color: step === s.num ? '#FF6B4A' : '#86868b',
               marginTop: '4px',
-            }}>
+            }} className="wizard-step-label">
               {s.label}
             </span>
           </div>
@@ -1049,7 +1050,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
       <div style={{
         ...pageStyles.content,
         ...(step === 6 && { maxWidth: '1100px' }),
-      }}>
+      }} className="wizard-content">
         {error && (
           <div style={pageStyles.errorBanner}>
             {error}
@@ -1064,9 +1065,9 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
 
         {/* Step 1: App Info */}
         {step === 1 && (
-          <div style={pageStyles.stepContent}>
-            <h2 style={pageStyles.stepTitle}>App Information</h2>
-            <p style={pageStyles.stepDesc}>Tell us about your app</p>
+          <div style={pageStyles.stepContent} className="wizard-step-content">
+            <h2 style={pageStyles.stepTitle} className="wizard-step-title">App Information</h2>
+            <p style={pageStyles.stepDesc} className="wizard-step-desc">Tell us about your app</p>
 
             <label style={pageStyles.label}>App Name *</label>
             <input
@@ -1095,7 +1096,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
               placeholder="fitness, workout, health tracker"
             />
 
-            <div style={pageStyles.stepActions}>
+            <div style={pageStyles.stepActions} className="wizard-step-actions">
               <div />
               <button
                 style={{ ...pageStyles.primaryButton, opacity: canProceed(1) ? 1 : 0.5 }}
@@ -1110,11 +1111,11 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
 
         {/* Step 2: Screenshots */}
         {step === 2 && (
-          <div style={pageStyles.stepContent}>
-            <h2 style={pageStyles.stepTitle}>Upload Screenshots</h2>
-            <p style={pageStyles.stepDesc}>Upload 3-8 app UI screenshots</p>
+          <div style={pageStyles.stepContent} className="wizard-step-content">
+            <h2 style={pageStyles.stepTitle} className="wizard-step-title">Upload Screenshots</h2>
+            <p style={pageStyles.stepDesc} className="wizard-step-desc">Upload 3-8 app UI screenshots</p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '12px', marginBottom: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '12px', marginBottom: '20px' }} className="wizard-screenshots-grid">
               {(project.uploadedScreenshots || []).map((url, i) => (
                 <div key={i} style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e5e5ea', aspectRatio: '9/19.5' }}>
                   <img src={url} alt={`Screenshot ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -1180,7 +1181,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
               </p>
             )}
 
-            <div style={pageStyles.stepActions}>
+            <div style={pageStyles.stepActions} className="wizard-step-actions">
               <button style={pageStyles.secondaryButton} onClick={prevStep} disabled={uploading}>Back</button>
               <button
                 style={{ ...pageStyles.primaryButton, opacity: canProceed(2) && !uploading ? 1 : 0.5 }}
@@ -1195,9 +1196,9 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
 
         {/* Step 3: Services */}
         {step === 3 && (
-          <div style={pageStyles.stepContent}>
-            <h2 style={pageStyles.stepTitle}>What to Generate</h2>
-            <p style={pageStyles.stepDesc}>Choose which assets to create</p>
+          <div style={pageStyles.stepContent} className="wizard-step-content">
+            <h2 style={pageStyles.stepTitle} className="wizard-step-title">What to Generate</h2>
+            <p style={pageStyles.stepDesc} className="wizard-step-desc">Choose which assets to create</p>
 
             {([
               { key: 'generateScreenshots' as const, label: 'Screenshots with Headlines', desc: 'AI-generated headlines on your screenshots with professional templates' },
@@ -1237,7 +1238,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
               );
             })}
 
-            <div style={pageStyles.stepActions}>
+            <div style={pageStyles.stepActions} className="wizard-step-actions">
               <button style={pageStyles.secondaryButton} onClick={prevStep}>Back</button>
               <button
                 style={{ ...pageStyles.primaryButton, opacity: canProceed(3) ? 1 : 0.5 }}
@@ -1252,11 +1253,11 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
 
         {/* Step 4: Tone */}
         {step === 4 && (
-          <div style={pageStyles.stepContent}>
-            <h2 style={pageStyles.stepTitle}>Visual Style</h2>
-            <p style={pageStyles.stepDesc}>Choose a color tone for your screenshots</p>
+          <div style={pageStyles.stepContent} className="wizard-step-content">
+            <h2 style={pageStyles.stepTitle} className="wizard-step-title">Visual Style</h2>
+            <p style={pageStyles.stepDesc} className="wizard-step-desc">Choose a color tone for your screenshots</p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }} className="wizard-template-grid">
               {TONE_PRESETS.map(tone => (
                 <div
                   key={tone.id}
@@ -1295,7 +1296,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
             <h3 style={{ ...pageStyles.sectionTitle, marginTop: '32px' }}>Layout</h3>
             <p style={{ fontSize: '13px', color: '#86868b', marginBottom: '16px' }}>Choose how mockups are positioned on screenshots</p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }} className="wizard-layout-grid">
               {LAYOUT_PRESETS.map(layout => (
                 <div
                   key={layout.id}
@@ -1361,7 +1362,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
               ))}
             </div>
 
-            <div style={pageStyles.stepActions}>
+            <div style={pageStyles.stepActions} className="wizard-step-actions">
               <button style={pageStyles.secondaryButton} onClick={prevStep}>Back</button>
               <button
                 style={{ ...pageStyles.primaryButton, opacity: canProceed(4) ? 1 : 0.5 }}
@@ -1376,9 +1377,9 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
 
         {/* Step 5: Generate */}
         {step === 5 && (
-          <div style={pageStyles.stepContent}>
-            <h2 style={pageStyles.stepTitle}>Generate</h2>
-            <p style={pageStyles.stepDesc}>
+          <div style={pageStyles.stepContent} className="wizard-step-content">
+            <h2 style={pageStyles.stepTitle} className="wizard-step-title">Generate</h2>
+            <p style={pageStyles.stepDesc} className="wizard-step-desc">
               AI will generate {[
                 project.generateScreenshots && 'headlines',
                 project.generateMetadata && 'metadata',
@@ -1415,7 +1416,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
               )}
             </div>
 
-            <div style={pageStyles.stepActions}>
+            <div style={pageStyles.stepActions} className="wizard-step-actions">
               <button style={pageStyles.secondaryButton} onClick={prevStep} disabled={generating}>Back</button>
               <div />
             </div>
@@ -1424,9 +1425,9 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
 
         {/* Step 6: Review & Editor */}
         {step === 6 && (
-          <div style={pageStyles.stepContent}>
-            <h2 style={pageStyles.stepTitle}>Review & Edit</h2>
-            <p style={pageStyles.stepDesc}>Review generated content or fine-tune in the editor</p>
+          <div style={pageStyles.stepContent} className="wizard-step-content">
+            <h2 style={pageStyles.stepTitle} className="wizard-step-title">Review & Edit</h2>
+            <p style={pageStyles.stepDesc} className="wizard-step-desc">Review generated content or fine-tune in the editor</p>
 
             {/* Tab bar */}
             <div style={{ display: 'flex', gap: '0', marginBottom: '24px', borderBottom: '1px solid #e5e5ea' }}>
@@ -1727,7 +1728,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
               </div>
             )}
 
-            <div style={pageStyles.stepActions}>
+            <div style={pageStyles.stepActions} className="wizard-step-actions">
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button style={pageStyles.secondaryButton} onClick={() => goToStep(5)}>Regenerate</button>
               </div>
@@ -1748,9 +1749,9 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
           const allSelected = availableLangs.every(l => project.targetLanguages.includes(l.code));
 
           return (
-          <div style={pageStyles.stepContent}>
-            <h2 style={pageStyles.stepTitle}>Translate</h2>
-            <p style={pageStyles.stepDesc}>
+          <div style={pageStyles.stepContent} className="wizard-step-content">
+            <h2 style={pageStyles.stepTitle} className="wizard-step-title">Translate</h2>
+            <p style={pageStyles.stepDesc} className="wizard-step-desc">
               Select target languages and translate all content
             </p>
 
@@ -1951,7 +1952,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
               )}
             </div>
 
-            <div style={pageStyles.stepActions}>
+            <div style={pageStyles.stepActions} className="wizard-step-actions">
               <button style={pageStyles.secondaryButton} onClick={prevStep} disabled={translating}>Back</button>
               <div />
             </div>
@@ -1961,9 +1962,9 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
 
         {/* Step 8: Export */}
         {step === 8 && (
-          <div style={pageStyles.stepContent}>
-            <h2 style={pageStyles.stepTitle}>Export</h2>
-            <p style={pageStyles.stepDesc}>Download your complete ASO package as a ZIP file</p>
+          <div style={pageStyles.stepContent} className="wizard-step-content">
+            <h2 style={pageStyles.stepTitle} className="wizard-step-title">Export</h2>
+            <p style={pageStyles.stepDesc} className="wizard-step-desc">Download your complete ASO package as a ZIP file</p>
 
             <div style={{ textAlign: 'center', padding: '40px 0' }}>
               <div style={{ marginBottom: '24px' }}>
@@ -1996,7 +1997,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
               )}
             </div>
 
-            <div style={pageStyles.stepActions}>
+            <div style={pageStyles.stepActions} className="wizard-step-actions">
               <button style={pageStyles.secondaryButton} onClick={prevStep} disabled={exporting}>Back</button>
               <div />
             </div>
@@ -2203,10 +2204,99 @@ const pageStyles: Record<string, React.CSSProperties> = {
   },
 };
 
-// Inject spinner animation
+// Inject spinner animation and responsive styles
 if (typeof document !== 'undefined') {
   const styleEl = document.getElementById('wizard-spinner-style') || document.createElement('style');
   styleEl.id = 'wizard-spinner-style';
-  styleEl.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+  styleEl.textContent = `
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Wizard responsive styles */
+    @media (max-width: 768px) {
+      .wizard-content {
+        padding: 16px !important;
+      }
+      .wizard-step-content {
+        padding: 20px !important;
+        border-radius: 16px !important;
+      }
+      .wizard-step-title {
+        font-size: 20px !important;
+      }
+      .wizard-step-desc {
+        font-size: 14px !important;
+      }
+      .wizard-step-bar {
+        gap: 4px !important;
+        padding: 12px 16px !important;
+      }
+      .wizard-step-item {
+        min-width: 50px !important;
+      }
+      .wizard-step-label {
+        font-size: 9px !important;
+      }
+      .wizard-step-actions {
+        flex-direction: column-reverse !important;
+        gap: 12px !important;
+      }
+      .wizard-step-actions > button {
+        width: 100% !important;
+      }
+      .wizard-screenshots-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+      }
+      .wizard-headline-item {
+        padding: 12px !important;
+      }
+      .wizard-headline-text {
+        font-size: 14px !important;
+      }
+      .wizard-tabs {
+        flex-wrap: wrap !important;
+      }
+      .wizard-language-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+      .wizard-preview-grid {
+        flex-direction: column !important;
+      }
+      .wizard-editor-container {
+        flex-direction: column !important;
+      }
+      .wizard-editor-sidebar {
+        width: 100% !important;
+        max-height: 300px !important;
+        overflow-y: auto !important;
+      }
+      .wizard-template-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+      .wizard-layout-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+      .wizard-metadata-panel {
+        max-width: 100% !important;
+      }
+    }
+    @media (max-width: 480px) {
+      .wizard-step-title {
+        font-size: 18px !important;
+      }
+      .wizard-screenshots-grid {
+        grid-template-columns: 1fr !important;
+      }
+      .wizard-language-grid {
+        grid-template-columns: 1fr !important;
+      }
+      .wizard-template-grid {
+        grid-template-columns: 1fr !important;
+      }
+      .wizard-layout-grid {
+        grid-template-columns: 1fr !important;
+      }
+    }
+  `;
   if (!styleEl.parentNode) document.head.appendChild(styleEl);
 }

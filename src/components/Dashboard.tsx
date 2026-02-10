@@ -9,6 +9,51 @@ interface Props {
   onNavigate: (page: string, id?: string) => void;
 }
 
+// Inject responsive CSS
+const dashboardResponsiveStyles = `
+  @media (max-width: 768px) {
+    .dashboard-content {
+      padding: 24px 16px !important;
+    }
+    .dashboard-page-title {
+      font-size: 26px !important;
+    }
+    .dashboard-toolbar {
+      flex-direction: column !important;
+      align-items: stretch !important;
+    }
+    .dashboard-toolbar-left {
+      justify-content: space-between !important;
+    }
+    .dashboard-new-button {
+      width: 100% !important;
+      justify-content: center !important;
+    }
+    .dashboard-grid {
+      grid-template-columns: 1fr !important;
+      gap: 16px !important;
+    }
+    .dashboard-card-actions {
+      flex-wrap: wrap !important;
+    }
+  }
+  @media (max-width: 480px) {
+    .dashboard-page-title {
+      font-size: 22px !important;
+    }
+    .dashboard-page-subtitle {
+      font-size: 14px !important;
+    }
+  }
+`;
+
+if (typeof document !== 'undefined' && !document.getElementById('dashboard-responsive')) {
+  const styleEl = document.createElement('style');
+  styleEl.id = 'dashboard-responsive';
+  styleEl.textContent = dashboardResponsiveStyles;
+  document.head.appendChild(styleEl);
+}
+
 const styles: Record<string, React.CSSProperties> = {
   container: {
     minHeight: '100vh',
@@ -276,7 +321,7 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
     <div style={styles.container}>
       <AppHeader currentPage="dashboard" onNavigate={onNavigate} />
 
-      <div style={styles.content}>
+      <div style={styles.content} className="dashboard-content">
         {/* Upgrade Success Banner */}
         {showUpgradeSuccess && (
           <div style={{
@@ -320,13 +365,13 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
           </div>
         )}
 
-        <h1 style={styles.pageTitle}>Projects</h1>
-        <p style={styles.pageSubtitle}>
+        <h1 style={styles.pageTitle} className="dashboard-page-title">Projects</h1>
+        <p style={styles.pageSubtitle} className="dashboard-page-subtitle">
           Create and manage your App Store screenshot projects
         </p>
 
-        <div style={styles.toolbar as React.CSSProperties}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={styles.toolbar as React.CSSProperties} className="dashboard-toolbar">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }} className="dashboard-toolbar-left">
             <span style={{ fontSize: '14px', color: '#86868b' }}>
               {projectCount} project{projectCount !== 1 ? 's' : ''}
               {plan === 'FREE' && ` (1 free)`}
@@ -352,7 +397,7 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
               </button>
             )}
           </div>
-          <button style={styles.newButton} onClick={handleNewProject}>
+          <button style={styles.newButton} onClick={handleNewProject} className="dashboard-new-button">
             + New Project
           </button>
         </div>
@@ -375,12 +420,12 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
             <p style={styles.emptyText}>
               Create your first project to start making App Store screenshots
             </p>
-            <button style={styles.newButton} onClick={handleNewProject}>
+            <button style={styles.newButton} onClick={handleNewProject} className="dashboard-new-button">
               + Create Project
             </button>
           </div>
         ) : (
-          <div style={styles.grid}>
+          <div style={styles.grid} className="dashboard-grid">
             {projectList.map((project) => {
               const status = getStatusLabel(project.wizardStatus);
               return (
@@ -429,7 +474,7 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
                       <span>{formatDate(project.updatedAt)}</span>
                     </div>
                   </div>
-                  <div style={styles.cardActions as React.CSSProperties}>
+                  <div style={styles.cardActions as React.CSSProperties} className="dashboard-card-actions">
                     <button
                       style={styles.cardActionButton}
                       onClick={(e) => handleRename(project.id, project.name || project.appName, e)}

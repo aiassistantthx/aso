@@ -9,6 +9,50 @@ import { unified as unifiedApi, UnifiedProjectFull, billing } from '../services/
 import { useAuth } from '../services/authContext';
 import { AppHeader } from './AppHeader';
 
+// Inject responsive styles for Editor
+if (typeof document !== 'undefined' && !document.getElementById('editor-responsive')) {
+  const styleEl = document.createElement('style');
+  styleEl.id = 'editor-responsive';
+  styleEl.textContent = `
+    @media (max-width: 1024px) {
+      .editor-layout {
+        flex-direction: column !important;
+      }
+      .editor-sidebar {
+        width: 100% !important;
+        max-height: 350px !important;
+        overflow-y: auto !important;
+        border-right: none !important;
+        border-bottom: 1px solid #e5e5ea !important;
+      }
+      .editor-main {
+        width: 100% !important;
+        flex: 1 !important;
+      }
+    }
+    @media (max-width: 768px) {
+      .editor-content {
+        padding: 16px !important;
+      }
+      .editor-header-title {
+        font-size: 14px !important;
+      }
+      .editor-tabs {
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+      }
+      .editor-tab {
+        padding: 6px 12px !important;
+        font-size: 12px !important;
+      }
+      .editor-sidebar {
+        max-height: 250px !important;
+      }
+    }
+  `;
+  document.head.appendChild(styleEl);
+}
+
 // Type alias for compatibility
 type ProjectFull = UnifiedProjectFull;
 

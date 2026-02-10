@@ -1,6 +1,42 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Screenshot, StyleConfig, DeviceSize, DEVICE_SIZES, TranslationData, ScreenshotMockupSettings, MockupStyle } from '../types';
 
+// Inject responsive styles for ScreensFlowEditor
+if (typeof document !== 'undefined' && !document.getElementById('screens-flow-editor-responsive')) {
+  const styleEl = document.createElement('style');
+  styleEl.id = 'screens-flow-editor-responsive';
+  styleEl.textContent = `
+    @media (max-width: 768px) {
+      .screens-flow-editor {
+        transform: scale(0.8);
+        transform-origin: top center;
+      }
+      .screens-flow-thumbs {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        justify-content: flex-start !important;
+        padding-bottom: 10px !important;
+      }
+      .screens-flow-thumb {
+        flex-shrink: 0 !important;
+      }
+      .screens-flow-controls {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+      }
+      .screens-flow-slider {
+        min-width: 100px !important;
+      }
+    }
+    @media (max-width: 480px) {
+      .screens-flow-editor {
+        transform: scale(0.65);
+      }
+    }
+  `;
+  document.head.appendChild(styleEl);
+}
+
 interface Props {
   screenshots: Screenshot[];
   selectedIndex: number;
