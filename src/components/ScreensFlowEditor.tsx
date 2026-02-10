@@ -425,7 +425,9 @@ const LinkedPairCanvas: React.FC<{
 
     switch (style.mockupAlignment) {
       case 'top':
-        baseMockupCenterY = -hiddenHeight + mockupHeight / 2;
+        // When text is at top, offset mockup down to leave room for text
+        const textAreaOffsetTop = style.textPosition === 'top' ? textAreaHeight : 0;
+        baseMockupCenterY = textAreaOffsetTop - hiddenHeight + mockupHeight / 2;
         break;
       case 'bottom':
         baseMockupCenterY = previewHeight - visiblePhoneHeight - (40 * scaleFactor) + mockupHeight / 2;
@@ -981,6 +983,9 @@ function drawText(
   let availableHeight: number;
   let textAreaY: number;
 
+  // Minimum text area height (25% of canvas for reasonable text display)
+  const minTextAreaHeight = canvasHeight * 0.25;
+
   if (mockupInfo && style.showMockup) {
     const mockupTop = getRotatedMockupTop(
       mockupInfo.centerY,
@@ -988,16 +993,27 @@ function drawText(
       mockupInfo.height,
       mockupInfo.rotation
     );
+    const mockupBottom = mockupInfo.centerY + mockupInfo.height / 2;
 
     const paddingTop = style.paddingTop * 0.04;
     const gapFromMockup = 4;
 
     if (textPosition === 'top') {
-      availableHeight = Math.max(mockupTop - gapFromMockup - paddingTop, 20);
-      textAreaY = paddingTop;
+      // Space above mockup
+      const spaceAboveMockup = mockupTop - gapFromMockup - paddingTop;
+
+      if (spaceAboveMockup >= minTextAreaHeight) {
+        // Enough space above mockup - use it
+        availableHeight = spaceAboveMockup;
+        textAreaY = paddingTop;
+      } else {
+        // Not enough space above mockup - use minimum area from top
+        // Text will overlay on mockup, which is acceptable
+        availableHeight = minTextAreaHeight;
+        textAreaY = paddingTop;
+      }
     } else {
-      const mockupBottom = mockupInfo.centerY + mockupInfo.height / 2;
-      availableHeight = Math.max(canvasHeight - mockupBottom - gapFromMockup - 8, 20);
+      availableHeight = Math.max(canvasHeight - mockupBottom - gapFromMockup - 8, minTextAreaHeight);
       textAreaY = mockupBottom + gapFromMockup;
     }
   } else {
@@ -1196,7 +1212,9 @@ const SingleScreenPreview: React.FC<{
 
         switch (style.mockupAlignment) {
           case 'top':
-            baseMockupCenterY = -hiddenHeight + mockupHeight / 2;
+            // When text is at top, offset mockup down to leave room for text
+            const textAreaOffsetTop = style.textPosition === 'top' ? textAreaHeight : 0;
+            baseMockupCenterY = textAreaOffsetTop - hiddenHeight + mockupHeight / 2;
             break;
           case 'bottom':
             baseMockupCenterY = previewHeight - visiblePhoneHeight - (40 * scaleFactor) + mockupHeight / 2;
