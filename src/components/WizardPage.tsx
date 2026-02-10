@@ -296,10 +296,6 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
 
-  // Canvas previews
-  const [previewCanvases, setPreviewCanvases] = useState<HTMLCanvasElement[]>([]);
-  const previewContainerRef = useRef<HTMLDivElement>(null);
-
   // Translation tab
   const [activeLang, setActiveLang] = useState<string>('');
 
@@ -572,146 +568,6 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
       setTranslating(false);
     }
   };
-
-  // Preview loading state
-  const [previewLoading, setPreviewLoading] = useState(false);
-  const [previewError, setPreviewError] = useState<string | null>(null);
-
-  // Generate canvas previews
-  useEffect(() => {
-    if (!project || step !== 6) return;
-    if (!project.editedHeadlines?.length || !project.uploadedScreenshots?.length) {
-      setPreviewCanvases([]);
-      return;
-    }
-
-    // Prefer saved styleConfig from editor; fall back to template resolution
-    const savedStyle = project.styleConfig ? project.styleConfig as unknown as StyleConfig : null;
-
-    const templateId = project.selectedTemplateId;
-    const themePreset = templateId ? THEME_PRESETS.find(t => t.id === templateId) : null;
-    if (!savedStyle && !themePreset) {
-      setPreviewError(`Template "${templateId}" not found`);
-      return;
-    }
-
-    const screenshots = project.uploadedScreenshots;
-    const headlines = project.editedHeadlines;
-    const deviceSize: DeviceSize = '6.9';
-    const editorData = project.screenshotEditorData || [];
-
-    const style: StyleConfig = savedStyle || {
-      backgroundColor: themePreset!.backgroundColor,
-      gradient: themePreset!.gradient,
-      textColor: themePreset!.textColor,
-      fontFamily: themePreset!.fontFamily,
-      fontSize: themePreset!.fontSize,
-      textPosition: 'top',
-      textAlign: themePreset!.textAlign || 'center',
-      paddingTop: 80,
-      paddingBottom: 60,
-      showMockup: true,
-      mockupColor: themePreset!.mockupColor,
-      mockupStyle: 'flat',
-      mockupVisibility: 'full',
-      mockupAlignment: 'bottom',
-      mockupOffset: { x: 0, y: 60 },
-      textOffset: { x: 0, y: 0 },
-      mockupScale: themePreset!.mockupScale || 1.0,
-      mockupRotation: 0,
-      mockupContinuation: 'none',
-      highlightColor: themePreset!.highlightColor,
-      highlightPadding: 12,
-      highlightBorderRadius: 8,
-      pattern: themePreset!.pattern,
-    };
-
-    const generatePreviews = async () => {
-      setPreviewLoading(true);
-      setPreviewError(null);
-      const canvases: HTMLCanvasElement[] = [];
-      const layoutPreset = LAYOUT_PRESETS.find(l => l.id === project.layoutPreset) || LAYOUT_PRESETS[0];
-
-      for (let i = 0; i < Math.min(screenshots.length, headlines.length); i++) {
-        const effectiveStyle = { ...style };
-
-        // Apply per-screenshot style overrides from editor data
-        if (editorData[i]?.styleOverride) {
-          const override = editorData[i].styleOverride as Record<string, unknown>;
-          if (override.backgroundColor) effectiveStyle.backgroundColor = override.backgroundColor as string;
-          if (override.textColor) effectiveStyle.textColor = override.textColor as string;
-          if (override.highlightColor) effectiveStyle.highlightColor = override.highlightColor as string;
-          if (override.gradient) effectiveStyle.gradient = override.gradient as StyleConfig['gradient'];
-        }
-
-        // Apply alternating colors only when not using saved editor styleConfig
-        if (!savedStyle && themePreset?.alternatingColors && i > 0 && !editorData[i]?.styleOverride) {
-          const altIdx = (i - 1) % themePreset.alternatingColors.length;
-          const alt = themePreset.alternatingColors[altIdx];
-          effectiveStyle.backgroundColor = alt.backgroundColor;
-          effectiveStyle.gradient = alt.gradient;
-          if (alt.textColor) effectiveStyle.textColor = alt.textColor;
-          if (alt.highlightColor) effectiveStyle.highlightColor = alt.highlightColor;
-        }
-
-        // Apply layout preset only when not using saved editor styleConfig
-        const layoutStyle = layoutPreset.getStyle(i);
-        if (!savedStyle) {
-          effectiveStyle.textPosition = layoutStyle.textPosition;
-          effectiveStyle.mockupAlignment = layoutStyle.mockupAlignment;
-          effectiveStyle.mockupVisibility = layoutStyle.mockupVisibility;
-          effectiveStyle.mockupOffset = layoutStyle.mockupOffset;
-          if (layoutStyle.mockupContinuation) {
-            effectiveStyle.mockupContinuation = layoutStyle.mockupContinuation;
-          }
-          if (layoutStyle.mockupRotation !== undefined) {
-            effectiveStyle.mockupRotation = layoutStyle.mockupRotation;
-          }
-        }
-
-        // Determine which screenshot to use for mockup (for spanning layout)
-        const mockupScreenshotIdx = layoutStyle.mockupScreenshotIndex ?? i;
-        const mockupScreenshot = screenshots[mockupScreenshotIdx] ?? screenshots[i];
-
-        // Use saved mockupSettings or convert from layout preset
-        const deviceWidth = 1290;
-        const deviceHeight = 2796;
-        let mockupSettings = editorData[i]?.mockupSettings as { offsetX: number; offsetY: number; scale: number; rotation: number } | undefined;
-
-        if (!mockupSettings && layoutStyle.mockupOffset) {
-          mockupSettings = {
-            offsetX: (layoutStyle.mockupOffset.x / deviceWidth) * 100,
-            offsetY: (layoutStyle.mockupOffset.y / deviceHeight) * 100,
-            scale: 1,
-            rotation: layoutStyle.mockupRotation ?? 0,
-          };
-        }
-
-        try {
-          const canvas = document.createElement('canvas');
-          await generatePreviewCanvas(canvas, {
-            screenshot: screenshots[i],
-            text: headlines[i],
-            style: effectiveStyle,
-            deviceSize,
-            mockupScreenshot: mockupScreenshot !== screenshots[i] ? mockupScreenshot : undefined,
-            mockupContinuation: layoutStyle.mockupContinuation,
-            mockupSettings,
-          });
-          canvases.push(canvas);
-        } catch (err) {
-          console.error(`Preview ${i} failed:`, err);
-        }
-      }
-      if (canvases.length === 0 && screenshots.length > 0) {
-        setPreviewError('Failed to generate previews. Your screenshots are still saved.');
-      }
-      setPreviewCanvases(canvases);
-      setPreviewLoading(false);
-    };
-
-    generatePreviews();
-  }, [project, step]);
 
   // Generate translated screenshot previews
   useEffect(() => {
@@ -1511,48 +1367,26 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                   </div>
                 )}
 
-                {/* Screenshot previews */}
+                {/* Screenshot previews using ScreensFlowEditor in readOnly mode */}
                 {project.generateScreenshots && (
                   <div style={{ marginBottom: '32px' }}>
                     <h3 style={pageStyles.sectionTitle}>Screenshots</h3>
 
-                    {previewLoading ? (
+                    {!editorInitialized || !editorStyle ? (
                       <div style={{ textAlign: 'center', padding: '32px 0' }}>
                         <div style={pageStyles.spinner} />
-                        <p style={{ marginTop: '12px', fontSize: '14px', color: '#86868b' }}>Generating previews...</p>
+                        <p style={{ marginTop: '12px', fontSize: '14px', color: '#86868b' }}>Loading previews...</p>
                       </div>
-                    ) : previewCanvases.length > 0 ? (
-                      <div
-                        ref={previewContainerRef}
-                        style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '12px' }}
-                      >
-                        {previewCanvases.map((canvas, i) => (
-                          <div key={i} style={{ flexShrink: 0, width: '180px' }}>
-                            <img
-                              src={canvas.toDataURL()}
-                              alt={`Preview ${i + 1}`}
-                              style={{ width: '100%', borderRadius: '12px', border: '1px solid #e5e5ea' }}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    ) : (project.uploadedScreenshots?.length ?? 0) > 0 ? (
-                      <div>
-                        {previewError && (
-                          <p style={{ fontSize: '13px', color: '#f59e0b', marginBottom: '12px' }}>{previewError}</p>
-                        )}
-                        <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '12px' }}>
-                          {(project.uploadedScreenshots || []).map((url, i) => (
-                            <div key={i} style={{ flexShrink: 0, width: '120px' }}>
-                              <img
-                                src={url}
-                                alt={`Screenshot ${i + 1}`}
-                                style={{ width: '100%', borderRadius: '10px', border: '1px solid #e5e5ea' }}
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                    ) : editorScreenshots.length > 0 ? (
+                      <ScreensFlowEditor
+                        screenshots={editorScreenshots}
+                        selectedIndex={editorSelectedIndex}
+                        onSelectIndex={setEditorSelectedIndex}
+                        onScreenshotsChange={handleEditorScreenshotsChange}
+                        style={editorStyle}
+                        deviceSize="6.9"
+                        readOnly={true}
+                      />
                     ) : (
                       <p style={{ fontSize: '14px', color: '#86868b' }}>No screenshots uploaded.</p>
                     )}
