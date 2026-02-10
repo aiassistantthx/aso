@@ -776,12 +776,12 @@ export const getElementBounds = (style: StyleConfig, deviceSize: DeviceSize): El
   const visibilityRatio = getVisibilityRatio(style.mockupVisibility);
   const mockupScale = style.mockupScale ?? 1.0;
 
-  // Calculate mockup dimensions
+  // Use fixed percentage for text area height (same as ScreensFlowEditor)
   const textAreaHeight = style.textPosition === 'top'
-    ? style.paddingTop + style.fontSize * 2.5
-    : style.paddingBottom + style.fontSize * 2.5;
+    ? dimensions.height * 0.38  // 38% of canvas height for text when at top
+    : dimensions.height * 0.30; // 30% when at bottom
 
-  const availableHeight = dimensions.height - textAreaHeight - 80;
+  const availableHeight = dimensions.height - textAreaHeight - 40;
   const baseMockupHeight = Math.min(availableHeight, dimensions.height * 0.75);
   const mockupHeight = baseMockupHeight * mockupScale;
   const phoneAspect = MOCKUP_CONFIG.phoneWidth / MOCKUP_CONFIG.phoneHeight;
@@ -794,7 +794,9 @@ export const getElementBounds = (style: StyleConfig, deviceSize: DeviceSize): El
   let mockupY: number;
   switch (style.mockupAlignment) {
     case 'top':
-      mockupY = -hiddenHeight;
+      // When text is at top, offset mockup down to leave room for text
+      const textAreaOffsetTop = style.textPosition === 'top' ? textAreaHeight : 0;
+      mockupY = textAreaOffsetTop - hiddenHeight;
       break;
     case 'bottom':
       mockupY = dimensions.height - visiblePhoneHeight - 40;
@@ -1280,11 +1282,14 @@ const drawMockupWithScreenshot = async (
   const hiddenHeight = fullPhoneHeight - visiblePhoneHeight;
   let adjustedMockupY: number;
 
+  // Calculate text area height for positioning (same as ScreensFlowEditor)
+  const textAreaForAlignment = style.textPosition === 'top' ? canvasHeight * 0.38 : 0;
+
   switch (style.mockupAlignment) {
     case 'top':
       // iPhone at TOP - top part extends ABOVE canvas (cropped from top)
-      // Bottom part of iPhone visible, positioned at top of canvas
-      adjustedMockupY = -hiddenHeight;
+      // When text is at top, offset mockup down to leave room for text
+      adjustedMockupY = textAreaForAlignment - hiddenHeight;
       break;
     case 'bottom':
       // iPhone at BOTTOM - bottom part extends BELOW canvas (cropped from bottom)
@@ -1482,12 +1487,12 @@ export const generateScreenshotImage = async (
   const rotation = mockupSettings?.rotation ?? style.mockupRotation ?? 0;
   const visibilityRatio = getVisibilityRatio(style.mockupVisibility);
 
-  // Original mockup size calculation for text area positioning
+  // Use fixed percentage for text area height (same as ScreensFlowEditor)
   const textAreaHeight = style.textPosition === 'top'
-    ? style.paddingTop + style.fontSize * 2.5
-    : style.paddingBottom + style.fontSize * 2.5;
+    ? canvas.height * 0.38  // 38% of canvas height for text when at top
+    : canvas.height * 0.30; // 30% when at bottom
 
-  const availableHeight = canvas.height - textAreaHeight - 80;
+  const availableHeight = canvas.height - textAreaHeight - 40;
   const baseMockupHeight = Math.min(availableHeight, canvas.height * 0.75);
   const clampedScale = Math.max(0.3, Math.min(2.0, mockupScale));
   const mockupHeight = baseMockupHeight * clampedScale;
@@ -1503,7 +1508,9 @@ export const generateScreenshotImage = async (
 
   switch (style.mockupAlignment) {
     case 'top':
-      mockupCenterY = -hiddenHeight + mockupHeight / 2;
+      // When text is at top, offset mockup down to leave room for text
+      const textAreaOffsetTop = style.textPosition === 'top' ? textAreaHeight : 0;
+      mockupCenterY = textAreaOffsetTop - hiddenHeight + mockupHeight / 2;
       break;
     case 'bottom':
       mockupCenterY = canvas.height - visiblePhoneHeight - 40 + mockupHeight / 2;
@@ -1525,7 +1532,7 @@ export const generateScreenshotImage = async (
 
   const mockupX = (canvas.width - mockupWidth) / 2;
   const mockupY = style.textPosition === 'top'
-    ? textAreaHeight + 40
+    ? textAreaHeight + 20
     : 40;
 
   // Only show mockup if there's a screenshot AND showMockup is enabled
@@ -1673,11 +1680,12 @@ export const generatePreviewCanvas = async (
   const rotation = mockupSettings?.rotation ?? style.mockupRotation ?? 0;
   const visibilityRatio = getVisibilityRatio(style.mockupVisibility);
 
-  const textAreaHeight = style.textPosition === 'top'
-    ? style.paddingTop + style.fontSize * 2.5
-    : style.paddingBottom + style.fontSize * 2.5;
+  // Use fixed percentage for text area height (same as ScreensFlowEditor)
+  const textAreaHeightPreview = style.textPosition === 'top'
+    ? dimensions.height * 0.38  // 38% of canvas height for text when at top
+    : dimensions.height * 0.30; // 30% when at bottom
 
-  const availableHeight = dimensions.height - textAreaHeight - 80;
+  const availableHeight = dimensions.height - textAreaHeightPreview - 40;
   const baseMockupHeight = Math.min(availableHeight, dimensions.height * 0.75);
   const clampedScalePreview = Math.max(0.3, Math.min(2.0, mockupScalePreview));
   const mockupHeight = baseMockupHeight * clampedScalePreview;
@@ -1693,7 +1701,9 @@ export const generatePreviewCanvas = async (
 
   switch (style.mockupAlignment) {
     case 'top':
-      mockupCenterY = -hiddenHeight + mockupHeight / 2;
+      // When text is at top, offset mockup down to leave room for text
+      const textOffsetForMockup = style.textPosition === 'top' ? textAreaHeightPreview : 0;
+      mockupCenterY = textOffsetForMockup - hiddenHeight + mockupHeight / 2;
       break;
     case 'bottom':
       mockupCenterY = dimensions.height - visiblePhoneHeight - 40 + mockupHeight / 2;
@@ -1714,7 +1724,7 @@ export const generatePreviewCanvas = async (
 
   const mockupX = (dimensions.width - mockupWidth) / 2;
   const mockupY = style.textPosition === 'top'
-    ? textAreaHeight + 40
+    ? textAreaHeightPreview + 20
     : 40;
 
   const hasMockup = !!(style.showMockup && screenshotForMockup);
