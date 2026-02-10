@@ -402,12 +402,12 @@ const LinkedPairCanvas: React.FC<{
     const currentMockupScale = Math.max(0.3, Math.min(2.0, style.mockupScale ?? 1.0));
     const visibilityRatio = style.mockupVisibility === '2/3' ? 2/3 : style.mockupVisibility === '1/2' ? 0.5 : 1;
 
-    // Calculate text area height - use larger multiplier (4.5) to account for 4-5 line headlines
+    // Calculate text area height - use fixed percentage for reliable spacing
     const textAreaHeight = style.textPosition === 'top'
-      ? (style.paddingTop + style.fontSize * 4.5) * (previewHeight / dimensions.height)
-      : (style.paddingBottom + style.fontSize * 4.5) * (previewHeight / dimensions.height);
+      ? previewHeight * 0.38  // 38% of preview height for text when at top
+      : previewHeight * 0.30; // 30% when at bottom
 
-    const availableHeight = previewHeight - textAreaHeight - (80 * previewHeight / dimensions.height);
+    const availableHeight = previewHeight - textAreaHeight - (40 * previewHeight / dimensions.height);
     const baseMockupHeight = Math.min(availableHeight, previewHeight * 0.75);
     const mockupHeight = baseMockupHeight * currentMockupScale;
     const mockupWidth = mockupHeight * 0.49;
@@ -983,8 +983,12 @@ function drawText(
   let availableHeight: number;
   let textAreaY: number;
 
-  // Minimum text area height (25% of canvas for reasonable text display)
-  const minTextAreaHeight = canvasHeight * 0.25;
+  // Minimum text area height (35% of canvas for reasonable text display with 4+ lines)
+  const minTextAreaHeight = canvasHeight * 0.35;
+
+  // Fixed padding values for preview (not scaled from full size)
+  const paddingTop = 15; // Fixed 15px top padding for preview
+  const gapFromMockup = 10; // Fixed 10px gap between text and mockup
 
   if (mockupInfo && style.showMockup) {
     const mockupTop = getRotatedMockupTop(
@@ -994,9 +998,6 @@ function drawText(
       mockupInfo.rotation
     );
     const mockupBottom = mockupInfo.centerY + mockupInfo.height / 2;
-
-    const paddingTop = style.paddingTop * 0.04;
-    const gapFromMockup = 4;
 
     if (textPosition === 'top') {
       // Space above mockup
@@ -1017,8 +1018,8 @@ function drawText(
       textAreaY = mockupBottom + gapFromMockup;
     }
   } else {
-    availableHeight = canvasHeight * 0.3;
-    textAreaY = textPosition === 'top' ? 8 : canvasHeight - availableHeight - 8;
+    availableHeight = canvasHeight * 0.35;
+    textAreaY = textPosition === 'top' ? paddingTop : canvasHeight - availableHeight - 8;
   }
 
   // Use consistent font size based on style, only shrink if text doesn't fit
@@ -1203,12 +1204,12 @@ const SingleScreenPreview: React.FC<{
         const mockupScale = Math.max(0.3, Math.min(2.0, style.mockupScale ?? 1));
         const visibilityRatio = style.mockupVisibility === '2/3' ? 2/3 : style.mockupVisibility === '1/2' ? 0.5 : 1;
 
-        // Calculate text area height - use larger multiplier (4.5) to account for 4-5 line headlines
+        // Calculate text area height - use fixed percentage for reliable spacing
         const textAreaHeight = style.textPosition === 'top'
-          ? (style.paddingTop + style.fontSize * 4.5) * (previewHeight / dimensions.height)
-          : (style.paddingBottom + style.fontSize * 4.5) * (previewHeight / dimensions.height);
+          ? previewHeight * 0.38  // 38% of preview height for text when at top
+          : previewHeight * 0.30; // 30% when at bottom
 
-        const availableHeight = previewHeight - textAreaHeight - (80 * previewHeight / dimensions.height);
+        const availableHeight = previewHeight - textAreaHeight - (40 * previewHeight / dimensions.height);
         const baseMockupHeight = Math.min(availableHeight, previewHeight * 0.75);
         const mockupHeight = baseMockupHeight * mockupScale;
         const mockupWidth = mockupHeight * 0.49;

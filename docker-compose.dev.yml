@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: aso-db-dev
+    environment:
+      POSTGRES_USER: aso
+      POSTGRES_PASSWORD: aso_password
+      POSTGRES_DB: aso
+    ports:
+      - "5432:5432"
+    volumes:
+      - aso_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  aso_postgres_data:
