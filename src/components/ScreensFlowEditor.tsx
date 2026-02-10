@@ -402,12 +402,11 @@ const LinkedPairCanvas: React.FC<{
     const currentMockupScale = Math.max(0.3, Math.min(2.0, style.mockupScale ?? 1.0));
     const visibilityRatio = style.mockupVisibility === '2/3' ? 2/3 : style.mockupVisibility === '1/2' ? 0.5 : 1;
 
-    // Calculate text area height - use fixed percentage for reliable spacing
-    const textAreaHeight = style.textPosition === 'top'
-      ? previewHeight * 0.38  // 38% of preview height for text when at top
-      : previewHeight * 0.30; // 30% when at bottom
+    // Use CONSISTENT text area height for mockup size calculation (35%)
+    // This ensures mockups are the same size regardless of text position
+    const textAreaHeightForMockup = previewHeight * 0.35;
 
-    const availableHeight = previewHeight - textAreaHeight - (40 * previewHeight / dimensions.height);
+    const availableHeight = previewHeight - textAreaHeightForMockup - (40 * previewHeight / dimensions.height);
     const baseMockupHeight = Math.min(availableHeight, previewHeight * 0.75);
     const mockupHeight = baseMockupHeight * currentMockupScale;
     const mockupWidth = mockupHeight * 0.49;
@@ -1268,12 +1267,16 @@ const SingleScreenPreview: React.FC<{
         const effectiveTextPosition = screenshot.styleOverride?.textPosition ?? style.textPosition;
         const effectiveMockupAlignment = screenshot.styleOverride?.mockupAlignment ?? style.mockupAlignment;
 
-        // Calculate text area height - use fixed percentage for reliable spacing
-        const textAreaHeight = effectiveTextPosition === 'top'
-          ? previewHeight * 0.38  // 38% of preview height for text when at top
-          : previewHeight * 0.30; // 30% when at bottom
+        // Use CONSISTENT text area height for mockup size calculation (35%)
+        // This ensures mockups are the same size regardless of text position
+        const textAreaHeightForMockup = previewHeight * 0.35;
 
-        const availableHeight = previewHeight - textAreaHeight - (40 * previewHeight / dimensions.height);
+        // Text area height for positioning (can vary by text position)
+        const textAreaHeight = effectiveTextPosition === 'top'
+          ? previewHeight * 0.35  // 35% when at top
+          : previewHeight * 0.35; // 35% when at bottom (same for consistency)
+
+        const availableHeight = previewHeight - textAreaHeightForMockup - (40 * previewHeight / dimensions.height);
         const baseMockupHeight = Math.min(availableHeight, previewHeight * 0.75);
         const mockupHeight = baseMockupHeight * mockupScale;
         const mockupWidth = mockupHeight * 0.49;
