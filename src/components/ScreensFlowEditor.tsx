@@ -995,10 +995,12 @@ function drawText(
     textAreaY = textPosition === 'top' ? 8 : canvasHeight - availableHeight - 8;
   }
 
-  // Calculate adaptive font size (use plain text for sizing), then apply user scale
-  const baseFontSize = calculatePreviewFontSize(ctx, text, maxWidth, availableHeight, style.fontFamily);
+  // Calculate font scale first, then adaptive font size with scaled available height
   const referenceFontSize = 72;
   const fontScale = Math.max(0.5, (style.fontSize ?? referenceFontSize) / referenceFontSize);
+  // Reduce available height by fontScale so adaptive sizing accounts for the final scaled size
+  const scaledAvailableHeight = availableHeight / fontScale;
+  const baseFontSize = calculatePreviewFontSize(ctx, text, maxWidth, scaledAvailableHeight, style.fontFamily);
   const fontSize = Math.max(8, baseFontSize * fontScale);
 
   ctx.font = `bold ${fontSize}px ${style.fontFamily}`;
