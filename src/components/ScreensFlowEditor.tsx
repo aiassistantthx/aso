@@ -498,7 +498,7 @@ const LinkedPairCanvas: React.FC<{
     };
   }, [dimensions, style, style.mockupScale, style.mockupAlignment, style.mockupVisibility, style.textPosition, style.paddingTop, style.paddingBottom, style.fontSize, style.textOffset, screen1, screen2, localOffsetX, localOffsetY, localRotation, index1, index2, translationData, selectedLanguage]);
 
-  // Handle drag
+  // Handle drag (mouse)
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0) return;
     setIsDragging(true);
@@ -541,6 +541,48 @@ const LinkedPairCanvas: React.FC<{
     setIsDragging(false);
   }, [isDragging, localOffsetX, localOffsetY, localRotation, settings1, screen2.mockupSettings, onBothSettingsChange]);
 
+  // Handle drag (touch for mobile)
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    setIsDragging(true);
+    setDragStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+  }, []);
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!isDragging || !containerRef.current || e.touches.length !== 1) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const deltaX = ((e.touches[0].clientX - dragStart.x) / (rect.width / 2)) * 100;
+    const deltaY = ((e.touches[0].clientY - dragStart.y) / rect.height) * 100;
+
+    const newOffsetX = Math.max(-50, Math.min(150, localOffsetX + deltaX));
+    const newOffsetY = Math.max(-30, Math.min(30, localOffsetY + deltaY));
+
+    setLocalOffsetX(newOffsetX);
+    setLocalOffsetY(newOffsetY);
+    setDragStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+    e.preventDefault();
+  }, [isDragging, dragStart, localOffsetX, localOffsetY]);
+
+  const handleTouchEnd = useCallback(() => {
+    if (isDragging) {
+      const newSettings1: ScreenshotMockupSettings = {
+        ...settings1,
+        offsetX: localOffsetX,
+        offsetY: localOffsetY,
+        rotation: localRotation
+      };
+      const newSettings2: ScreenshotMockupSettings = {
+        ...(screen2.mockupSettings || DEFAULT_MOCKUP_SETTINGS),
+        offsetX: localOffsetX - 100,
+        offsetY: localOffsetY,
+        rotation: localRotation
+      };
+      onBothSettingsChange(newSettings1, newSettings2);
+    }
+    setIsDragging(false);
+  }, [isDragging, localOffsetX, localOffsetY, localRotation, settings1, screen2.mockupSettings, onBothSettingsChange]);
+
   const handleRotationChange = (delta: number) => {
     const newRotation = localRotation + delta;
     setLocalRotation(newRotation);
@@ -560,12 +602,16 @@ const LinkedPairCanvas: React.FC<{
     if (isDragging) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('touchmove', handleTouchMove, { passive: false });
+      window.addEventListener('touchend', handleTouchEnd);
       return () => {
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
+        window.removeEventListener('touchmove', handleTouchMove);
+        window.removeEventListener('touchend', handleTouchEnd);
       };
     }
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
   const previewHeight = 340;
   const aspectRatio = dimensions.width / dimensions.height;
@@ -590,13 +636,15 @@ const LinkedPairCanvas: React.FC<{
       <div
         ref={containerRef}
         onMouseDown={readOnly ? undefined : handleMouseDown}
+        onTouchStart={readOnly ? undefined : handleTouchStart}
         style={{
           cursor: readOnly ? 'default' : (isDragging ? 'grabbing' : 'grab'),
           borderRadius: '16px',
           overflow: 'hidden',
           border: readOnly ? '3px solid transparent' : '3px solid #FF6B4A',
           boxShadow: readOnly ? '0 4px 16px rgba(0,0,0,0.1)' : '0 8px 24px rgba(255, 107, 74, 0.3)',
-          position: 'relative'
+          position: 'relative',
+          touchAction: readOnly ? 'auto' : 'none'
         }}
       >
         <canvas
@@ -1277,7 +1325,7 @@ const SingleScreenPreview: React.FC<{
     }
   }, [screenshot, style, style.mockupScale, style.mockupAlignment, style.mockupVisibility, style.textPosition, style.paddingTop, style.paddingBottom, style.fontSize, style.textColor, style.highlightColor, style.textOffset, deviceSize, settings, translationData, selectedLanguage, allScreenshots]);
 
-  // Handle drag
+  // Handle drag (mouse)
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0) return;
     setIsDragging(true);
@@ -1306,16 +1354,48 @@ const SingleScreenPreview: React.FC<{
     setIsDragging(false);
   }, []);
 
+  // Handle drag (touch for mobile)
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    setIsDragging(true);
+    setDragStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+  }, []);
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!isDragging || !containerRef.current || e.touches.length !== 1) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const deltaX = ((e.touches[0].clientX - dragStart.x) / rect.width) * 100;
+    const deltaY = ((e.touches[0].clientY - dragStart.y) / rect.height) * 100;
+
+    onSettingsChange({
+      ...settings,
+      offsetX: Math.max(-80, Math.min(80, settings.offsetX + deltaX)),
+      offsetY: Math.max(-30, Math.min(30, settings.offsetY + deltaY))
+    });
+
+    setDragStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+    e.preventDefault();
+  }, [isDragging, dragStart, settings, onSettingsChange]);
+
+  const handleTouchEnd = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
   useEffect(() => {
     if (isDragging) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('touchmove', handleTouchMove, { passive: false });
+      window.addEventListener('touchend', handleTouchEnd);
       return () => {
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
+        window.removeEventListener('touchmove', handleTouchMove);
+        window.removeEventListener('touchend', handleTouchEnd);
       };
     }
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
   const previewHeight = 340;
   const aspectRatio = dimensions.width / dimensions.height;
@@ -1347,13 +1427,15 @@ const SingleScreenPreview: React.FC<{
           ref={containerRef}
           onClick={onClick}
           onMouseDown={readOnly ? undefined : handleMouseDown}
+          onTouchStart={readOnly ? undefined : handleTouchStart}
           style={{
             cursor: readOnly ? 'default' : (isDragging ? 'grabbing' : 'grab'),
             borderRadius: '16px',
             overflow: 'hidden',
             border: isSelected && !readOnly ? '3px solid #FF6B4A' : '3px solid transparent',
             boxShadow: isSelected && !readOnly ? '0 8px 24px rgba(255, 107, 74, 0.3)' : '0 4px 16px rgba(0,0,0,0.1)',
-            position: 'relative'
+            position: 'relative',
+            touchAction: readOnly ? 'auto' : 'none'
           }}
         >
           <canvas
