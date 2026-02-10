@@ -760,6 +760,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
               if (override.textColor) effectiveStyle.textColor = override.textColor as string;
               if (override.highlightColor) effectiveStyle.highlightColor = override.highlightColor as string;
               if (override.gradient) effectiveStyle.gradient = override.gradient as StyleConfig['gradient'];
+              if (override.textPosition) effectiveStyle.textPosition = override.textPosition as StyleConfig['textPosition'];
             }
 
             if (!savedStyle && themePreset?.alternatingColors && i > 0 && !editorData[i]?.styleOverride) {
@@ -790,6 +791,21 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
             const mockupScreenshotIdx = layoutStyle.mockupScreenshotIndex ?? i;
             const mockupScreenshot = screenshots[mockupScreenshotIdx] ?? screenshots[i];
 
+            // Get mockup settings from editor data, with fallback to layout preset
+            const deviceWidth = size === '6.9' ? 1290 : 1242;
+            const deviceHeight = size === '6.9' ? 2796 : 2688;
+            let mockupSettings = editorData[i]?.mockupSettings as ScreenshotMockupSettings | undefined;
+
+            // If no saved editor settings, convert layout preset offset to percentage-based settings
+            if (!mockupSettings && layoutStyle.mockupOffset && !savedStyle) {
+              mockupSettings = {
+                offsetX: (layoutStyle.mockupOffset.x / deviceWidth) * 100,
+                offsetY: (layoutStyle.mockupOffset.y / deviceHeight) * 100,
+                scale: 1,
+                rotation: layoutStyle.mockupRotation ?? 0,
+              };
+            }
+
             try {
               const blob = await generateScreenshotImage({
                 screenshot: screenshots[i],
@@ -798,6 +814,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                 deviceSize: size,
                 mockupScreenshot: mockupScreenshot !== screenshots[i] ? mockupScreenshot : undefined,
                 mockupContinuation: layoutStyle.mockupContinuation,
+                mockupSettings,
               });
 
               const sizeLabel = size === '6.9' ? '6.9-inch' : '6.5-inch';
