@@ -402,10 +402,10 @@ const LinkedPairCanvas: React.FC<{
     const currentMockupScale = Math.max(0.3, Math.min(2.0, style.mockupScale ?? 1.0));
     const visibilityRatio = style.mockupVisibility === '2/3' ? 2/3 : style.mockupVisibility === '1/2' ? 0.5 : 1;
 
-    // Calculate text area height (same as generatePreviewCanvas)
+    // Calculate text area height - use larger multiplier (4.5) to account for 4-5 line headlines
     const textAreaHeight = style.textPosition === 'top'
-      ? (style.paddingTop + style.fontSize * 2.5) * (previewHeight / dimensions.height)
-      : (style.paddingBottom + style.fontSize * 2.5) * (previewHeight / dimensions.height);
+      ? (style.paddingTop + style.fontSize * 4.5) * (previewHeight / dimensions.height)
+      : (style.paddingBottom + style.fontSize * 4.5) * (previewHeight / dimensions.height);
 
     const availableHeight = previewHeight - textAreaHeight - (80 * previewHeight / dimensions.height);
     const baseMockupHeight = Math.min(availableHeight, previewHeight * 0.75);
@@ -1203,10 +1203,10 @@ const SingleScreenPreview: React.FC<{
         const mockupScale = Math.max(0.3, Math.min(2.0, style.mockupScale ?? 1));
         const visibilityRatio = style.mockupVisibility === '2/3' ? 2/3 : style.mockupVisibility === '1/2' ? 0.5 : 1;
 
-        // Calculate text area height (same as generatePreviewCanvas)
+        // Calculate text area height - use larger multiplier (4.5) to account for 4-5 line headlines
         const textAreaHeight = style.textPosition === 'top'
-          ? (style.paddingTop + style.fontSize * 2.5) * (previewHeight / dimensions.height)
-          : (style.paddingBottom + style.fontSize * 2.5) * (previewHeight / dimensions.height);
+          ? (style.paddingTop + style.fontSize * 4.5) * (previewHeight / dimensions.height)
+          : (style.paddingBottom + style.fontSize * 4.5) * (previewHeight / dimensions.height);
 
         const availableHeight = previewHeight - textAreaHeight - (80 * previewHeight / dimensions.height);
         const baseMockupHeight = Math.min(availableHeight, previewHeight * 0.75);
