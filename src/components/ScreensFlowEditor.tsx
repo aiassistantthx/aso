@@ -425,7 +425,7 @@ const LinkedPairCanvas: React.FC<{
     switch (style.mockupAlignment) {
       case 'top':
         // When text is at top, offset mockup down to leave room for text
-        const textAreaOffsetTop = style.textPosition === 'top' ? textAreaHeight : 0;
+        const textAreaOffsetTop = style.textPosition === 'top' ? textAreaHeightForMockup : 0;
         baseMockupCenterY = textAreaOffsetTop - hiddenHeight + mockupHeight / 2;
         break;
       case 'bottom':

@@ -794,7 +794,7 @@ export const getElementBounds = (style: StyleConfig, deviceSize: DeviceSize): El
   switch (style.mockupAlignment) {
     case 'top':
       // When text is at top, offset mockup down to leave room for text
-      const textAreaOffsetTop = style.textPosition === 'top' ? textAreaHeight : 0;
+      const textAreaOffsetTop = style.textPosition === 'top' ? textAreaHeightForMockup : 0;
       mockupY = textAreaOffsetTop - hiddenHeight;
       break;
     case 'bottom':
@@ -1507,7 +1507,7 @@ export const generateScreenshotImage = async (
   switch (style.mockupAlignment) {
     case 'top':
       // When text is at top, offset mockup down to leave room for text
-      const textAreaOffsetTop = style.textPosition === 'top' ? textAreaHeight : 0;
+      const textAreaOffsetTop = style.textPosition === 'top' ? textAreaHeightForMockup : 0;
       mockupCenterY = textAreaOffsetTop - hiddenHeight + mockupHeight / 2;
       break;
     case 'bottom':
@@ -1530,7 +1530,7 @@ export const generateScreenshotImage = async (
 
   const mockupX = (canvas.width - mockupWidth) / 2;
   const mockupY = style.textPosition === 'top'
-    ? textAreaHeight + 20
+    ? textAreaHeightForMockup + 20
     : 40;
 
   // Only show mockup if there's a screenshot AND showMockup is enabled
@@ -1699,7 +1699,7 @@ export const generatePreviewCanvas = async (
   switch (style.mockupAlignment) {
     case 'top':
       // When text is at top, offset mockup down to leave room for text
-      const textOffsetForMockup = style.textPosition === 'top' ? textAreaHeightPreview : 0;
+      const textOffsetForMockup = style.textPosition === 'top' ? textAreaHeightForMockupPreview : 0;
       mockupCenterY = textOffsetForMockup - hiddenHeight + mockupHeight / 2;
       break;
     case 'bottom':
@@ -1721,7 +1721,7 @@ export const generatePreviewCanvas = async (
 
   const mockupX = (dimensions.width - mockupWidth) / 2;
   const mockupY = style.textPosition === 'top'
-    ? textAreaHeightPreview + 20
+    ? textAreaHeightForMockupPreview + 20
     : 40;
 
   const hasMockup = !!(style.showMockup && screenshotForMockup);
