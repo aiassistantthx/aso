@@ -1,7 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import {
   getAuth,
-  signInWithRedirect,
+  signInWithPopup,
   GoogleAuthProvider,
   sendSignInLinkToEmail,
   isSignInWithEmailLink,
@@ -37,8 +37,8 @@ export async function signInWithGoogle(): Promise<string | null> {
     throw new Error('Firebase is not configured');
   }
 
-  await signInWithRedirect(auth, googleProvider);
-  return null;
+  const result = await signInWithPopup(auth, googleProvider);
+  return result.user.getIdToken();
 }
 
 export async function sendMagicLink(email: string): Promise<void> {
