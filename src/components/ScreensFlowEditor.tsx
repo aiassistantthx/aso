@@ -1186,6 +1186,11 @@ const SingleScreenPreview: React.FC<{
   selectedLanguage?: string;
   allScreenshots: Screenshot[];
   readOnly?: boolean;
+  onReplaceScreenshot?: (file: File) => void;
+  onMoveLeft?: () => void;
+  onMoveRight?: () => void;
+  canMoveLeft?: boolean;
+  canMoveRight?: boolean;
 }> = ({
   screenshot,
   index,
@@ -1199,8 +1204,14 @@ const SingleScreenPreview: React.FC<{
   translationData,
   selectedLanguage = 'all',
   allScreenshots,
-  readOnly = false
+  readOnly = false,
+  onReplaceScreenshot,
+  onMoveLeft,
+  onMoveRight,
+  canMoveLeft = false,
+  canMoveRight = false
 }) => {
+  const uploadInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -1474,6 +1485,54 @@ const SingleScreenPreview: React.FC<{
               {index + 1}
             </div>
           )}
+
+          {/* Upload/replace screenshot button */}
+          {!readOnly && onReplaceScreenshot && (
+            <>
+              <input
+                ref={uploadInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    onReplaceScreenshot(file);
+                    e.target.value = '';
+                  }
+                }}
+              />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  uploadInputRef.current?.click();
+                }}
+                style={{
+                  position: 'absolute',
+                  bottom: '40px',
+                  right: '8px',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  backgroundColor: 'rgba(0,0,0,0.6)',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '16px',
+                  opacity: 0.7,
+                  transition: 'opacity 0.2s'
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.7')}
+                title={screenshot.preview ? 'Replace screenshot' : 'Upload screenshot'}
+              >
+                📷
+              </button>
+            </>
+          )}
         </div>
 
         {/* Rotation controls - hide in readOnly mode */}
@@ -1520,6 +1579,53 @@ const SingleScreenPreview: React.FC<{
               }}
             >
               ↻
+            </button>
+
+            {/* Spacer */}
+            <div style={{ width: '12px' }} />
+
+            {/* Move left button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoveLeft?.();
+              }}
+              disabled={!canMoveLeft}
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '6px',
+                border: '1px solid #d1d1d6',
+                backgroundColor: canMoveLeft ? '#fff' : '#f5f5f5',
+                cursor: canMoveLeft ? 'pointer' : 'not-allowed',
+                fontSize: '12px',
+                opacity: canMoveLeft ? 1 : 0.4
+              }}
+              title="Move left"
+            >
+              ←
+            </button>
+
+            {/* Move right button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoveRight?.();
+              }}
+              disabled={!canMoveRight}
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '6px',
+                border: '1px solid #d1d1d6',
+                backgroundColor: canMoveRight ? '#fff' : '#f5f5f5',
+                cursor: canMoveRight ? 'pointer' : 'not-allowed',
+                fontSize: '12px',
+                opacity: canMoveRight ? 1 : 0.4
+              }}
+              title="Move right"
+            >
+              →
             </button>
           </div>
         )}
@@ -1801,6 +1907,36 @@ export const ScreensFlowEditor: React.FC<Props> = ({
       URL.revokeObjectURL(screenshot.preview);
     }
     onScreenshotsChange(screenshots.filter(s => s.id !== id));
+  }, [screenshots, onScreenshotsChange]);
+
+  // Replace screenshot at specific index
+  const handleReplaceScreenshot = useCallback((index: number, file: File) => {
+    const oldScreenshot = screenshots[index];
+    if (oldScreenshot && oldScreenshot.preview) {
+      URL.revokeObjectURL(oldScreenshot.preview);
+    }
+
+    const newScreenshots = screenshots.map((s, i) => {
+      if (i === index) {
+        return {
+          ...s,
+          file,
+          preview: URL.createObjectURL(file)
+        };
+      }
+      return s;
+    });
+    onScreenshotsChange(newScreenshots);
+  }, [screenshots, onScreenshotsChange]);
+
+  // Move screenshot left or right
+  const handleMoveScreenshot = useCallback((index: number, direction: 'left' | 'right') => {
+    const targetIndex = direction === 'left' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= screenshots.length) return;
+
+    const newScreenshots = [...screenshots];
+    [newScreenshots[index], newScreenshots[targetIndex]] = [newScreenshots[targetIndex], newScreenshots[index]];
+    onScreenshotsChange(newScreenshots);
   }, [screenshots, onScreenshotsChange]);
 
   const updateSettings = (index: number, settings: ScreenshotMockupSettings) => {
@@ -2188,6 +2324,11 @@ export const ScreensFlowEditor: React.FC<Props> = ({
                     selectedLanguage={selectedLanguage}
                     allScreenshots={screenshots}
                     readOnly={readOnly}
+                    onReplaceScreenshot={(file) => handleReplaceScreenshot(item.index, file)}
+                    onMoveLeft={() => handleMoveScreenshot(item.index, 'left')}
+                    onMoveRight={() => handleMoveScreenshot(item.index, 'right')}
+                    canMoveLeft={item.index > 0}
+                    canMoveRight={item.index < screenshots.length - 1}
                   />
                 </div>
                 {/* Text input below preview - hide in readOnly mode */}
