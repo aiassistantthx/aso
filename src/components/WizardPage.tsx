@@ -242,6 +242,10 @@ function buildEditorScreenshots(project: WizardProjectData): Screenshot[] {
     // Use saved mockupSettings or initialize from layout preset
     let mockupSettings = editorData[i]?.mockupSettings as ScreenshotMockupSettings | undefined;
 
+    // Check if this is a spanning layout (next screenshot uses this one's image)
+    const nextLayoutStyle = layoutPreset.getStyle(i + 1);
+    const isSpanningStart = nextLayoutStyle?.mockupScreenshotIndex === i;
+
     if (!mockupSettings && !hasSavedStyle && layoutStyle.mockupOffset) {
       // Convert pixel-based mockupOffset to percentage-based mockupSettings
       mockupSettings = {
@@ -249,7 +253,11 @@ function buildEditorScreenshots(project: WizardProjectData): Screenshot[] {
         offsetY: (layoutStyle.mockupOffset.y / deviceHeight) * 100,
         rotation: layoutStyle.mockupRotation ?? 0,
         scale: layoutStyle.mockupScale, // Use layout preset scale if provided
+        linkedToNext: isSpanningStart, // Link to next for spanning layout
       } as ScreenshotMockupSettings;
+    } else if (mockupSettings && isSpanningStart && !mockupSettings.linkedToNext) {
+      // Ensure linkedToNext is set for spanning layout even if settings exist
+      mockupSettings = { ...mockupSettings, linkedToNext: true };
     }
 
     // Use saved linkedMockupIndex or get from layout preset (for spanning layout)
@@ -1245,6 +1253,13 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                         <rect x="4" y="2" width="40" height="52" rx="4" stroke="#d1d1d6" strokeWidth="1.5" fill="none"/>
                         <rect x="10" y="8" width="28" height="4" rx="2" fill="#FF6B4A" opacity="0.6"/>
                         <rect x="14" y="24" width="20" height="28" rx="3" stroke="#FF6B4A" strokeWidth="1.5" fill="#e0f0ff"/>
+                      </svg>
+                    )}
+                    {layout.id === 'text-bottom' && (
+                      <svg width="48" height="56" viewBox="0 0 48 56" fill="none">
+                        <rect x="4" y="2" width="40" height="52" rx="4" stroke="#d1d1d6" strokeWidth="1.5" fill="none"/>
+                        <rect x="14" y="4" width="20" height="28" rx="3" stroke="#FF6B4A" strokeWidth="1.5" fill="#e0f0ff"/>
+                        <rect x="10" y="44" width="28" height="4" rx="2" fill="#FF6B4A" opacity="0.6"/>
                       </svg>
                     )}
                     {layout.id === 'center' && (
