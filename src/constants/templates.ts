@@ -650,8 +650,8 @@ export const TEMPLATES: Template[] = [
     mockupColor: 'black',
     mockupScale: 0.85,
     mockupShadow: true,
-    paddingTop: 80,
-    paddingBottom: 120,
+    paddingTop: 60,
+    paddingBottom: 90,
     paddingSide: 80
   },
   {
@@ -674,8 +674,8 @@ export const TEMPLATES: Template[] = [
     mockupColor: 'black',
     mockupScale: 0.9,
     mockupShadow: true,
-    paddingTop: 80,
-    paddingBottom: 60,
+    paddingTop: 60,
+    paddingBottom: 45,
     paddingSide: 60
   },
   {
@@ -696,8 +696,8 @@ export const TEMPLATES: Template[] = [
     mockupColor: 'white',
     mockupScale: 0.95,
     mockupShadow: true,
-    paddingTop: 100,
-    paddingBottom: 80,
+    paddingTop: 70,
+    paddingBottom: 45,
     paddingSide: 80
   },
   {
@@ -720,8 +720,8 @@ export const TEMPLATES: Template[] = [
     mockupColor: 'black',
     mockupScale: 1.0,
     mockupShadow: true,
-    paddingTop: 80,
-    paddingBottom: 60,
+    paddingTop: 60,
+    paddingBottom: 45,
     paddingSide: 60
   },
   {
@@ -744,8 +744,8 @@ export const TEMPLATES: Template[] = [
     mockupColor: 'black',
     mockupScale: 0.9,
     mockupShadow: true,
-    paddingTop: 80,
-    paddingBottom: 60,
+    paddingTop: 60,
+    paddingBottom: 45,
     paddingSide: 80
   },
   {
@@ -766,8 +766,8 @@ export const TEMPLATES: Template[] = [
     mockupColor: 'white',
     mockupScale: 0.95,
     mockupShadow: true,
-    paddingTop: 80,
-    paddingBottom: 60,
+    paddingTop: 60,
+    paddingBottom: 45,
     paddingSide: 80
   },
   {
@@ -790,8 +790,8 @@ export const TEMPLATES: Template[] = [
     mockupColor: 'black',
     mockupScale: 0.9,
     mockupShadow: true,
-    paddingTop: 80,
-    paddingBottom: 60,
+    paddingTop: 60,
+    paddingBottom: 45,
     paddingSide: 60
   },
   {
@@ -814,8 +814,8 @@ export const TEMPLATES: Template[] = [
     mockupColor: 'white',
     mockupScale: 0.85,
     mockupShadow: true,
-    paddingTop: 80,
-    paddingBottom: 80,
+    paddingTop: 60,
+    paddingBottom: 45,
     paddingSide: 80
   },
   {
@@ -838,8 +838,8 @@ export const TEMPLATES: Template[] = [
     mockupColor: 'black',
     mockupScale: 0.9,
     mockupShadow: true,
-    paddingTop: 80,
-    paddingBottom: 60,
+    paddingTop: 60,
+    paddingBottom: 45,
     paddingSide: 60
   },
   {
@@ -860,8 +860,8 @@ export const TEMPLATES: Template[] = [
     mockupColor: 'black',
     mockupScale: 0.95,
     mockupShadow: true,
-    paddingTop: 80,
-    paddingBottom: 60,
+    paddingTop: 60,
+    paddingBottom: 45,
     paddingSide: 60
   },
   {
@@ -884,8 +884,8 @@ export const TEMPLATES: Template[] = [
     mockupColor: 'white',
     mockupScale: 0.9,
     mockupShadow: true,
-    paddingTop: 80,
-    paddingBottom: 60,
+    paddingTop: 60,
+    paddingBottom: 45,
     paddingSide: 60
   },
   {
@@ -908,8 +908,8 @@ export const TEMPLATES: Template[] = [
     mockupColor: 'black',
     mockupScale: 0.9,
     mockupShadow: true,
-    paddingTop: 80,
-    paddingBottom: 60,
+    paddingTop: 60,
+    paddingBottom: 45,
     paddingSide: 80
   }
 ];
