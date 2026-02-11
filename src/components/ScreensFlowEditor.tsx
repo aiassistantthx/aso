@@ -444,7 +444,6 @@ const LinkedPairCanvas: React.FC<{
   }, [settings1.offsetX, settings1.offsetY, settings1.rotation, isDragging]);
 
   const dimensions = DEVICE_SIZES[deviceSize];
-  console.log('[ScreensFlowEditor] deviceSize:', deviceSize, 'platform:', dimensions?.platform);
   const isEditingTranslation = selectedLanguage !== 'all' && translationData;
 
   const getDisplayText = (screen: Screenshot, idx: number): string => {
