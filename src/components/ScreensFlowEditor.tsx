@@ -1030,9 +1030,6 @@ function drawText(
   let availableHeight: number;
   let textAreaY: number;
 
-  // Minimum text area height (35% of canvas for reasonable text display with 4+ lines)
-  const minTextAreaHeight = canvasHeight * 0.35;
-
   // Fixed padding values for preview (not scaled from full size)
   const paddingTop = 15; // Fixed 15px top padding for preview
   const gapFromMockup = 10; // Fixed 10px gap between text and mockup
