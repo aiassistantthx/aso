@@ -106,16 +106,22 @@ export const generateZipArchive = async (options: ExportOptions): Promise<void> 
         }
 
         try {
+          // Determine spanning link source (explicit linkedMockupIndex or previous screen flagged as linked)
+          const prevScreen = i > 0 ? screenshots[i - 1] : null;
+          const linkSourceIndex = screenshot.linkedMockupIndex !== undefined
+            ? screenshot.linkedMockupIndex
+            : (prevScreen?.mockupSettings?.linkedToNext ? i - 1 : undefined);
+
           // Get the mockup screenshot (may be linked to another screen)
-          const mockupScreenshot = screenshot.linkedMockupIndex !== undefined
-            ? screenshots[screenshot.linkedMockupIndex]?.preview || null
+          const mockupScreenshot = linkSourceIndex !== undefined
+            ? screenshots[linkSourceIndex]?.preview || null
             : screenshot.preview;
 
           // Ensure linked (spanning) mockups stay perfectly aligned across export sizes.
           // If this screen is linked to another, derive mockup position from the source screen.
           let effectiveMockupSettings = screenshot.mockupSettings;
-          if (screenshot.linkedMockupIndex !== undefined) {
-            const linkedScreen = screenshots[screenshot.linkedMockupIndex];
+          if (linkSourceIndex !== undefined) {
+            const linkedScreen = screenshots[linkSourceIndex];
             if (linkedScreen?.mockupSettings) {
               const linkedSettings = linkedScreen.mockupSettings;
               effectiveMockupSettings = {
