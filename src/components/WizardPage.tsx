@@ -789,9 +789,15 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
               if (alt.highlightColor) effectiveStyle.highlightColor = alt.highlightColor;
             }
 
-            // Apply layout preset only when not using saved editor styleConfig
+            // Get device info
+            const deviceDims = DEVICE_SIZES[size];
+            const deviceWidth = deviceDims.width;
+            const deviceHeight = deviceDims.height;
+            const isAndroid = deviceDims.platform === 'android';
+
+            // Apply layout preset only for iOS and when not using saved editor styleConfig
             const layoutStyle = layoutPreset.getStyle(i);
-            if (!savedStyle) {
+            if (!savedStyle && !isAndroid) {
               effectiveStyle.textPosition = layoutStyle.textPosition;
               effectiveStyle.mockupAlignment = layoutStyle.mockupAlignment;
               effectiveStyle.mockupVisibility = layoutStyle.mockupVisibility;
@@ -807,39 +813,47 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
               }
             }
 
-            // Determine which screenshot to use for mockup (for spanning layout)
-            const mockupScreenshotIdx = layoutStyle.mockupScreenshotIndex ?? i;
+            // For Android, use simple centered layout
+            if (isAndroid && !savedStyle) {
+              effectiveStyle.textPosition = 'top';
+              effectiveStyle.mockupAlignment = 'bottom';
+              effectiveStyle.mockupVisibility = 'full';
+              effectiveStyle.mockupOffset = { x: 0, y: 0 };
+              effectiveStyle.mockupRotation = 0;
+              effectiveStyle.mockupContinuation = 'none';
+            }
+
+            // Determine which screenshot to use for mockup (for spanning layout - iOS only)
+            const mockupScreenshotIdx = isAndroid ? i : (layoutStyle.mockupScreenshotIndex ?? i);
             const mockupScreenshot = screenshots[mockupScreenshotIdx] ?? screenshots[i];
 
-            // Get mockup settings from editor data, with fallback to layout preset
-            const deviceDims = DEVICE_SIZES[size];
-            const deviceWidth = deviceDims.width;
-            const deviceHeight = deviceDims.height;
-            const isSpanningLayout = layoutStyle.mockupScreenshotIndex !== undefined;
+            // Get mockup settings from editor data
+            const isSpanningLayout = !isAndroid && layoutStyle.mockupScreenshotIndex !== undefined;
 
             let mockupSettings: ScreenshotMockupSettings | undefined;
 
             if (isSpanningLayout && layoutStyle.mockupOffset) {
-              // For spanning layout, always use layout preset values (each screen has unique offset)
+              // For spanning layout (iOS only), always use layout preset values
               mockupSettings = {
                 offsetX: (layoutStyle.mockupOffset.x / deviceWidth) * 100,
                 offsetY: (layoutStyle.mockupOffset.y / deviceHeight) * 100,
-                scale: layoutStyle.mockupScale, // undefined falls back to style.mockupScale in canvas.ts
+                scale: layoutStyle.mockupScale,
                 rotation: layoutStyle.mockupRotation ?? 0,
               };
-            } else {
-              // For other layouts, use saved editor settings or fallback to layout preset
+            } else if (!isAndroid) {
+              // For other iOS layouts, use saved editor settings or fallback to layout preset
               mockupSettings = langEditorData[i]?.mockupSettings as ScreenshotMockupSettings | undefined;
 
               if (!mockupSettings && layoutStyle.mockupOffset && !savedStyle) {
                 mockupSettings = {
                   offsetX: (layoutStyle.mockupOffset.x / deviceWidth) * 100,
                   offsetY: (layoutStyle.mockupOffset.y / deviceHeight) * 100,
-                  scale: layoutStyle.mockupScale, // undefined falls back to style.mockupScale in canvas.ts
+                  scale: layoutStyle.mockupScale,
                   rotation: layoutStyle.mockupRotation ?? 0,
                 };
               }
             }
+            // For Android: mockupSettings stays undefined = centered default
 
             try {
               const blob = await generateScreenshotImage({
@@ -848,7 +862,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                 style: effectiveStyle,
                 deviceSize: size,
                 mockupScreenshot: mockupScreenshot !== screenshots[i] ? mockupScreenshot : undefined,
-                mockupContinuation: layoutStyle.mockupContinuation,
+                mockupContinuation: isAndroid ? 'none' : layoutStyle.mockupContinuation,
                 mockupSettings,
               });
 
