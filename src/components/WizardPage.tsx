@@ -859,31 +859,52 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
             <h2 style={pageStyles.stepTitle} className="wizard-step-title">App Information</h2>
             <p style={pageStyles.stepDesc} className="wizard-step-desc">Tell us about your app</p>
 
-            <label style={pageStyles.label}>App Name *</label>
+            <label style={pageStyles.label}>
+              App Name *
+              <span style={{ fontSize: '12px', color: project.appName.length > 100 ? '#ff3b30' : '#86868b', marginLeft: '8px' }}>
+                {project.appName.length}/100
+              </span>
+            </label>
             <input
               style={pageStyles.input}
               value={project.appName}
-              onChange={e => setProject({ ...project, appName: e.target.value })}
+              onChange={e => setProject({ ...project, appName: e.target.value.slice(0, 100) })}
               onBlur={() => saveField({ appName: project.appName })}
               placeholder="My Amazing App"
+              maxLength={100}
             />
 
-            <label style={pageStyles.label}>Brief Description *</label>
+            <label style={pageStyles.label}>
+              Brief Description *
+              <span style={{ fontSize: '12px', color: project.briefDescription.length > 500 ? '#ff3b30' : '#86868b', marginLeft: '8px' }}>
+                {project.briefDescription.length}/500
+              </span>
+            </label>
             <textarea
               style={{ ...pageStyles.input, minHeight: '100px', resize: 'vertical' }}
               value={project.briefDescription}
-              onChange={e => setProject({ ...project, briefDescription: e.target.value })}
+              onChange={e => {
+                const value = e.target.value.slice(0, 500);
+                setProject({ ...project, briefDescription: value });
+              }}
               onBlur={() => saveField({ briefDescription: project.briefDescription })}
               placeholder="A short description of what your app does..."
+              maxLength={500}
             />
 
-            <label style={pageStyles.label}>Target Keywords</label>
+            <label style={pageStyles.label}>
+              Target Keywords
+              <span style={{ fontSize: '12px', color: '#86868b', marginLeft: '8px' }}>
+                {project.targetKeywords.length}/200
+              </span>
+            </label>
             <input
               style={pageStyles.input}
               value={project.targetKeywords}
-              onChange={e => setProject({ ...project, targetKeywords: e.target.value })}
+              onChange={e => setProject({ ...project, targetKeywords: e.target.value.slice(0, 200) })}
               onBlur={() => saveField({ targetKeywords: project.targetKeywords })}
               placeholder="fitness, workout, health tracker"
+              maxLength={200}
             />
 
             <div style={pageStyles.stepActions} className="wizard-step-actions">

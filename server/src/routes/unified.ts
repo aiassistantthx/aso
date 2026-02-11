@@ -8,6 +8,32 @@ import { UPLOADS_DIR } from '../config.js';
 import { getPrompt, renderPrompt } from '../utils/prompts.js';
 import { logAIUsage, extractTokenUsage } from '../utils/aiUsageLogger.js';
 
+// Input limits for user-provided fields
+const INPUT_LIMITS = {
+  appName: 100,
+  briefDescription: 500,
+  targetKeywords: 200,
+};
+
+// Sanitize user input to prevent prompt injection
+function sanitizeInput(input: string | undefined, maxLength: number): string {
+  if (!input) return '';
+
+  let sanitized = input
+    // Limit length
+    .slice(0, maxLength)
+    // Remove potential prompt injection patterns
+    .replace(/\b(ignore|disregard|forget|override)\s+(all\s+)?(previous|above|prior)\s+(instructions?|rules?|prompts?)/gi, '')
+    .replace(/\b(system|assistant|user)\s*:/gi, '')
+    .replace(/```[\s\S]*?```/g, '') // Remove code blocks
+    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    // Normalize whitespace
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return sanitized;
+}
+
 const IOS_LIMITS: Record<string, number> = {
   appName: 30,
   subtitle: 30,
@@ -181,13 +207,24 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
       return reply.status(404).send({ error: 'Project not found' });
     }
 
+    // Sanitize user inputs to prevent prompt injection
+    const sanitizedAppName = body.appName !== undefined
+      ? sanitizeInput(body.appName as string, INPUT_LIMITS.appName)
+      : undefined;
+    const sanitizedBriefDescription = body.briefDescription !== undefined
+      ? sanitizeInput(body.briefDescription as string, INPUT_LIMITS.briefDescription)
+      : undefined;
+    const sanitizedTargetKeywords = body.targetKeywords !== undefined
+      ? sanitizeInput(body.targetKeywords as string, INPUT_LIMITS.targetKeywords)
+      : undefined;
+
     const updated = await fastify.prisma.unifiedProject.update({
       where: { id },
       data: {
         name: body.name as string | undefined,
-        appName: body.appName as string | undefined,
-        briefDescription: body.briefDescription as string | undefined,
-        targetKeywords: body.targetKeywords as string | undefined,
+        appName: sanitizedAppName,
+        briefDescription: sanitizedBriefDescription,
+        targetKeywords: sanitizedTargetKeywords,
         styleConfig: body.styleConfig as Prisma.InputJsonValue | undefined,
         deviceSize: body.deviceSize as string | undefined,
         metadataPlatform: body.metadataPlatform as string | undefined,
