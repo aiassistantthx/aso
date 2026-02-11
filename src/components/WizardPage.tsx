@@ -5,7 +5,7 @@ import { AppHeader } from './AppHeader';
 import { TONE_PRESETS, LAYOUT_PRESETS } from '../constants/tonePresets';
 import { APP_STORE_LANGUAGES, getLanguageName } from '../constants/languages';
 import { THEME_PRESETS, THEME_PRESET_GROUPS } from '../constants/templates';
-import { generatePreviewCanvas, generateScreenshotImage } from '../services/canvas';
+import { generateScreenshotImage } from '../services/canvas';
 import { StyleConfig, DeviceSize, Screenshot, Decoration, ScreenshotStyleOverride, ScreenshotMockupSettings } from '../types';
 import { ScreensFlowEditor } from './ScreensFlowEditor';
 import { StyleEditor } from './StyleEditor';
@@ -320,10 +320,6 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
   // Editor language selection (for step 6 editor tab)
   const [editorLang, setEditorLang] = useState<string>('source');
 
-  // Translated screenshot previews
-  const [translatedPreviews, setTranslatedPreviews] = useState<HTMLCanvasElement[]>([]);
-  const [translatedPreviewLoading, setTranslatedPreviewLoading] = useState(false);
-
   // Load specific project
   const loadProject = useCallback(async (id: string) => {
     setLoading(true);
@@ -586,146 +582,6 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
       setTranslating(false);
     }
   };
-
-  // Generate translated screenshot previews
-  useEffect(() => {
-    if (!project || step !== 7) return;
-    if (!activeLang || !project.translatedHeadlines?.[activeLang]) {
-      setTranslatedPreviews([]);
-      return;
-    }
-    if (!project.uploadedScreenshots?.length) {
-      setTranslatedPreviews([]);
-      return;
-    }
-
-    const templateId = project.selectedTemplateId;
-    const themePreset = templateId ? THEME_PRESETS.find(t => t.id === templateId) : null;
-    if (!themePreset) {
-      setTranslatedPreviews([]);
-      return;
-    }
-
-    const screenshots = project.uploadedScreenshots;
-    const headlines = project.translatedHeadlines[activeLang];
-    const deviceSize: DeviceSize = '6.9';
-    const editorData = project.screenshotEditorData || [];
-
-    const style: StyleConfig = {
-      backgroundColor: themePreset.backgroundColor,
-      gradient: themePreset.gradient,
-      textColor: themePreset.textColor,
-      fontFamily: themePreset.fontFamily,
-      fontSize: themePreset.fontSize,
-      textPosition: 'top',
-      textAlign: themePreset.textAlign || 'center',
-      paddingTop: 80,
-      paddingBottom: 60,
-      showMockup: true,
-      mockupColor: themePreset.mockupColor,
-      mockupStyle: 'flat',
-      mockupVisibility: 'full',
-      mockupAlignment: 'bottom',
-      mockupOffset: { x: 0, y: 60 },
-      textOffset: { x: 0, y: 0 },
-      mockupScale: themePreset.mockupScale || 1.15,
-      mockupRotation: 0,
-      mockupContinuation: 'none',
-      highlightColor: themePreset.highlightColor,
-      highlightPadding: 12,
-      highlightBorderRadius: 8,
-      pattern: themePreset.pattern,
-    };
-
-    const generateTranslatedPreviews = async () => {
-      setTranslatedPreviewLoading(true);
-      const canvases: HTMLCanvasElement[] = [];
-      const layoutPreset = LAYOUT_PRESETS.find(l => l.id === project.layoutPreset) || LAYOUT_PRESETS[0];
-
-      for (let i = 0; i < Math.min(screenshots.length, headlines.length); i++) {
-        const effectiveStyle = { ...style };
-
-        if (themePreset.alternatingColors && i > 0) {
-          const altIdx = (i - 1) % themePreset.alternatingColors.length;
-          const alt = themePreset.alternatingColors[altIdx];
-          effectiveStyle.backgroundColor = alt.backgroundColor;
-          effectiveStyle.gradient = alt.gradient;
-          if (alt.textColor) effectiveStyle.textColor = alt.textColor;
-          if (alt.highlightColor) effectiveStyle.highlightColor = alt.highlightColor;
-        }
-
-        const layoutStyle = layoutPreset.getStyle(i);
-        effectiveStyle.textPosition = layoutStyle.textPosition;
-        effectiveStyle.mockupAlignment = layoutStyle.mockupAlignment;
-        effectiveStyle.mockupVisibility = layoutStyle.mockupVisibility;
-        effectiveStyle.mockupOffset = layoutStyle.mockupOffset;
-        if (layoutStyle.mockupContinuation) {
-          effectiveStyle.mockupContinuation = layoutStyle.mockupContinuation;
-        }
-        if (layoutStyle.mockupRotation !== undefined) {
-          effectiveStyle.mockupRotation = layoutStyle.mockupRotation;
-        }
-        if (layoutStyle.mockupScale !== undefined) {
-          effectiveStyle.mockupScale = layoutStyle.mockupScale;
-        }
-
-        // Determine which screenshot to use for mockup (for spanning layout)
-        const mockupScreenshotIdx = layoutStyle.mockupScreenshotIndex ?? i;
-        const mockupScreenshot = screenshots[mockupScreenshotIdx] ?? screenshots[i];
-
-        // Use layout preset mockupSettings for spanning layout (each screen needs different offset)
-        // For non-spanning layouts, use saved mockupSettings or convert from layout preset
-        const deviceWidth = 1290;
-        const deviceHeight = 2796;
-        const isSpanningLayout = layoutStyle.mockupScreenshotIndex !== undefined;
-
-        let mockupSettings: { offsetX: number; offsetY: number; scale: number; rotation: number } | undefined;
-
-        if (isSpanningLayout && layoutStyle.mockupOffset) {
-          // For spanning layout, always use layout preset values (each screen has unique offset)
-          mockupSettings = {
-            offsetX: (layoutStyle.mockupOffset.x / deviceWidth) * 100,
-            offsetY: (layoutStyle.mockupOffset.y / deviceHeight) * 100,
-            scale: layoutStyle.mockupScale ?? 1,
-            rotation: layoutStyle.mockupRotation ?? 0,
-          };
-        } else {
-          // For other layouts, use saved editor settings or fallback to layout preset
-          mockupSettings = editorData[i]?.mockupSettings as { offsetX: number; offsetY: number; scale: number; rotation: number } | undefined;
-
-          if (!mockupSettings && layoutStyle.mockupOffset) {
-            mockupSettings = {
-              offsetX: (layoutStyle.mockupOffset.x / deviceWidth) * 100,
-              offsetY: (layoutStyle.mockupOffset.y / deviceHeight) * 100,
-              scale: layoutStyle.mockupScale ?? 1,
-              rotation: layoutStyle.mockupRotation ?? 0,
-            };
-          }
-        }
-
-        try {
-          const canvas = document.createElement('canvas');
-          await generatePreviewCanvas(canvas, {
-            screenshot: screenshots[i],
-            text: headlines[i],
-            style: effectiveStyle,
-            deviceSize,
-            mockupScreenshot: mockupScreenshot !== screenshots[i] ? mockupScreenshot : undefined,
-            mockupContinuation: layoutStyle.mockupContinuation,
-            mockupSettings,
-          });
-          canvases.push(canvas);
-        } catch (err) {
-          console.error(`Translated preview ${i} failed:`, err);
-        }
-      }
-      setTranslatedPreviews(canvases);
-      setTranslatedPreviewLoading(false);
-    };
-
-    generateTranslatedPreviews();
-  }, [project?.translatedHeadlines, activeLang, step, project?.selectedTemplateId, project?.layoutPreset, project?.uploadedScreenshots]);
-
   // Export ZIP
   const handleExport = async () => {
     if (!project) return;
