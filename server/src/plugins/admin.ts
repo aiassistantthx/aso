@@ -298,38 +298,6 @@ export async function setupAdmin(fastify: FastifyInstance, prisma: PrismaClient)
           listProperties: ['id', 'projectId', 'order', 'text'],
         },
       },
-      // Legacy resources
-      {
-        resource: { model: getModelByName('Project', dmmf), client: prisma },
-        options: {
-          navigation: { name: 'Legacy', icon: 'Archive' },
-          listProperties: ['id', 'name', 'userId', 'deviceSize', 'createdAt'],
-          filterProperties: ['name', 'userId', 'createdAt'],
-        },
-      },
-      {
-        resource: { model: getModelByName('WizardProject', dmmf), client: prisma },
-        options: {
-          navigation: { name: 'Legacy', icon: 'Archive' },
-          listProperties: ['id', 'appName', 'userId', 'status', 'currentStep', 'createdAt'],
-          filterProperties: ['status', 'currentStep', 'createdAt'],
-        },
-      },
-      {
-        resource: { model: getModelByName('MetadataProject', dmmf), client: prisma },
-        options: {
-          navigation: { name: 'Legacy', icon: 'Archive' },
-          listProperties: ['id', 'name', 'userId', 'platform', 'createdAt'],
-          filterProperties: ['platform', 'createdAt'],
-        },
-      },
-      {
-        resource: { model: getModelByName('Screenshot', dmmf), client: prisma },
-        options: {
-          navigation: { name: 'Legacy', icon: 'Archive' },
-          listProperties: ['id', 'projectId', 'order', 'text'],
-        },
-      },
       // Promo Codes
       {
         resource: { model: getModelByName('PromoCode', dmmf), client: prisma },
