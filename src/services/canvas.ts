@@ -658,6 +658,31 @@ const MOCKUP_CONFIG = {
   }
 };
 
+// Google Pixel mockup configuration (drawn programmatically)
+// Based on Pixel 10 / Pixel 9 design with camera bar
+const PIXEL_CONFIG = {
+  // Phone dimensions (aspect ratio ~9:19.5 like Pixel)
+  phoneWidth: 450,
+  phoneHeight: 980,
+  // Frame/bezel thickness
+  bezelWidth: 8,
+  // Corner radius for the phone body
+  cornerRadius: 50,
+  // Screen corner radius (slightly smaller)
+  screenCornerRadius: 45,
+  // Punch-hole camera (centered at top)
+  punchHoleX: 225, // Center of phone
+  punchHoleY: 35,
+  punchHoleRadius: 12,
+  // Side buttons
+  buttons: {
+    // Right side - Power button
+    rightPower: { x: 450, y: 200, width: 6, height: 80 },
+    // Right side - Volume rocker
+    rightVolume: { x: 450, y: 300, width: 6, height: 100 }
+  }
+};
+
 
 const getVisibilityRatio = (visibility: StyleConfig['mockupVisibility']): number => {
   switch (visibility) {
@@ -772,7 +797,10 @@ export const getElementBounds = (style: StyleConfig, deviceSize: DeviceSize): El
   const availableHeight = dimensions.height - textAreaHeightForMockup - 40;
   const baseMockupHeight = Math.min(availableHeight, dimensions.height * 0.75);
   const mockupHeight = baseMockupHeight * mockupScale;
-  const phoneAspect = MOCKUP_CONFIG.phoneWidth / MOCKUP_CONFIG.phoneHeight;
+  // Use Pixel aspect ratio for Android, iPhone for iOS
+  const isAndroidBounds = dimensions.platform === 'android';
+  const configBounds = isAndroidBounds ? PIXEL_CONFIG : MOCKUP_CONFIG;
+  const phoneAspect = configBounds.phoneWidth / configBounds.phoneHeight;
   const mockupWidth = mockupHeight * phoneAspect;
 
   // Calculate mockup position
@@ -1227,6 +1255,106 @@ const drawOutlineMockup = (
   ctx.fill();
 };
 
+// Draw Google Pixel style mockup (flat style with punch-hole camera)
+const drawPixelMockup = (
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  frameColor: string,
+  screenshot: HTMLImageElement | null
+): void => {
+  // Pixel proportions - thinner bezels than iPhone
+  const frameThickness = width * 0.025;
+  const cornerRadius = width * 0.08; // Pixel has slightly less rounded corners
+  const screenCornerRadius = cornerRadius - frameThickness * 0.7;
+
+  // Punch-hole camera (centered at top, smaller than Dynamic Island)
+  const punchHoleRadius = width * 0.025;
+  const punchHoleY = y + frameThickness + height * 0.015;
+  const punchHoleX = x + width / 2;
+
+  // Draw shadow first
+  ctx.save();
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+  ctx.shadowBlur = 40;
+  ctx.shadowOffsetX = 8;
+  ctx.shadowOffsetY = 16;
+
+  // Draw solid phone body
+  ctx.fillStyle = frameColor;
+  ctx.beginPath();
+  ctx.roundRect(x, y, width, height, cornerRadius);
+  ctx.fill();
+
+  ctx.restore();
+
+  // Draw screen area (slightly inset)
+  const screenX = x + frameThickness;
+  const screenY = y + frameThickness;
+  const screenWidth = width - frameThickness * 2;
+  const screenHeight = height - frameThickness * 2;
+
+  // Black screen background
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.roundRect(screenX, screenY, screenWidth, screenHeight, screenCornerRadius);
+  ctx.fill();
+
+  // Draw screenshot if provided
+  if (screenshot) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(screenX, screenY, screenWidth, screenHeight, screenCornerRadius);
+    ctx.clip();
+
+    const imgAspect = screenshot.width / screenshot.height;
+    const screenAspect = screenWidth / screenHeight;
+    let drawW, drawH, drawX, drawY;
+
+    if (imgAspect > screenAspect) {
+      drawH = screenHeight;
+      drawW = drawH * imgAspect;
+      drawX = screenX - (drawW - screenWidth) / 2;
+      drawY = screenY;
+    } else {
+      drawW = screenWidth;
+      drawH = drawW / imgAspect;
+      drawX = screenX;
+      drawY = screenY - (drawH - screenHeight) / 2;
+    }
+    ctx.drawImage(screenshot, drawX, drawY, drawW, drawH);
+    ctx.restore();
+  }
+
+  // Draw punch-hole camera (small circle cutout)
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.arc(punchHoleX, punchHoleY, punchHoleRadius, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Draw side buttons (Pixel style - on the right side)
+  const buttonColor = frameColor === '#F5F5F7' ? '#D2D2D7' :
+                      frameColor === '#E3D5C8' ? '#C5B5A6' : '#2D2D2F';
+  ctx.fillStyle = buttonColor;
+
+  // Power button (right side, higher position like Pixel)
+  const powerWidth = width * 0.015;
+  const powerHeight = height * 0.045;
+  const powerY = y + height * 0.18;
+  ctx.beginPath();
+  ctx.roundRect(x + width, powerY, powerWidth, powerHeight, 2);
+  ctx.fill();
+
+  // Volume rocker (right side, below power - Pixel has volume on right)
+  const volHeight = height * 0.08;
+  const volY = powerY + powerHeight + height * 0.02;
+  ctx.beginPath();
+  ctx.roundRect(x + width, volY, powerWidth, volHeight, 2);
+  ctx.fill();
+};
+
 const drawMockupWithScreenshot = async (
   ctx: CanvasRenderingContext2D,
   _mockupX: number,
@@ -1238,10 +1366,15 @@ const drawMockupWithScreenshot = async (
   screenshot: string | null,
   style: StyleConfig,
   mockupContinuationOverride?: MockupContinuation,
-  mockupSettings?: ScreenshotMockupSettings
+  mockupSettings?: ScreenshotMockupSettings,
+  deviceSize?: DeviceSize
 ): Promise<void> => {
+  // Determine if this is an Android device
+  const isAndroid = deviceSize ? DEVICE_SIZES[deviceSize].platform === 'android' : false;
+
   const mockupStyle = style.mockupStyle || 'realistic';
-  const mockupImg = mockupStyle === 'realistic' ? await loadMockupImage() : null;
+  // For Android, always use flat-style Pixel mockup (no PNG image)
+  const mockupImg = (!isAndroid && mockupStyle === 'realistic') ? await loadMockupImage() : null;
   const visibilityRatio = getVisibilityRatio(style.mockupVisibility);
   // Per-screenshot settings override global style settings
   const rotation = mockupSettings?.rotation ?? style.mockupRotation ?? 0;
@@ -1249,7 +1382,9 @@ const drawMockupWithScreenshot = async (
 
   // Phone size is FIXED - never changes with visibility
   const fullPhoneHeight = mockupHeight;
-  const phoneAspect = MOCKUP_CONFIG.phoneWidth / MOCKUP_CONFIG.phoneHeight;
+  // Use Pixel aspect ratio for Android, iPhone for iOS
+  const config = isAndroid ? PIXEL_CONFIG : MOCKUP_CONFIG;
+  const phoneAspect = config.phoneWidth / config.phoneHeight;
   const fullPhoneWidth = fullPhoneHeight * phoneAspect;
 
   // Calculate scale factor
@@ -1359,7 +1494,14 @@ const drawMockupWithScreenshot = async (
   // Load screenshot image if available
   const screenshotImg = screenshot ? await loadImage(screenshot) : null;
 
-  // Choose drawing method based on mockup style
+  // For Android devices, always use Pixel mockup
+  if (isAndroid) {
+    drawPixelMockup(ctx, adjustedMockupX, adjustedMockupY, fullPhoneWidth, fullPhoneHeight, frameColor, screenshotImg);
+    ctx.restore();
+    return;
+  }
+
+  // Choose drawing method based on mockup style (iOS only)
   if (mockupStyle !== 'realistic') {
     // Use programmatic mockup drawing for non-realistic styles
     switch (mockupStyle) {
@@ -1483,7 +1625,10 @@ export const generateScreenshotImage = async (
   const baseMockupHeight = Math.min(availableHeight, canvas.height * 0.75);
   const clampedScale = Math.max(0.3, Math.min(2.0, mockupScale));
   const mockupHeight = baseMockupHeight * clampedScale;
-  const phoneAspect = MOCKUP_CONFIG.phoneWidth / MOCKUP_CONFIG.phoneHeight;
+  // Use Pixel aspect ratio for Android, iPhone for iOS
+  const isAndroidExport = dimensions.platform === 'android';
+  const configExport = isAndroidExport ? PIXEL_CONFIG : MOCKUP_CONFIG;
+  const phoneAspect = configExport.phoneWidth / configExport.phoneHeight;
   const mockupWidth = mockupHeight * phoneAspect;
 
   // Calculate mockup center for text positioning
@@ -1526,7 +1671,7 @@ export const generateScreenshotImage = async (
   const hasMockup = !!(style.showMockup && screenshotForMockup);
 
   if (hasMockup) {
-    await drawMockupWithScreenshot(ctx, mockupX, mockupY, mockupWidth, mockupHeight, canvas.width, canvas.height, screenshotForMockup, style, mockupContinuation, mockupSettings);
+    await drawMockupWithScreenshot(ctx, mockupX, mockupY, mockupWidth, mockupHeight, canvas.width, canvas.height, screenshotForMockup, style, mockupContinuation, mockupSettings, deviceSize);
   } else if (screenshotForMockup && !style.showMockup) {
     // Draw screenshot without mockup (legacy mode)
     const img = await loadImage(screenshotForMockup);
@@ -1675,7 +1820,10 @@ export const generatePreviewCanvas = async (
   const baseMockupHeight = Math.min(availableHeight, dimensions.height * 0.75);
   const clampedScalePreview = Math.max(0.3, Math.min(2.0, mockupScalePreview));
   const mockupHeight = baseMockupHeight * clampedScalePreview;
-  const phoneAspect = MOCKUP_CONFIG.phoneWidth / MOCKUP_CONFIG.phoneHeight;
+  // Use Pixel aspect ratio for Android, iPhone for iOS
+  const isAndroidPreview = dimensions.platform === 'android';
+  const configPreview = isAndroidPreview ? PIXEL_CONFIG : MOCKUP_CONFIG;
+  const phoneAspect = configPreview.phoneWidth / configPreview.phoneHeight;
   const mockupWidth = mockupHeight * phoneAspect;
 
   // Calculate mockup center for text positioning
@@ -1717,7 +1865,7 @@ export const generatePreviewCanvas = async (
 
   if (hasMockup) {
     try {
-      await drawMockupWithScreenshot(ctx, mockupX, mockupY, mockupWidth, mockupHeight, dimensions.width, dimensions.height, screenshotForMockup, style, mockupContinuation, mockupSettings);
+      await drawMockupWithScreenshot(ctx, mockupX, mockupY, mockupWidth, mockupHeight, dimensions.width, dimensions.height, screenshotForMockup, style, mockupContinuation, mockupSettings, deviceSize);
     } catch (e) {
       ctx.fillStyle = '#1d1d1f';
       ctx.beginPath();
