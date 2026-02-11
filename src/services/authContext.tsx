@@ -4,6 +4,7 @@ import {
   signInWithGoogle as firebaseSignInWithGoogle,
   sendMagicLink as firebaseSendMagicLink,
   completeMagicLinkSignIn,
+  handleGoogleRedirectResult,
   firebaseSignOut,
   subscribeToAuthState,
   isFirebaseEnabled,
@@ -46,27 +47,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Handle magic link completion on page load
+  // Handle magic link and Google redirect completion on page load
   useEffect(() => {
-    async function handleMagicLinkCallback() {
+    async function handleAuthCallbacks() {
       try {
-        const idToken = await completeMagicLinkSignIn();
-        if (idToken) {
-          const { user } = await authApi.firebaseVerify(idToken);
+        // Check for magic link
+        const magicLinkToken = await completeMagicLinkSignIn();
+        if (magicLinkToken) {
+          const { user } = await authApi.firebaseVerify(magicLinkToken);
           setState({ user, loading: false, error: null });
+          return;
+        }
+
+        // Check for Google redirect result
+        const redirectToken = await handleGoogleRedirectResult();
+        if (redirectToken) {
+          const { user } = await authApi.firebaseVerify(redirectToken);
+          setState({ user, loading: false, error: null });
+          return;
         }
       } catch (err) {
-        console.error('Magic link sign-in failed:', err);
+        console.error('Auth callback failed:', err);
         setState(s => ({
           ...s,
           loading: false,
-          error: err instanceof Error ? err.message : 'Magic link sign-in failed',
+          error: err instanceof Error ? err.message : 'Sign-in failed',
         }));
       }
     }
 
     if (isFirebaseEnabled()) {
-      handleMagicLinkCallback();
+      handleAuthCallbacks();
     }
   }, []);
 
