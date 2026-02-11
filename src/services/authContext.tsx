@@ -145,6 +145,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setState((s) => ({ ...s, error: null }));
     try {
       const idToken = await firebaseSignInWithGoogle();
+      if (!idToken) {
+        // Redirect flow started; token will be handled on page load.
+        return;
+      }
       const { user } = await authApi.firebaseVerify(idToken);
       setState({ user, loading: false, error: null });
     } catch (err) {

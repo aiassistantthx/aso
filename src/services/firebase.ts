@@ -32,13 +32,26 @@ export function isFirebaseEnabled(): boolean {
   return isFirebaseConfigured && auth !== null;
 }
 
-export async function signInWithGoogle(): Promise<string> {
+export async function signInWithGoogle(): Promise<string | null> {
   if (!auth) {
     throw new Error('Firebase is not configured');
   }
 
-  const result = await signInWithPopup(auth, googleProvider);
-  return result.user.getIdToken();
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    return result.user.getIdToken();
+  } catch (err: unknown) {
+    const error = err as { code?: string };
+    if (
+      error.code === 'auth/popup-blocked' ||
+      error.code === 'auth/popup-closed-by-user' ||
+      error.code === 'auth/cancelled-popup-request'
+    ) {
+      await signInWithRedirect(auth, googleProvider);
+      return null;
+    }
+    throw err;
+  }
 }
 
 export async function sendMagicLink(email: string): Promise<void> {
