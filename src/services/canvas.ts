@@ -732,27 +732,29 @@ const calculateTextArea = (
     rotation
   );
 
-  // Calculate horizontal text area accounting for mockup position
-  // Ensure text doesn't overlap with mockup horizontally
+  // Calculate horizontal text area
+  // For top/bottom layouts, text and mockup don't overlap horizontally,
+  // so we don't need to constrain text width based on mockup position.
+  // Only constrain if mockup is significantly off-center (> 15% from center)
   const gapFromMockup = 15; // Gap between text and mockup
   const minSidePadding = sidePadding;
 
-  // Calculate text width - reduce if mockup extends into text area horizontally
   let textLeft = minSidePadding;
   let textRight = canvasWidth - minSidePadding;
 
-  // If mockup is offset to the left, we may need to move text right boundary
-  // If mockup is offset to the right, we may need to move text left boundary
-  const mockupLeft = rotatedBounds.left;
-  const mockupRight = rotatedBounds.right;
+  // Only apply horizontal constraints for significantly off-center mockups
+  const mockupOffsetRatio = Math.abs(mockupCenterX - canvasWidth / 2) / canvasWidth;
+  const significantOffset = mockupOffsetRatio > 0.15; // More than 15% from center
 
-  // Only constrain horizontally if mockup extends significantly into text area
-  if (mockupRight > textRight - gapFromMockup && mockupCenterX > canvasWidth / 2) {
-    // Mockup is on the right side, reduce text width from right
-    textRight = Math.max(mockupLeft - gapFromMockup, canvasWidth * 0.5);
-  } else if (mockupLeft < textLeft + gapFromMockup && mockupCenterX < canvasWidth / 2) {
-    // Mockup is on the left side, reduce text width from left
-    textLeft = Math.min(mockupRight + gapFromMockup, canvasWidth * 0.5);
+  if (significantOffset) {
+    const mockupLeft = rotatedBounds.left;
+    const mockupRight = rotatedBounds.right;
+
+    if (mockupRight > textRight - gapFromMockup && mockupCenterX > canvasWidth / 2) {
+      textRight = Math.max(mockupLeft - gapFromMockup, canvasWidth * 0.5);
+    } else if (mockupLeft < textLeft + gapFromMockup && mockupCenterX < canvasWidth / 2) {
+      textLeft = Math.min(mockupRight + gapFromMockup, canvasWidth * 0.5);
+    }
   }
 
   const width = textRight - textLeft;
