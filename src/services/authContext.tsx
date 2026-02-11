@@ -142,16 +142,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const loginWithGoogle = useCallback(async () => {
+    console.log('[Auth] loginWithGoogle called');
     setState((s) => ({ ...s, error: null }));
     try {
       const idToken = await firebaseSignInWithGoogle();
+      console.log('[Auth] Got idToken:', idToken ? `${idToken.substring(0, 20)}...` : 'null');
       if (!idToken) {
         // Redirect flow started; token will be handled on page load.
+        console.log('[Auth] No token, redirect flow started');
         return;
       }
+      console.log('[Auth] Calling firebaseVerify...');
       const { user } = await authApi.firebaseVerify(idToken);
+      console.log('[Auth] firebaseVerify success, user:', user.email);
       setState({ user, loading: false, error: null });
     } catch (err) {
+      console.error('[Auth] loginWithGoogle error:', err);
       const message = err instanceof Error ? err.message : 'Google sign-in failed';
       setState((s) => ({ ...s, error: message }));
       throw err;

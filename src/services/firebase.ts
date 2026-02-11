@@ -2,7 +2,6 @@ import { initializeApp } from 'firebase/app';
 import {
   getAuth,
   signInWithPopup,
-  signInWithRedirect,
   GoogleAuthProvider,
   sendSignInLinkToEmail,
   isSignInWithEmailLink,
@@ -38,19 +37,15 @@ export async function signInWithGoogle(): Promise<string | null> {
     throw new Error('Firebase is not configured');
   }
 
+  console.log('[Firebase] signInWithGoogle called');
   try {
     const result = await signInWithPopup(auth, googleProvider);
-    return result.user.getIdToken();
+    console.log('[Firebase] Popup completed, user:', result.user.email);
+    const token = await result.user.getIdToken();
+    console.log('[Firebase] Got ID token, length:', token.length);
+    return token;
   } catch (err: unknown) {
-    const error = err as { code?: string };
-    if (
-      error.code === 'auth/popup-blocked' ||
-      error.code === 'auth/popup-closed-by-user' ||
-      error.code === 'auth/cancelled-popup-request'
-    ) {
-      await signInWithRedirect(auth, googleProvider);
-      return null;
-    }
+    console.error('[Firebase] signInWithPopup error:', err);
     throw err;
   }
 }
