@@ -1113,12 +1113,27 @@ function drawText(
   }
 
   // Draw each line with highlights
+  const textAlign = style.textAlign || 'center';
+  const sidePadding = width * 0.10; // 10% padding on each side for text area
+
   lines.forEach((line, lineIndex) => {
     const y = textY + lineIndex * lineHeight;
     const lineWidth = measureLineWidth(ctx, line);
 
-    // Center the line
-    let lineX = x + (width - lineWidth) / 2 + textOffsetX;
+    // Calculate line X based on text alignment
+    let lineX: number;
+    switch (textAlign) {
+      case 'left':
+        lineX = x + sidePadding + textOffsetX;
+        break;
+      case 'right':
+        lineX = x + width - sidePadding - lineWidth + textOffsetX;
+        break;
+      case 'center':
+      default:
+        lineX = x + (width - lineWidth) / 2 + textOffsetX;
+        break;
+    }
 
     for (const segment of line.segments) {
       const segmentWidth = ctx.measureText(segment.text).width;
