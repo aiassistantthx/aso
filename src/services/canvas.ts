@@ -233,7 +233,8 @@ const calculateAdaptiveFontSize = (
   maxHeight: number,
   fontFamily: string
 ): number => {
-  const minFontSize = Math.max(24, baseFontSize * 0.25); // Don't go below 25% of original or 24px
+  // Allow smaller minimum when space is very limited (e.g., large mockup)
+  const minFontSize = Math.max(16, baseFontSize * 0.2); // Don't go below 20% of original or 16px
   const maxFontSize = Math.min(baseFontSize * 2, 200); // Can grow up to 2x or 200px max
 
   // Binary search for optimal font size
@@ -759,14 +760,16 @@ const calculateTextArea = (
 
   if (textPosition === 'top') {
     // Text at top: from paddingTop to mockup's top edge (minus gap)
-    const availableBottom = Math.max(rotatedBounds.top - gapFromMockup, paddingTop + 50);
-    const height = availableBottom - paddingTop;
-    return { x, y: paddingTop, width, height: Math.max(height, 100) };
+    // Allow text area to shrink when mockup is large/repositioned
+    const availableBottom = Math.max(rotatedBounds.top - gapFromMockup, paddingTop + 30);
+    const height = Math.max(availableBottom - paddingTop, 30);
+    return { x, y: paddingTop, width, height };
   } else {
     // Text at bottom: from mockup's bottom edge (plus gap) to canvas bottom minus paddingBottom
-    const availableTop = Math.min(rotatedBounds.bottom + gapFromMockup, canvasHeight - paddingBottom - 50);
-    const height = canvasHeight - paddingBottom - availableTop;
-    return { x, y: availableTop, width, height: Math.max(height, 100) };
+    // Allow text area to shrink when mockup is large/repositioned
+    const availableTop = Math.min(rotatedBounds.bottom + gapFromMockup, canvasHeight - paddingBottom - 30);
+    const height = Math.max(canvasHeight - paddingBottom - availableTop, 30);
+    return { x, y: availableTop, width, height };
   }
 };
 

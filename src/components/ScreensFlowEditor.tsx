@@ -1047,21 +1047,14 @@ function drawText(
     const mockupBottom = mockupInfo.centerY + mockupInfo.height / 2;
 
     if (textPosition === 'top') {
-      // Space above mockup
-      const spaceAboveMockup = mockupTop - gapFromMockup - paddingTop;
-
-      if (spaceAboveMockup >= minTextAreaHeight) {
-        // Enough space above mockup - use it
-        availableHeight = spaceAboveMockup;
-        textAreaY = paddingTop;
-      } else {
-        // Not enough space above mockup - use minimum area from top
-        // Text will overlay on mockup, which is acceptable
-        availableHeight = minTextAreaHeight;
-        textAreaY = paddingTop;
-      }
+      // Space above mockup - text must fit ABOVE the mockup, no overlay
+      const spaceAboveMockup = Math.max(mockupTop - gapFromMockup - paddingTop, 30);
+      availableHeight = spaceAboveMockup;
+      textAreaY = paddingTop;
     } else {
-      availableHeight = Math.max(canvasHeight - mockupBottom - gapFromMockup - 8, minTextAreaHeight);
+      // Space below mockup
+      const spaceBelowMockup = Math.max(canvasHeight - mockupBottom - gapFromMockup - 8, 30);
+      availableHeight = spaceBelowMockup;
       textAreaY = mockupBottom + gapFromMockup;
     }
   } else {
@@ -1083,10 +1076,10 @@ function drawText(
   // When mockup is smaller (scale < 1) → more space → factor > 1 → larger text
   const spaceRatio = availableHeight / baseAvailableHeight;
 
-  // Apply scaling with dampening (sqrt) to avoid extreme changes
-  // Also clamp between 0.6 and 1.4 to keep text readable
-  const adaptiveScale = Math.max(0.6, Math.min(1.4, Math.sqrt(spaceRatio)));
-  const targetFontSize = Math.max(10, Math.min(baseFontSize * adaptiveScale, baseFontSize * 1.5));
+  // Apply linear scaling for more responsive size changes
+  // Clamp between 0.4 and 1.3 to keep text readable but allow significant shrinking
+  const adaptiveScale = Math.max(0.4, Math.min(1.3, spaceRatio));
+  const targetFontSize = Math.max(8, Math.min(baseFontSize * adaptiveScale, baseFontSize * 1.3));
 
   // Check if text fits at target size
   ctx.font = `bold ${targetFontSize}px ${style.fontFamily}`;
