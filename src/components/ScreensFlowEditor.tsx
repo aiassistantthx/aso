@@ -109,6 +109,87 @@ const drawPreviewSideButtons = (
   isOutline ? ctx.stroke() : ctx.fill();
 };
 
+// Draw Pixel mockup frame (centered at 0,0)
+const drawPixelMockupFrame = (
+  ctx: CanvasRenderingContext2D,
+  mockupWidth: number,
+  mockupHeight: number,
+  frameColor: string,
+  img: HTMLImageElement | null
+): void => {
+  // Pixel proportions - thinner bezels than iPhone
+  const frameThickness = mockupWidth * 0.025;
+  const cornerRadius = mockupWidth * 0.08;
+  const screenCornerRadius = cornerRadius - frameThickness * 0.7;
+
+  // Punch-hole camera (centered at top, smaller than Dynamic Island)
+  const punchHoleRadius = mockupWidth * 0.025;
+  const punchHoleY = -mockupHeight / 2 + frameThickness + mockupHeight * 0.015;
+
+  // Draw shadow
+  ctx.save();
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
+  ctx.shadowBlur = 15;
+  ctx.shadowOffsetY = 6;
+
+  // Draw solid phone body
+  ctx.fillStyle = frameColor;
+  ctx.beginPath();
+  ctx.roundRect(-mockupWidth / 2, -mockupHeight / 2, mockupWidth, mockupHeight, cornerRadius);
+  ctx.fill();
+  ctx.restore();
+
+  // Draw screen area
+  const screenW = mockupWidth - frameThickness * 2;
+  const screenH = mockupHeight - frameThickness * 2;
+
+  // Black screen background
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.roundRect(-screenW / 2, -screenH / 2, screenW, screenH, screenCornerRadius);
+  ctx.fill();
+
+  // Draw screenshot if provided
+  if (img) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(-screenW / 2, -screenH / 2, screenW, screenH, screenCornerRadius);
+    ctx.clip();
+    const imgAspect = img.width / img.height;
+    const screenAspect = screenW / screenH;
+    const drawH = imgAspect > screenAspect ? screenH : screenW / imgAspect;
+    const drawW = imgAspect > screenAspect ? drawH * imgAspect : screenW;
+    ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+    ctx.restore();
+  }
+
+  // Draw punch-hole camera
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.arc(0, punchHoleY, punchHoleRadius, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Draw side buttons (Pixel style - on the right side)
+  const buttonColor = frameColor === '#F5F5F7' ? '#D2D2D7' :
+                      frameColor === '#E3D5C8' ? '#C5B5A6' : '#2D2D2F';
+  ctx.fillStyle = buttonColor;
+
+  // Power button (right side)
+  const powerWidth = mockupWidth * 0.015;
+  const powerHeight = mockupHeight * 0.045;
+  const powerY = -mockupHeight / 2 + mockupHeight * 0.18;
+  ctx.beginPath();
+  ctx.roundRect(mockupWidth / 2, powerY, powerWidth, powerHeight, 2);
+  ctx.fill();
+
+  // Volume rocker (right side, below power)
+  const volHeight = mockupHeight * 0.08;
+  const volY = powerY + powerHeight + mockupHeight * 0.02;
+  ctx.beginPath();
+  ctx.roundRect(mockupWidth / 2, volY, powerWidth, volHeight, 2);
+  ctx.fill();
+};
+
 // Draw mockup frame based on style (centered at 0,0)
 const drawMockupFrame = (
   ctx: CanvasRenderingContext2D,
@@ -116,8 +197,15 @@ const drawMockupFrame = (
   mockupWidth: number,
   mockupHeight: number,
   frameColor: string,
-  img: HTMLImageElement | null
+  img: HTMLImageElement | null,
+  isAndroid: boolean = false
 ): void => {
+  // For Android, always use Pixel mockup
+  if (isAndroid) {
+    drawPixelMockupFrame(ctx, mockupWidth, mockupHeight, frameColor, img);
+    return;
+  }
+
   const frameThickness = mockupWidth * 0.035;
   const cornerRadius = mockupWidth * 0.12;
   const innerRadius = cornerRadius - frameThickness * 0.8;
@@ -409,7 +497,9 @@ const LinkedPairCanvas: React.FC<{
     const availableHeight = previewHeight - textAreaHeightForMockup - (40 * previewHeight / dimensions.height);
     const baseMockupHeight = Math.min(availableHeight, previewHeight * 0.75);
     const mockupHeight = baseMockupHeight * currentMockupScale;
-    const mockupWidth = mockupHeight * 0.49;
+    // Use Pixel aspect ratio (450/980) for Android, iPhone (0.49) for iOS
+    const phoneAspectLinked = dimensions.platform === 'android' ? 0.459 : 0.49;
+    const mockupWidth = mockupHeight * phoneAspectLinked;
 
     // Calculate visible portion
     const visiblePhoneHeight = mockupHeight * visibilityRatio;
@@ -455,7 +545,8 @@ const LinkedPairCanvas: React.FC<{
         ctx.translate(mockupCenterX, mockupCenterY);
         ctx.rotate((currentRotation * Math.PI) / 180);
 
-        drawMockupFrame(ctx, currentMockupStyle, mockupWidth, mockupHeight, frameColor, img);
+        const isAndroid = dimensions.platform === 'android';
+        drawMockupFrame(ctx, currentMockupStyle, mockupWidth, mockupHeight, frameColor, img, isAndroid);
 
         ctx.restore();
 
@@ -1296,7 +1387,8 @@ const SingleScreenPreview: React.FC<{
         const availableHeight = previewHeight - textAreaHeightForMockup - (40 * previewHeight / dimensions.height);
         const baseMockupHeight = Math.min(availableHeight, previewHeight * 0.75);
         const mockupHeight = baseMockupHeight * mockupScale;
-        const mockupWidth = mockupHeight * 0.49;
+        const phoneAspectSingle = dimensions.platform === 'android' ? 0.459 : 0.49;
+        const mockupWidth = mockupHeight * phoneAspectSingle;
 
         // Calculate visible portion
         const visiblePhoneHeight = mockupHeight * visibilityRatio;
@@ -1334,7 +1426,8 @@ const SingleScreenPreview: React.FC<{
         ctx.translate(mockupCenterX, mockupCenterY);
         ctx.rotate((settings.rotation * Math.PI) / 180);
 
-        drawMockupFrame(ctx, style.mockupStyle || 'realistic', mockupWidth, mockupHeight, frameColor, img);
+        const isAndroidSingle = dimensions.platform === 'android';
+        drawMockupFrame(ctx, style.mockupStyle || 'realistic', mockupWidth, mockupHeight, frameColor, img, isAndroidSingle);
 
         ctx.restore();
 
