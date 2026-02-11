@@ -130,29 +130,32 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     description: 'One mockup spans two consecutive screenshots',
     getStyle: (index: number) => {
       // Screenshots 0 and 1 share the same mockup image spanning across both
+      // Values based on: X:41% Y:12% R:27° for linked pair
       if (index === 0) {
         return {
           textPosition: 'top' as const,
           mockupAlignment: 'bottom' as const,
           mockupVisibility: 'full' as const,
-          mockupOffset: { x: 350, y: 170 }, // Offset right - mockup exits right edge
-          mockupScreenshotIndex: 0, // Use screenshot 0's image
+          mockupOffset: { x: 530, y: 335 }, // ~41% X, 12% Y
+          mockupRotation: 27,
+          mockupScreenshotIndex: 0,
         };
       } else if (index === 1) {
         return {
           textPosition: 'top' as const,
           mockupAlignment: 'bottom' as const,
           mockupVisibility: 'full' as const,
-          mockupOffset: { x: -350, y: 170 }, // Offset left - mockup enters from left
+          mockupOffset: { x: -530, y: 335 }, // Mirrored X position
+          mockupRotation: 27,
           mockupScreenshotIndex: 0, // Use same screenshot 0's image
         };
       } else {
-        // Rest of screenshots - normal centered layout
+        // Rest of screenshots: X:-1% Y:11%
         return {
           textPosition: 'top' as const,
           mockupAlignment: 'bottom' as const,
           mockupVisibility: 'full' as const,
-          mockupOffset: { x: 0, y: 60 },
+          mockupOffset: { x: -13, y: 307 }, // ~-1% X, 11% Y
         };
       }
     },
