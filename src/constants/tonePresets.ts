@@ -64,6 +64,7 @@ export interface LayoutPreset {
   id: string;
   name: string;
   description: string;
+  hidden?: boolean;
   getStyle: (index: number) => LayoutPresetStyle;
 }
 
@@ -125,9 +126,23 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     }),
   },
   {
+    id: 'tilted',
+    name: 'Tilted',
+    description: 'Mockups with alternating tilt angle',
+    getStyle: (index: number) => ({
+      textPosition: 'top' as const,
+      mockupAlignment: 'bottom' as const,
+      mockupVisibility: 'full' as const,
+      mockupOffset: { x: 0, y: 315 }, // Y:11% of ~2868px height ≈ 315
+      mockupRotation: index % 2 === 0 ? 10 : -10, // Alternating 10° / -10°
+      mockupScale: 1.15, // 115%
+    }),
+  },
+  {
     id: 'spanning',
     name: 'Spanning',
     description: 'One mockup spans two consecutive screenshots',
+    hidden: true,
     getStyle: (index: number) => {
       // Screenshots 0 and 1 share the same mockup spanning across both
       // For 6.9" device (1320px width), mockup center needs to be at canvas edge:

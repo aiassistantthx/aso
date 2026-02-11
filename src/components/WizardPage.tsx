@@ -1332,7 +1332,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
             <p style={{ fontSize: '13px', color: '#86868b', marginBottom: '16px' }}>Choose how mockups are positioned on screenshots</p>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }} className="wizard-layout-grid">
-              {LAYOUT_PRESETS.map(layout => (
+              {LAYOUT_PRESETS.filter(l => !l.hidden).map(layout => (
                 <div
                   key={layout.id}
                   style={{
@@ -1385,6 +1385,13 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                         <rect x="4" y="2" width="40" height="52" rx="4" stroke="#d1d1d6" strokeWidth="1.5" fill="none"/>
                         <rect x="10" y="8" width="28" height="4" rx="2" fill="#FF6B4A" opacity="0.6"/>
                         <rect x="12" y="22" width="24" height="40" rx="3" stroke="#FF6B4A" strokeWidth="1.5" fill="#e0f0ff"/>
+                      </svg>
+                    )}
+                    {layout.id === 'tilted' && (
+                      <svg width="48" height="56" viewBox="0 0 48 56" fill="none">
+                        <rect x="4" y="2" width="40" height="52" rx="4" stroke="#d1d1d6" strokeWidth="1.5" fill="none"/>
+                        <rect x="10" y="8" width="28" height="4" rx="2" fill="#FF6B4A" opacity="0.6"/>
+                        <rect x="12" y="20" width="20" height="32" rx="3" stroke="#FF6B4A" strokeWidth="1.5" fill="#e0f0ff" transform="rotate(10 22 36)"/>
                       </svg>
                     )}
                     {layout.id === 'spanning' && (
