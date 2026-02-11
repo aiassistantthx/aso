@@ -3,7 +3,15 @@ import { Prisma } from '@prisma/client';
 import OpenAI from 'openai';
 import path from 'path';
 import fs from 'fs';
-import { getPlanLimits } from '../middleware/planLimits.js';
+import {
+  getPlanLimits,
+  checkProjectLimit,
+  checkGenerationLimit,
+  checkLanguageLimit,
+  incrementProjectCount,
+  incrementGenerationCount,
+  getUserLimitsInfo,
+} from '../middleware/planLimits.js';
 import { UPLOADS_DIR } from '../config.js';
 import { getPrompt, renderPrompt } from '../utils/prompts.js';
 import { logAIUsage, extractTokenUsage } from '../utils/aiUsageLogger.js';
@@ -103,6 +111,14 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
     openai = new OpenAI({ apiKey: openaiKey });
   }
 
+  // Get user limits info
+  fastify.get('/api/unified/limits', {
+    onRequest: [fastify.authenticate],
+  }, async (request) => {
+    const { projectId } = request.query as { projectId?: string };
+    return getUserLimitsInfo(fastify.prisma, request.user.id, projectId);
+  });
+
   // List all unified projects
   fastify.get('/api/unified', {
     onRequest: [fastify.authenticate],
@@ -154,37 +170,9 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
   }, async (request, reply) => {
     const { mode = 'wizard', name } = request.body as { mode?: string; name?: string };
 
-    // Check plan limits
-    const subscription = await fastify.prisma.subscription.findUnique({
-      where: { userId: request.user.id },
-    });
-    const plan = subscription?.plan ?? 'FREE';
-    const limits = getPlanLimits(plan);
-
-    const projectCount = await fastify.prisma.unifiedProject.count({
-      where: { userId: request.user.id },
-    });
-
-    if (mode === 'wizard') {
-      const wizardCount = await fastify.prisma.unifiedProject.count({
-        where: { userId: request.user.id, mode: 'wizard' },
-      });
-      if (limits.maxWizardProjects !== Infinity && wizardCount >= limits.maxWizardProjects) {
-        return reply.status(403).send({
-          error: 'Plan limit reached',
-          message: `Free plan allows up to ${limits.maxWizardProjects} wizard project${limits.maxWizardProjects !== 1 ? 's' : ''}. Upgrade to Pro for unlimited.`,
-          limit: 'wizardProjects',
-        });
-      }
-    } else {
-      if (limits.maxProjects !== Infinity && projectCount >= limits.maxProjects) {
-        return reply.status(403).send({
-          error: 'Plan limit reached',
-          message: `Free plan allows up to ${limits.maxProjects} projects. Upgrade to Pro for unlimited.`,
-          limit: 'projects',
-        });
-      }
-    }
+    // Check lifetime project limit (counts all projects ever created, even deleted)
+    const canCreate = await checkProjectLimit(request, reply);
+    if (!canCreate) return;
 
     const project = await fastify.prisma.unifiedProject.create({
       data: {
@@ -193,6 +181,9 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
         mode: mode === 'manual' ? 'manual' : 'wizard',
       },
     });
+
+    // Increment lifetime project counter
+    await incrementProjectCount(fastify.prisma, request.user.id);
 
     return reply.status(201).send(project);
   });
@@ -465,6 +456,10 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
     if (!project) {
       return reply.status(404).send({ error: 'Project not found' });
     }
+
+    // Check generation limit before proceeding
+    const canGenerate = await checkGenerationLimit(request, reply, id);
+    if (!canGenerate) return;
 
     const screenshots = (project.wizardUploadedScreenshots as string[] | null) || [];
     const results: Record<string, unknown> = {};
@@ -742,6 +737,9 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
       data: updateData,
     });
 
+    // Increment generation count after successful generation
+    await incrementGenerationCount(fastify.prisma, id);
+
     const response: Record<string, unknown> = { ...updated };
     if (errors.length > 0) {
       response.generationErrors = errors;
@@ -766,19 +764,9 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
       return reply.status(404).send({ error: 'Project not found' });
     }
 
-    // Check plan limits
-    const subscription = await fastify.prisma.subscription.findUnique({
-      where: { userId: request.user.id },
-    });
-    const plan = subscription?.plan ?? 'FREE';
-    const limits = getPlanLimits(plan);
-
-    if (limits.maxWizardTargetLanguages !== Infinity && project.targetLanguages.length > limits.maxWizardTargetLanguages) {
-      return reply.status(403).send({
-        error: `Free plan allows up to ${limits.maxWizardTargetLanguages} target languages. Upgrade to Pro for unlimited.`,
-        limit: 'targetLanguages',
-      });
-    }
+    // Check language limit
+    const canTranslate = await checkLanguageLimit(request, reply, project.targetLanguages.length);
+    if (!canTranslate) return;
 
     const editedHeadlines = project.wizardEditedHeadlines as string[] | null;
     const editedMetadata = project.editedMetadata as Record<string, string> | null;
@@ -1296,17 +1284,9 @@ Rules:
       return reply.status(404).send({ error: 'Project not found' });
     }
 
-    // Check plan limits
-    const subscription = await fastify.prisma.subscription.findUnique({
-      where: { userId: request.user.id },
-    });
-    const plan = subscription?.plan ?? 'FREE';
-    if (plan === 'FREE' && targetLanguages.length > 2) {
-      return reply.status(403).send({
-        error: 'Free plan allows up to 2 target languages. Upgrade to Pro for unlimited.',
-        limit: 'targetLanguages',
-      });
-    }
+    // Check language limit
+    const canTranslate = await checkLanguageLimit(request, reply, targetLanguages.length);
+    if (!canTranslate) return;
 
     const editedMetadata = project.editedMetadata as Record<string, string> | null;
     if (!editedMetadata) {

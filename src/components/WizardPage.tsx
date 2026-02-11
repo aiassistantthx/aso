@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { unified as unifiedApi, UnifiedProjectFull, ApiError } from '../services/api';
 import { useAuth } from '../services/authContext';
 import { AppHeader } from './AppHeader';
+import { UpgradeModal, UpgradeLimitType } from './UpgradeModal';
 import { TONE_PRESETS, LAYOUT_PRESETS } from '../constants/tonePresets';
 import { APP_STORE_LANGUAGES, getLanguageName } from '../constants/languages';
 import { THEME_PRESETS, THEME_PRESET_GROUPS } from '../constants/templates';
@@ -337,6 +338,22 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
 
+  // Upgrade modal state
+  const [upgradeModal, setUpgradeModal] = useState<{
+    isOpen: boolean;
+    limitType: UpgradeLimitType;
+    currentUsage?: number;
+    maxAllowed?: number;
+  }>({ isOpen: false, limitType: 'generic' });
+
+  const openUpgradeModal = (limitType: UpgradeLimitType, currentUsage?: number, maxAllowed?: number) => {
+    setUpgradeModal({ isOpen: true, limitType, currentUsage, maxAllowed });
+  };
+
+  const closeUpgradeModal = () => {
+    setUpgradeModal(prev => ({ ...prev, isOpen: false }));
+  };
+
   // Translation tab
   const [activeLang, setActiveLang] = useState<string>('');
 
@@ -456,7 +473,12 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
       setProject(wizardData);
       setStep(6);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Generation failed');
+      if (err instanceof ApiError && err.limit === 'generations') {
+        // Show upgrade modal for generation limit
+        openUpgradeModal('generations');
+      } else {
+        setError(err instanceof ApiError ? err.message : 'Generation failed');
+      }
     } finally {
       setGenerating(false);
       setGenStage('');
@@ -1793,23 +1815,29 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                 .filter(l => l.code !== project.sourceLanguage)
                 .map(l => {
                   const selected = project.targetLanguages.includes(l.code);
-                  const disabled = !selected && plan === 'FREE' && project.targetLanguages.length >= 2;
+                  const wouldExceedLimit = !selected && plan === 'FREE' && project.targetLanguages.length >= 2;
                   return (
                     <button
                       key={l.code}
                       style={{
                         padding: '6px 14px',
                         borderRadius: '20px',
-                        border: `1px solid ${selected ? '#FF6B4A' : '#e5e5ea'}`,
-                        backgroundColor: selected ? '#e0f0ff' : disabled ? '#f5f5f7' : '#fff',
-                        color: selected ? '#FF6B4A' : disabled ? '#c7c7cc' : '#1d1d1f',
+                        border: `1px solid ${selected ? '#FF6B4A' : wouldExceedLimit ? '#FF6B4A33' : '#e5e5ea'}`,
+                        backgroundColor: selected ? '#e0f0ff' : wouldExceedLimit ? '#FFF5F2' : '#fff',
+                        color: selected ? '#FF6B4A' : wouldExceedLimit ? '#FF6B4A' : '#1d1d1f',
                         fontSize: '13px',
                         fontWeight: 500,
-                        cursor: disabled ? 'not-allowed' : 'pointer',
+                        cursor: translating ? 'wait' : 'pointer',
                         transition: 'all 0.2s',
+                        position: 'relative',
                       }}
-                      disabled={disabled || translating}
+                      disabled={translating}
                       onClick={() => {
+                        if (wouldExceedLimit) {
+                          // Show upgrade modal instead of adding language
+                          openUpgradeModal('targetLanguages', project.targetLanguages.length, 2);
+                          return;
+                        }
                         const newTargets = selected
                           ? project.targetLanguages.filter(c => c !== l.code)
                           : [...project.targetLanguages, l.code];
@@ -1817,6 +1845,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                         saveField({ targetLanguages: newTargets });
                       }}
                     >
+                      {wouldExceedLimit && <span style={{ marginRight: '4px' }}>🔒</span>}
                       {l.name}
                     </button>
                   );
@@ -2020,6 +2049,14 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
           </div>
         )}
       </div>
+
+      <UpgradeModal
+        isOpen={upgradeModal.isOpen}
+        onClose={closeUpgradeModal}
+        limitType={upgradeModal.limitType}
+        currentUsage={upgradeModal.currentUsage}
+        maxAllowed={upgradeModal.maxAllowed}
+      />
     </div>
   );
 };

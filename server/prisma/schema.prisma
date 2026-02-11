@@ -8,16 +8,17 @@ datasource db {
 }
 
 model User {
-  id               String           @id @default(cuid())
-  email            String           @unique
-  passwordHash     String?
-  name             String?
-  polarCustomerId  String?          @unique
-  firebaseUid      String?          @unique
-  authProvider     String           @default("legacy") // "legacy" | "firebase"
-  createdAt        DateTime         @default(now())
-  unifiedProjects  UnifiedProject[]
-  subscription     Subscription?
+  id                    String           @id @default(cuid())
+  email                 String           @unique
+  passwordHash          String?
+  name                  String?
+  polarCustomerId       String?          @unique
+  firebaseUid           String?          @unique
+  authProvider          String           @default("legacy") // "legacy" | "firebase"
+  totalProjectsCreated  Int              @default(0) // Track lifetime projects (even deleted)
+  createdAt             DateTime         @default(now())
+  unifiedProjects       UnifiedProject[]
+  subscription          Subscription?
 }
 
 model Subscription {
@@ -82,6 +83,9 @@ model UnifiedProject {
   wizardGenerateScreenshots Boolean  @default(true)
   wizardGenerateIcon        Boolean  @default(true)
   wizardGenerateMetadata    Boolean  @default(true)
+
+  // Usage tracking
+  generationCount Int      @default(0) // Track AI generations for limits
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { unified as unifiedApi, UnifiedProjectListItem, ApiError, billing } from '../services/api';
+import { unified as unifiedApi, UnifiedProjectListItem, ApiError } from '../services/api';
 import { useAuth } from '../services/authContext';
 import { AppHeader } from './AppHeader';
+import { UpgradeModal, UpgradeLimitType } from './UpgradeModal';
 
 interface Props {
   onOpenProject: (id: string) => void;
@@ -213,7 +214,12 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
   const [projectList, setProjectList] = useState<UnifiedProjectListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUpgradeSuccess, setShowUpgradeSuccess] = useState(false);
-  const [upgradeLoading, setUpgradeLoading] = useState(false);
+  const [upgradeModal, setUpgradeModal] = useState<{
+    isOpen: boolean;
+    limitType: UpgradeLimitType;
+    currentUsage?: number;
+    maxAllowed?: number;
+  }>({ isOpen: false, limitType: 'generic' });
 
   const loadProjects = useCallback(async () => {
     try {
@@ -244,16 +250,12 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
     }
   }, [refreshUser]);
 
-  const handleUpgrade = async () => {
-    setUpgradeLoading(true);
-    try {
-      const { url } = await billing.checkout();
-      window.location.href = url;
-    } catch (err) {
-      console.error('Failed to start checkout:', err);
-      window.alert(err instanceof Error ? err.message : 'Failed to start checkout');
-      setUpgradeLoading(false);
-    }
+  const openUpgradeModal = (limitType: UpgradeLimitType, currentUsage?: number, maxAllowed?: number) => {
+    setUpgradeModal({ isOpen: true, limitType, currentUsage, maxAllowed });
+  };
+
+  const closeUpgradeModal = () => {
+    setUpgradeModal(prev => ({ ...prev, isOpen: false }));
   };
 
   const handleRename = async (id: string, currentName: string, e: React.MouseEvent) => {
@@ -288,8 +290,10 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
       const project = await unifiedApi.create('wizard');
       onNavigate('project', project.id);
     } catch (err) {
-      if (err instanceof ApiError && err.limit === 'wizardProjects') {
-        window.alert(err.message);
+      if (err instanceof ApiError && err.limit) {
+        // Show upgrade modal with the specific limit type
+        const limitType = err.limit === 'lifetimeProjects' ? 'lifetimeProjects' : 'generic';
+        openUpgradeModal(limitType as UpgradeLimitType);
       } else {
         console.error('Failed to create project:', err);
       }
@@ -378,8 +382,7 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
             </span>
             {plan === 'FREE' && (
               <button
-                onClick={handleUpgrade}
-                disabled={upgradeLoading}
+                onClick={() => openUpgradeModal('generic')}
                 style={{
                   padding: '6px 14px',
                   fontSize: '12px',
@@ -388,12 +391,11 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
                   borderRadius: '8px',
                   background: 'linear-gradient(135deg, #FF6B4A 0%, #FF8A65 100%)',
                   color: '#fff',
-                  cursor: upgradeLoading ? 'wait' : 'pointer',
-                  opacity: upgradeLoading ? 0.7 : 1,
+                  cursor: 'pointer',
                   transition: 'all 0.2s ease',
                 }}
               >
-                {upgradeLoading ? 'Loading...' : 'Upgrade to PRO'}
+                Upgrade to PRO
               </button>
             )}
           </div>
@@ -506,6 +508,14 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
           </div>
         )}
       </div>
+
+      <UpgradeModal
+        isOpen={upgradeModal.isOpen}
+        onClose={closeUpgradeModal}
+        limitType={upgradeModal.limitType}
+        currentUsage={upgradeModal.currentUsage}
+        maxAllowed={upgradeModal.maxAllowed}
+      />
     </div>
   );
 };

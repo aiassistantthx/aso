@@ -167,8 +167,25 @@ export const billing = {
   portal: () => polar.portal(),
 };
 
+// User limits info
+export interface UserLimitsInfo {
+  plan: 'FREE' | 'PRO';
+  limits: {
+    maxLifetimeProjects: number | null;
+    maxGenerationsPerProject: number | null;
+    maxTargetLanguages: number | null;
+  };
+  usage: {
+    totalProjectsCreated: number;
+    projectGenerationCount: number;
+  };
+}
+
 // Unified Projects API
 export const unified = {
+  getLimits: (projectId?: string) =>
+    request<UserLimitsInfo>(`/api/unified/limits${projectId ? `?projectId=${projectId}` : ''}`),
+
   list: (mode?: 'wizard' | 'manual') =>
     request<UnifiedProjectListItem[]>(`/api/unified${mode ? `?mode=${mode}` : ''}`),
 
