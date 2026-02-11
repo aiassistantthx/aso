@@ -1563,7 +1563,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                         onSelectIndex={setEditorSelectedIndex}
                         onScreenshotsChange={handleEditorScreenshotsChange}
                         style={editorStyle}
-                        deviceSize="6.9"
+                        deviceSize={getDeviceSizesForPlatform(project.platform)[0] || '6.9'}
                         readOnly={true}
                       />
                     ) : (
@@ -1722,7 +1722,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                     onSelectIndex={setEditorSelectedIndex}
                     onScreenshotsChange={handleEditorScreenshotsChange}
                     style={editorStyle}
-                    deviceSize="6.9"
+                    deviceSize={getDeviceSizesForPlatform(project.platform)[0] || '6.9'}
                     translationData={editorTranslationData}
                     selectedLanguage={selectedLangForEditor}
                   />
@@ -1735,7 +1735,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                     <StyleEditor
                       style={editorStyle}
                       onStyleChange={handleEditorStyleChange}
-                      deviceSize="6.9"
+                      deviceSize={getDeviceSizesForPlatform(project.platform)[0] || '6.9'}
                       screenshots={editorScreenshots}
                       selectedIndex={editorSelectedIndex}
                       onScreenshotsChange={handleEditorScreenshotsChange}
@@ -1911,7 +1911,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                             onSelectIndex={() => {}}
                             onScreenshotsChange={() => {}}
                             style={editorStyle}
-                            deviceSize="6.9"
+                            deviceSize={getDeviceSizesForPlatform(project.platform)[0] || '6.9'}
                             translationData={{ headlines: project.translatedHeadlines || {}, laurelTexts: {} }}
                             selectedLanguage={activeLang}
                             readOnly={true}
