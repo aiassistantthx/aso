@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { PrismaClient } from '@prisma/client';
 
+import { validateEnv } from './utils/validateEnv.js';
 import prismaPlugin from './plugins/prisma.js';
 import firebasePlugin from './plugins/firebase.js';
 import authPlugin from './plugins/auth.js';
@@ -30,6 +31,9 @@ const PORT = parseInt(process.env.PORT || '3001', 10);
 const HOST = process.env.HOST || '0.0.0.0';
 
 async function start() {
+  // Validate required environment variables before starting
+  validateEnv();
+
   const fastify = Fastify({
     logger: true,
   });

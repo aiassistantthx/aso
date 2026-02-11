@@ -6,14 +6,12 @@ import { PrismaClient } from '@prisma/client';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { clearPromptsCache } from '../utils/prompts.js';
+import { getRequiredEnv } from '../utils/validateEnv.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 AdminJS.registerAdapter({ Database, Resource });
-
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@example.com';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 
 // Component loader for custom components
 const componentLoader = new ComponentLoader();
@@ -386,17 +384,25 @@ export async function setupAdmin(fastify: FastifyInstance, prisma: PrismaClient)
 
   await admin.initialize();
 
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
   await AdminJSFastify.buildAuthenticatedRouter(
     admin,
     {
       authenticate: async (email: string, password: string) => {
-        if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-          return { email: ADMIN_EMAIL, role: 'admin' };
+        // If admin credentials not configured, deny all access
+        if (!adminEmail || !adminPassword) {
+          fastify.log.warn('Admin credentials not configured - access denied');
+          return null;
+        }
+        if (email === adminEmail && password === adminPassword) {
+          return { email: adminEmail, role: 'admin' };
         }
         return null;
       },
       cookieName: 'adminjs',
-      cookiePassword: process.env.SESSION_SECRET || 'a-very-long-secret-key-for-sessions-min-32-chars',
+      cookiePassword: getRequiredEnv('SESSION_SECRET'),
     },
     fastify,
   );

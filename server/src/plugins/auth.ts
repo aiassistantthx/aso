@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
 import fjwt from '@fastify/jwt';
+import { getRequiredEnv } from '../utils/validateEnv.js';
 
 declare module '@fastify/jwt' {
   interface FastifyJWT {
@@ -11,7 +12,7 @@ declare module '@fastify/jwt' {
 
 async function authPlugin(fastify: FastifyInstance) {
   await fastify.register(fjwt, {
-    secret: process.env.JWT_SECRET || 'dev-secret-change-in-production',
+    secret: getRequiredEnv('JWT_SECRET'),
     sign: { expiresIn: '7d' },
   });
 
