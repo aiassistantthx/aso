@@ -1031,8 +1031,8 @@ function drawText(
   let textAreaY: number;
 
   // Fixed padding values for preview (not scaled from full size)
-  const paddingTop = 8; // Fixed 8px top padding for preview
-  const gapFromMockup = 4; // Fixed 4px gap between text and mockup
+  const paddingTop = 6; // Fixed 6px top padding for preview
+  const gapFromMockup = 2; // Fixed 2px gap between text and mockup
 
   if (mockupInfo && style.showMockup) {
     const mockupTop = getRotatedMockupTop(
@@ -2139,7 +2139,7 @@ export const ScreensFlowEditor: React.FC<Props> = ({
             Drag mockups to position • Click ○ to link screens
           </span>
 
-          {/* Align to first button - only aligns Y position, keeps rotation */}
+          {/* Align to first button - aligns X and Y position */}
           <button
             onClick={() => {
               if (screenshots.length < 2) return;
@@ -2149,12 +2149,12 @@ export const ScreensFlowEditor: React.FC<Props> = ({
                 // Skip linked screens (they share settings with previous)
                 if (s.linkedMockupIndex !== undefined) return s;
 
-                // Only update offsetY, preserve everything else including not setting scale
+                // Copy X and Y position from first, preserve rotation
                 const currentSettings = s.mockupSettings;
                 return {
                   ...s,
                   mockupSettings: {
-                    offsetX: currentSettings?.offsetX ?? 0,
+                    offsetX: firstSettings.offsetX,
                     offsetY: firstSettings.offsetY,
                     rotation: currentSettings?.rotation ?? 0,
                     linkedToNext: currentSettings?.linkedToNext

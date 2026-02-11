@@ -734,7 +734,7 @@ const calculateTextArea = (
 
   // Calculate horizontal text area accounting for mockup position
   // Ensure text doesn't overlap with mockup horizontally
-  const gapFromMockup = 30; // Gap between text and mockup
+  const gapFromMockup = 15; // Gap between text and mockup
   const minSidePadding = sidePadding;
 
   // Calculate text width - reduce if mockup extends into text area horizontally
