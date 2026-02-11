@@ -111,6 +111,24 @@ export const generateZipArchive = async (options: ExportOptions): Promise<void> 
             ? screenshots[screenshot.linkedMockupIndex]?.preview || null
             : screenshot.preview;
 
+          // Ensure linked (spanning) mockups stay perfectly aligned across export sizes.
+          // If this screen is linked to another, derive mockup position from the source screen.
+          let effectiveMockupSettings = screenshot.mockupSettings;
+          if (screenshot.linkedMockupIndex !== undefined) {
+            const linkedScreen = screenshots[screenshot.linkedMockupIndex];
+            if (linkedScreen?.mockupSettings) {
+              const linkedSettings = linkedScreen.mockupSettings;
+              effectiveMockupSettings = {
+                ...linkedSettings,
+                // For the continuation screen, offset one full width to the left
+                offsetX: (linkedSettings.offsetX ?? 0) - 100,
+                // Preserve per-screen text offsets if any
+                textOffsetX: screenshot.mockupSettings?.textOffsetX,
+                textOffsetY: screenshot.mockupSettings?.textOffsetY,
+              };
+            }
+          }
+
           const blob = await generateScreenshotImage({
             screenshot: screenshot.preview,
             text,
@@ -120,7 +138,7 @@ export const generateZipArchive = async (options: ExportOptions): Promise<void> 
             styleOverride: screenshot.styleOverride,
             mockupScreenshot,
             mockupContinuation: screenshot.mockupContinuation,
-            mockupSettings: screenshot.mockupSettings
+            mockupSettings: effectiveMockupSettings
           });
 
           const fileName = `screenshot_${String(i + 1).padStart(2, '0')}.png`;
