@@ -77,6 +77,8 @@ async function start() {
       },
     },
     crossOriginEmbedderPolicy: false,
+    // Allow popups to communicate back (required for Firebase Auth popup flow)
+    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
   });
 
   // Rate limiting for auth endpoints (brute force protection)
