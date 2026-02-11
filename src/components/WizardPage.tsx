@@ -42,6 +42,16 @@ type WizardProjectData = {
     mockupSettings?: unknown;
     linkedMockupIndex?: number;
   }> | null;
+  // Per-language editor settings (mockupScale, positions, etc.)
+  translatedEditorData: Record<string, {
+    mockupScale?: number;
+    screenshotSettings?: Array<{
+      decorations?: unknown;
+      styleOverride?: unknown;
+      mockupSettings?: unknown;
+      linkedMockupIndex?: number;
+    }>;
+  }> | null;
   currentStep: number;
   status: string;
   generationErrors?: string[];
@@ -75,6 +85,7 @@ function toWizardData(p: UnifiedProjectFull): WizardProjectData {
     translatedMetadata: p.metadataTranslations,
     styleConfig: p.styleConfig,
     screenshotEditorData: p.wizardScreenshotEditorData,
+    translatedEditorData: p.wizardTranslatedEditorData,
     currentStep: p.wizardCurrentStep,
     status: p.wizardStatus,
     generationErrors: p.generationErrors,
@@ -104,6 +115,7 @@ function toUnifiedUpdate(data: Record<string, unknown>): Record<string, unknown>
   if ('editedHeadlines' in data) result.wizardEditedHeadlines = data.editedHeadlines;
   if ('editedMetadata' in data) result.editedMetadata = data.editedMetadata;
   if ('screenshotEditorData' in data) result.wizardScreenshotEditorData = data.screenshotEditorData;
+  if ('translatedEditorData' in data) result.wizardTranslatedEditorData = data.translatedEditorData;
   if ('generateScreenshots' in data) result.wizardGenerateScreenshots = data.generateScreenshots;
   if ('generateIcon' in data) result.wizardGenerateIcon = data.generateIcon;
   if ('generateMetadata' in data) result.wizardGenerateMetadata = data.generateMetadata;
@@ -188,10 +200,28 @@ function resolveStyleConfig(project: WizardProjectData): StyleConfig | null {
 }
 
 // Helper: build Screenshot[] from wizard project data
-function buildEditorScreenshots(project: WizardProjectData): Screenshot[] {
+function buildEditorScreenshots(project: WizardProjectData, lang?: string): Screenshot[] {
   const urls = project.uploadedScreenshots || [];
-  const headlines = project.editedHeadlines || [];
-  const editorData = project.screenshotEditorData || [];
+
+  // Use language-specific headlines and settings if editing a translated language
+  const isTranslatedLang = lang && lang !== 'source' && project.translatedHeadlines?.[lang];
+  const headlines = isTranslatedLang
+    ? (project.translatedHeadlines?.[lang] || [])
+    : (project.editedHeadlines || []);
+
+  // Use language-specific editor data if available, otherwise use source data
+  type EditorDataEntry = {
+    decorations?: unknown;
+    styleOverride?: unknown;
+    mockupSettings?: unknown;
+    linkedMockupIndex?: number;
+  };
+  const langEditorData: EditorDataEntry[] = isTranslatedLang
+    ? (project.translatedEditorData?.[lang]?.screenshotSettings || [])
+    : [];
+  const sourceEditorData: EditorDataEntry[] = project.screenshotEditorData || [];
+  // Merge: prefer language-specific settings, fall back to source settings
+  const editorData: EditorDataEntry[] = urls.map((_, i) => langEditorData[i] || sourceEditorData[i] || {});
 
   // Get theme and layout presets for alternating colors
   const templateId = project.selectedTemplateId;
@@ -441,16 +471,26 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
   };
 
   // Initialize embedded editor when switching to Editor tab
-  const initializeEditor = useCallback(() => {
-    if (!project || editorInitialized) return;
-    const screenshots = buildEditorScreenshots(project);
+  const initializeEditor = useCallback((lang?: string) => {
+    if (!project) return;
+    const screenshots = buildEditorScreenshots(project, lang);
     const style = resolveStyleConfig(project);
     if (!style) return;
+
+    // Apply per-language mockupScale if available
+    const isTranslatedLang = lang && lang !== 'source' && project.translatedHeadlines?.[lang];
+    const langMockupScale = isTranslatedLang
+      ? project.translatedEditorData?.[lang]?.mockupScale
+      : undefined;
+    const finalStyle = langMockupScale !== undefined
+      ? { ...style, mockupScale: langMockupScale }
+      : style;
+
     setEditorScreenshots(screenshots);
-    setEditorStyle(style);
+    setEditorStyle(finalStyle);
     setEditorSelectedIndex(0);
     setEditorInitialized(true);
-  }, [project, editorInitialized]);
+  }, [project]);
 
   // Reset editor when project changes significantly (e.g. regeneration)
   const prevProjectRef = useRef<string | null>(null);
@@ -467,9 +507,19 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
   // Initialize editor data when reaching step 6 (for both Review and Editor tabs)
   useEffect(() => {
     if (step === 6 && !editorInitialized) {
-      initializeEditor();
+      initializeEditor(editorLang);
     }
-  }, [step, editorInitialized, initializeEditor]);
+  }, [step, editorInitialized, initializeEditor, editorLang]);
+
+  // Reinitialize editor when language changes (to load per-language settings)
+  const prevEditorLangRef = useRef<string>(editorLang);
+  useEffect(() => {
+    if (editorInitialized && editorLang !== prevEditorLangRef.current && project) {
+      // Language changed, reinitialize editor with new language's settings
+      initializeEditor(editorLang);
+    }
+    prevEditorLangRef.current = editorLang;
+  }, [editorLang, editorInitialized, project, initializeEditor]);
 
   // Debounced autosave from editor changes
   const scheduleEditorSave = useCallback((data: Record<string, unknown>) => {
@@ -538,29 +588,90 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
 
     // Extract data to save
     const editedHeadlines = newScreenshots.map(s => s.text);
-    const screenshotEditorData = newScreenshots.map(s => ({
+    const screenshotSettings = newScreenshots.map(s => ({
       decorations: s.decorations,
       styleOverride: s.styleOverride,
       mockupSettings: s.mockupSettings,
       linkedMockupIndex: s.linkedMockupIndex,
     }));
 
-    // Update local project state immediately
-    setProject(prev => prev ? {
-      ...prev,
-      editedHeadlines,
-      screenshotEditorData,
-    } : prev);
+    // Check if editing source language or translated language
+    const isEditingTranslatedLang = editorLang !== 'source' && project.translatedHeadlines?.[editorLang];
 
-    scheduleEditorSave({ editedHeadlines, screenshotEditorData });
-  }, [project, scheduleEditorSave]);
+    if (isEditingTranslatedLang) {
+      // Save to per-language data
+      const currentTranslatedEditorData = project.translatedEditorData || {};
+      const langData = currentTranslatedEditorData[editorLang] || {};
+      const updatedLangData = {
+        ...langData,
+        screenshotSettings,
+      };
+      const updatedTranslatedEditorData = {
+        ...currentTranslatedEditorData,
+        [editorLang]: updatedLangData,
+      };
+
+      // Also update translated headlines
+      const currentTranslatedHeadlines = project.translatedHeadlines || {};
+      const updatedTranslatedHeadlines = {
+        ...currentTranslatedHeadlines,
+        [editorLang]: editedHeadlines,
+      };
+
+      setProject(prev => prev ? {
+        ...prev,
+        translatedHeadlines: updatedTranslatedHeadlines,
+        translatedEditorData: updatedTranslatedEditorData,
+      } : prev);
+
+      scheduleEditorSave({
+        translatedHeadlines: updatedTranslatedHeadlines,
+        translatedEditorData: updatedTranslatedEditorData,
+      });
+    } else {
+      // Save to source language data
+      setProject(prev => prev ? {
+        ...prev,
+        editedHeadlines,
+        screenshotEditorData: screenshotSettings,
+      } : prev);
+
+      scheduleEditorSave({ editedHeadlines, screenshotEditorData: screenshotSettings });
+    }
+  }, [project, scheduleEditorSave, editorLang]);
 
   // Handle style changes from embedded editor
   const handleEditorStyleChange = useCallback((newStyle: StyleConfig) => {
     setEditorStyle(newStyle);
-    setProject(prev => prev ? { ...prev, styleConfig: newStyle as unknown as Record<string, unknown> } : prev);
-    scheduleEditorSave({ styleConfig: newStyle });
-  }, [scheduleEditorSave]);
+
+    // Check if editing source language or translated language
+    const isEditingTranslatedLang = editorLang !== 'source' && project?.translatedHeadlines?.[editorLang];
+
+    if (isEditingTranslatedLang) {
+      // Save mockupScale to per-language data
+      const currentTranslatedEditorData = project?.translatedEditorData || {};
+      const langData = currentTranslatedEditorData[editorLang] || {};
+      const updatedLangData = {
+        ...langData,
+        mockupScale: newStyle.mockupScale,
+      };
+      const updatedTranslatedEditorData = {
+        ...currentTranslatedEditorData,
+        [editorLang]: updatedLangData,
+      };
+
+      setProject(prev => prev ? {
+        ...prev,
+        translatedEditorData: updatedTranslatedEditorData,
+      } : prev);
+
+      scheduleEditorSave({ translatedEditorData: updatedTranslatedEditorData });
+    } else {
+      // Save to source language style
+      setProject(prev => prev ? { ...prev, styleConfig: newStyle as unknown as Record<string, unknown> } : prev);
+      scheduleEditorSave({ styleConfig: newStyle });
+    }
+  }, [scheduleEditorSave, editorLang, project]);
 
   // Translation
   const handleTranslate = async () => {
@@ -639,6 +750,20 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
           ? (project.editedMetadata || {})
           : (project.translatedMetadata?.[lang] || project.editedMetadata || {});
 
+        // Get per-language editor data if available
+        type ExportEditorEntry = {
+          decorations?: unknown;
+          styleOverride?: unknown;
+          mockupSettings?: unknown;
+          linkedMockupIndex?: number;
+        };
+        const langEditorSettings = !isSource ? project.translatedEditorData?.[lang]?.screenshotSettings : undefined;
+        const langMockupScale = !isSource ? project.translatedEditorData?.[lang]?.mockupScale : undefined;
+        // Use per-language settings, falling back to source settings
+        const langEditorData: ExportEditorEntry[] = langEditorSettings
+          ? screenshots.map((_, i) => langEditorSettings[i] || editorData[i] || {})
+          : editorData;
+
         // Generate screenshots for each device size
         for (const size of ['6.9', '6.5'] as DeviceSize[]) {
           for (let i = 0; i < Math.min(screenshots.length, langHeadlines.length); i++) {
@@ -647,8 +772,13 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
             const effectiveStyle = { ...baseStyle };
 
             // Apply per-screenshot style overrides from editor data
-            if (editorData[i]?.styleOverride) {
-              const override = editorData[i].styleOverride as Record<string, unknown>;
+            // Apply per-language mockupScale if available
+            if (langMockupScale !== undefined) {
+              effectiveStyle.mockupScale = langMockupScale;
+            }
+
+            if (langEditorData[i]?.styleOverride) {
+              const override = langEditorData[i].styleOverride as Record<string, unknown>;
               if (override.backgroundColor) effectiveStyle.backgroundColor = override.backgroundColor as string;
               if (override.textColor) effectiveStyle.textColor = override.textColor as string;
               if (override.highlightColor) effectiveStyle.highlightColor = override.highlightColor as string;
@@ -656,7 +786,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
               if (override.textPosition) effectiveStyle.textPosition = override.textPosition as StyleConfig['textPosition'];
             }
 
-            if (!savedStyle && themePreset?.alternatingColors && i > 0 && !editorData[i]?.styleOverride) {
+            if (!savedStyle && themePreset?.alternatingColors && i > 0 && !langEditorData[i]?.styleOverride) {
               const altIdx = (i - 1) % themePreset.alternatingColors.length;
               const alt = themePreset.alternatingColors[altIdx];
               effectiveStyle.backgroundColor = alt.backgroundColor;
@@ -704,7 +834,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
               };
             } else {
               // For other layouts, use saved editor settings or fallback to layout preset
-              mockupSettings = editorData[i]?.mockupSettings as ScreenshotMockupSettings | undefined;
+              mockupSettings = langEditorData[i]?.mockupSettings as ScreenshotMockupSettings | undefined;
 
               if (!mockupSettings && layoutStyle.mockupOffset && !savedStyle) {
                 mockupSettings = {

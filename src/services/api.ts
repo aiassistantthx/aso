@@ -327,6 +327,15 @@ export interface UnifiedProjectFull {
     linkedMockupIndex?: number;
   }> | null;
   wizardTranslatedHeadlines: Record<string, string[]> | null;
+  wizardTranslatedEditorData: Record<string, {
+    mockupScale?: number;
+    screenshotSettings?: Array<{
+      decorations?: unknown;
+      styleOverride?: unknown;
+      mockupSettings?: unknown;
+      linkedMockupIndex?: number;
+    }>;
+  }> | null;
   wizardGenerateScreenshots: boolean;
   wizardGenerateIcon: boolean;
   wizardGenerateMetadata: boolean;

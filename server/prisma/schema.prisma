@@ -76,6 +76,7 @@ model UnifiedProject {
   wizardUploadedScreenshots Json?
   wizardScreenshotEditorData Json?
   wizardTranslatedHeadlines  Json?
+  wizardTranslatedEditorData Json?  // Per-language editor settings (mockupScale, positions, etc.)
 
   // Wizard service toggles
   wizardGenerateScreenshots Boolean  @default(true)

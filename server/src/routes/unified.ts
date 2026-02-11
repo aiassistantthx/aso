@@ -245,6 +245,7 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
         wizardUploadedScreenshots: body.wizardUploadedScreenshots as Prisma.InputJsonValue | undefined,
         wizardScreenshotEditorData: body.wizardScreenshotEditorData as Prisma.InputJsonValue | undefined,
         wizardTranslatedHeadlines: body.wizardTranslatedHeadlines as Prisma.InputJsonValue | undefined,
+        wizardTranslatedEditorData: body.wizardTranslatedEditorData as Prisma.InputJsonValue | undefined,
         wizardGenerateScreenshots: body.wizardGenerateScreenshots as boolean | undefined,
         wizardGenerateIcon: body.wizardGenerateIcon as boolean | undefined,
         wizardGenerateMetadata: body.wizardGenerateMetadata as boolean | undefined,
