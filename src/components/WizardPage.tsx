@@ -843,7 +843,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
               mockupSettings = {
                 offsetX: (layoutStyle.mockupOffset.x / deviceWidth) * 100,
                 offsetY: (layoutStyle.mockupOffset.y / deviceHeight) * 100,
-                scale: layoutStyle.mockupScale ?? 1,
+                scale: layoutStyle.mockupScale, // undefined falls back to style.mockupScale in canvas.ts
                 rotation: layoutStyle.mockupRotation ?? 0,
               };
             } else {
@@ -854,7 +854,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                 mockupSettings = {
                   offsetX: (layoutStyle.mockupOffset.x / deviceWidth) * 100,
                   offsetY: (layoutStyle.mockupOffset.y / deviceHeight) * 100,
-                  scale: layoutStyle.mockupScale ?? 1,
+                  scale: layoutStyle.mockupScale, // undefined falls back to style.mockupScale in canvas.ts
                   rotation: layoutStyle.mockupRotation ?? 0,
                 };
               }
