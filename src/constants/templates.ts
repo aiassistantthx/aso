@@ -44,7 +44,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     pattern: { type: 'grid', color: '#ffffff', opacity: 0.05, size: 1, spacing: 40 },
     fontFamily: 'Inter, sans-serif',
     fontSize: 80,
-    textAlign: 'left'
+    textAlign: 'center'
   },
   {
     id: 'dark-purple',
@@ -57,7 +57,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     pattern: { type: 'dots', color: '#a855f7', opacity: 0.08, size: 4, spacing: 30 },
     fontFamily: 'Poppins, sans-serif',
     fontSize: 76,
-    textAlign: 'left'
+    textAlign: 'center'
   },
   {
     id: 'pure-black',
@@ -83,7 +83,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     mockupColor: 'white',
     fontFamily: 'Poppins, sans-serif',
     fontSize: 84,
-    textAlign: 'left'
+    textAlign: 'center'
   },
   {
     id: 'purple-gradient',
@@ -108,7 +108,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     mockupColor: 'white',
     fontFamily: 'Raleway, sans-serif',
     fontSize: 76,
-    textAlign: 'left'
+    textAlign: 'center'
   },
 
   // Blue themes - professional, clean fonts
@@ -136,7 +136,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     pattern: { type: 'grid', color: '#60a5fa', opacity: 0.1, size: 1, spacing: 35 },
     fontFamily: 'Inter, sans-serif',
     fontSize: 76,
-    textAlign: 'left'
+    textAlign: 'center'
   },
   {
     id: 'indigo',
@@ -162,7 +162,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     mockupColor: 'black',
     fontFamily: 'Montserrat, sans-serif',
     fontSize: 80,
-    textAlign: 'left'
+    textAlign: 'center'
   },
   {
     id: 'emerald',
@@ -186,7 +186,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     mockupColor: 'black',
     fontFamily: 'Lato, sans-serif',
     fontSize: 76,
-    textAlign: 'left'
+    textAlign: 'center'
   },
 
   // Cyan/Mint themes - light, airy fonts
@@ -239,7 +239,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     mockupColor: 'black',
     fontFamily: 'Oswald, sans-serif',
     fontSize: 84,
-    textAlign: 'left'
+    textAlign: 'center'
   },
 
   // Pink themes - playful, modern fonts
@@ -253,7 +253,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     mockupColor: 'white',
     fontFamily: 'Poppins, sans-serif',
     fontSize: 84,
-    textAlign: 'left'
+    textAlign: 'center'
   },
   {
     id: 'rose',
@@ -279,7 +279,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     mockupColor: 'white',
     fontFamily: 'Inter, sans-serif',
     fontSize: 76,
-    textAlign: 'left',
+    textAlign: 'center',
     alternatingColors: [
       { backgroundColor: '#EC4899', gradient: { enabled: true, color1: '#EC4899', color2: '#8B5CF6', angle: 180 }, textColor: '#ffffff', highlightColor: '#831843' },
       { backgroundColor: '#8B5CF6', gradient: { enabled: true, color1: '#8B5CF6', color2: '#3B82F6', angle: 180 }, textColor: '#ffffff', highlightColor: '#4c1d95' }
@@ -295,7 +295,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     mockupColor: 'white',
     fontFamily: 'Poppins, sans-serif',
     fontSize: 80,
-    textAlign: 'left',
+    textAlign: 'center',
     alternatingColors: [
       { backgroundColor: '#833AB4', gradient: { enabled: true, color1: '#E1306C', color2: '#833AB4', angle: 135 }, textColor: '#ffffff', highlightColor: '#4c1d95' },
       { backgroundColor: '#405DE6', gradient: { enabled: true, color1: '#833AB4', color2: '#405DE6', angle: 135 }, textColor: '#ffffff', highlightColor: '#1e3a8a' }
@@ -344,7 +344,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     mockupColor: 'black',
     fontFamily: 'Lato, sans-serif',
     fontSize: 76,
-    textAlign: 'left',
+    textAlign: 'center',
     alternatingColors: [
       { backgroundColor: '#0369A1', gradient: { enabled: true, color1: '#0284C7', color2: '#0369A1', angle: 180 }, textColor: '#ffffff', highlightColor: '#0c4a6e' },
       { backgroundColor: '#075985', gradient: { enabled: true, color1: '#0369A1', color2: '#075985', angle: 180 }, textColor: '#ffffff', highlightColor: '#082f49' }
@@ -397,7 +397,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     pattern: { type: 'grid', color: '#00ff88', opacity: 0.08, size: 1, spacing: 40 },
     fontFamily: 'Inter, sans-serif',
     fontSize: 80,
-    textAlign: 'left',
+    textAlign: 'center',
     alternatingColors: [
       { backgroundColor: '#1a1a2e', gradient: { enabled: true, color1: '#16213e', color2: '#1a1a2e', angle: 180 }, textColor: '#ff00ff', highlightColor: '#00ff88' },
       { backgroundColor: '#1a1a2e', gradient: { enabled: true, color1: '#1a1a2e', color2: '#0f0f1a', angle: 180 }, textColor: '#00d4ff', highlightColor: '#ff6b6b' }
@@ -555,7 +555,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     mockupColor: 'black',
     fontFamily: 'Open Sans, sans-serif',
     fontSize: 76,
-    textAlign: 'left'
+    textAlign: 'center'
   },
   {
     id: 'pastel-blue',
@@ -580,7 +580,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     mockupColor: 'black',
     fontFamily: 'Lato, sans-serif',
     fontSize: 76,
-    textAlign: 'left'
+    textAlign: 'center'
   },
 
   // Light/White themes - clean, professional fonts
@@ -607,7 +607,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     pattern: { type: 'dots', color: '#fbbf24', opacity: 0.15, size: 3, spacing: 30 },
     fontFamily: 'Poppins, sans-serif',
     fontSize: 76,
-    textAlign: 'left'
+    textAlign: 'center'
   },
   {
     id: 'cool-gray',
@@ -620,7 +620,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     pattern: { type: 'grid', color: '#94a3b8', opacity: 0.15, size: 1, spacing: 30 },
     fontFamily: 'Inter, sans-serif',
     fontSize: 72,
-    textAlign: 'left'
+    textAlign: 'center'
   }
 ];
 
@@ -641,7 +641,7 @@ export const TEMPLATES: Template[] = [
     pattern: noPattern,
     fontFamily: 'Poppins, sans-serif',
     fontSize: 96,
-    textAlign: 'left',
+    textAlign: 'center',
     subtitleEnabled: true,
     subtitleFontSize: 36,
     subtitleColor: '#666666',
@@ -689,7 +689,7 @@ export const TEMPLATES: Template[] = [
     pattern: noPattern,
     fontFamily: 'Poppins, sans-serif',
     fontSize: 80,
-    textAlign: 'left',
+    textAlign: 'center',
     subtitleEnabled: false,
     highlightColor: '#fef08a',
     highlightStyle: 'none',
@@ -735,7 +735,7 @@ export const TEMPLATES: Template[] = [
     pattern: { type: 'grid', color: '#7C3AED', opacity: 0.1, size: 1, spacing: 40 },
     fontFamily: 'Inter, sans-serif',
     fontSize: 76,
-    textAlign: 'left',
+    textAlign: 'center',
     subtitleEnabled: true,
     subtitleFontSize: 28,
     subtitleColor: '#A78BFA',
@@ -759,7 +759,7 @@ export const TEMPLATES: Template[] = [
     pattern: noPattern,
     fontFamily: 'Poppins, sans-serif',
     fontSize: 84,
-    textAlign: 'left',
+    textAlign: 'center',
     subtitleEnabled: false,
     highlightColor: '#fef08a',
     highlightStyle: 'none',
@@ -805,7 +805,7 @@ export const TEMPLATES: Template[] = [
     pattern: { type: 'dots', color: '#FFFFFF', opacity: 0.08, size: 6, spacing: 20 },
     fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif',
     fontSize: 76,
-    textAlign: 'left',
+    textAlign: 'center',
     subtitleEnabled: true,
     subtitleFontSize: 28,
     subtitleColor: 'rgba(255,255,255,0.7)',
@@ -899,7 +899,7 @@ export const TEMPLATES: Template[] = [
     pattern: { type: 'grid', color: '#3F3F46', opacity: 0.5, size: 1, spacing: 32 },
     fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif',
     fontSize: 72,
-    textAlign: 'left',
+    textAlign: 'center',
     subtitleEnabled: true,
     subtitleFontSize: 26,
     subtitleColor: '#A1A1AA',
