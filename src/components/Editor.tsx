@@ -84,7 +84,7 @@ const defaultStyle: StyleConfig = {
   mockupAlignment: 'center',
   mockupOffset: { x: 0, y: 0 },
   textOffset: { x: 0, y: 0 },
-  mockupScale: 1.0,
+  mockupScale: 1.15,
   mockupRotation: 0,
   mockupContinuation: 'none',
   highlightColor: '#FFE135',

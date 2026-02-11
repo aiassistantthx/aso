@@ -550,7 +550,7 @@ export const Preview: React.FC<Props> = ({
         ...style,
         mockupOffset: { x: 0, y: 0 },
         textOffset: { x: 0, y: 0 },
-        mockupScale: 1.0
+        mockupScale: 1.15
       });
     }
   }, [onStyleChange, style, isEditingTranslation, translationData, selectedLanguage, selectedIndex, onTranslationChange]);

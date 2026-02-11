@@ -718,7 +718,7 @@ export const TEMPLATES: Template[] = [
     highlightColor: '#0071E3',
     highlightStyle: 'none',
     mockupColor: 'black',
-    mockupScale: 1.0,
+    mockupScale: 1.15,
     mockupShadow: true,
     paddingTop: 60,
     paddingBottom: 45,
