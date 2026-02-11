@@ -1859,13 +1859,33 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                     </p>
                   )}
                   {targetLangs.length === 0 ? (
-                    <p style={{ fontSize: '14px', color: '#86868b' }}>
-                      Select at least one target language above to translate.
-                    </p>
+                    <div>
+                      <p style={{ fontSize: '14px', color: '#86868b', marginBottom: '16px' }}>
+                        Select target languages above to translate, or continue with English only.
+                      </p>
+                      <button style={pageStyles.primaryButton} onClick={nextStep}>
+                        Continue with English Only
+                      </button>
+                    </div>
                   ) : (
-                    <button style={pageStyles.primaryButton} onClick={handleTranslate}>
-                      Translate All
-                    </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                      <button style={pageStyles.primaryButton} onClick={handleTranslate}>
+                        Translate All
+                      </button>
+                      <button
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#86868b',
+                          fontSize: '13px',
+                          cursor: 'pointer',
+                          textDecoration: 'underline',
+                        }}
+                        onClick={nextStep}
+                      >
+                        Skip translations
+                      </button>
+                    </div>
                   )}
                 </div>
               )}
