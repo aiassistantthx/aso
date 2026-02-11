@@ -1,5 +1,6 @@
-import { Language } from '../types';
+import { Language, Platform } from '../types';
 
+// App Store (iOS) supported languages - 40 languages
 export const APP_STORE_LANGUAGES: Language[] = [
   { code: 'en-US', name: 'English (US)', nativeName: 'English' },
   { code: 'en-GB', name: 'English (UK)', nativeName: 'English' },
@@ -42,7 +43,101 @@ export const APP_STORE_LANGUAGES: Language[] = [
   { code: 'vi-VN', name: 'Vietnamese', nativeName: 'Tiếng Việt' }
 ];
 
-export const getLanguageName = (code: string): string => {
-  const lang = APP_STORE_LANGUAGES.find(l => l.code === code);
+// Google Play (Android) supported languages - 77+ languages
+export const GOOGLE_PLAY_LANGUAGES: Language[] = [
+  { code: 'en-US', name: 'English (US)', nativeName: 'English' },
+  { code: 'en-GB', name: 'English (UK)', nativeName: 'English' },
+  { code: 'en-AU', name: 'English (Australia)', nativeName: 'English' },
+  { code: 'en-CA', name: 'English (Canada)', nativeName: 'English' },
+  { code: 'en-IN', name: 'English (India)', nativeName: 'English' },
+  { code: 'en-SG', name: 'English (Singapore)', nativeName: 'English' },
+  { code: 'en-ZA', name: 'English (South Africa)', nativeName: 'English' },
+  { code: 'af', name: 'Afrikaans', nativeName: 'Afrikaans' },
+  { code: 'sq', name: 'Albanian', nativeName: 'Shqip' },
+  { code: 'am', name: 'Amharic', nativeName: 'አማርኛ' },
+  { code: 'ar', name: 'Arabic', nativeName: 'العربية' },
+  { code: 'hy-AM', name: 'Armenian', nativeName: 'Հայերեն' },
+  { code: 'az-AZ', name: 'Azerbaijani', nativeName: 'Azərbaycan' },
+  { code: 'bn-BD', name: 'Bengali', nativeName: 'বাংলা' },
+  { code: 'eu-ES', name: 'Basque', nativeName: 'Euskara' },
+  { code: 'be', name: 'Belarusian', nativeName: 'Беларуская' },
+  { code: 'bg', name: 'Bulgarian', nativeName: 'Български' },
+  { code: 'my-MM', name: 'Burmese', nativeName: 'မြန်မာ' },
+  { code: 'ca', name: 'Catalan', nativeName: 'Català' },
+  { code: 'zh-CN', name: 'Chinese (Simplified)', nativeName: '简体中文' },
+  { code: 'zh-TW', name: 'Chinese (Traditional)', nativeName: '繁體中文' },
+  { code: 'zh-HK', name: 'Chinese (Hong Kong)', nativeName: '繁體中文' },
+  { code: 'hr', name: 'Croatian', nativeName: 'Hrvatski' },
+  { code: 'cs-CZ', name: 'Czech', nativeName: 'Čeština' },
+  { code: 'da-DK', name: 'Danish', nativeName: 'Dansk' },
+  { code: 'nl-NL', name: 'Dutch', nativeName: 'Nederlands' },
+  { code: 'et', name: 'Estonian', nativeName: 'Eesti' },
+  { code: 'fil', name: 'Filipino', nativeName: 'Filipino' },
+  { code: 'fi-FI', name: 'Finnish', nativeName: 'Suomi' },
+  { code: 'fr-CA', name: 'French (Canada)', nativeName: 'Français' },
+  { code: 'fr-FR', name: 'French (France)', nativeName: 'Français' },
+  { code: 'gl-ES', name: 'Galician', nativeName: 'Galego' },
+  { code: 'ka-GE', name: 'Georgian', nativeName: 'ქართული' },
+  { code: 'de-DE', name: 'German', nativeName: 'Deutsch' },
+  { code: 'el-GR', name: 'Greek', nativeName: 'Ελληνικά' },
+  { code: 'gu', name: 'Gujarati', nativeName: 'ગુજરાતી' },
+  { code: 'iw-IL', name: 'Hebrew', nativeName: 'עברית' },
+  { code: 'hi-IN', name: 'Hindi', nativeName: 'हिन्दी' },
+  { code: 'hu-HU', name: 'Hungarian', nativeName: 'Magyar' },
+  { code: 'is-IS', name: 'Icelandic', nativeName: 'Íslenska' },
+  { code: 'id', name: 'Indonesian', nativeName: 'Bahasa Indonesia' },
+  { code: 'it-IT', name: 'Italian', nativeName: 'Italiano' },
+  { code: 'ja-JP', name: 'Japanese', nativeName: '日本語' },
+  { code: 'kn-IN', name: 'Kannada', nativeName: 'ಕನ್ನಡ' },
+  { code: 'kk', name: 'Kazakh', nativeName: 'Қазақша' },
+  { code: 'km-KH', name: 'Khmer', nativeName: 'ខ្មែរ' },
+  { code: 'ko-KR', name: 'Korean', nativeName: '한국어' },
+  { code: 'ky-KG', name: 'Kyrgyz', nativeName: 'Кыргызча' },
+  { code: 'lo-LA', name: 'Lao', nativeName: 'ລາວ' },
+  { code: 'lv', name: 'Latvian', nativeName: 'Latviešu' },
+  { code: 'lt', name: 'Lithuanian', nativeName: 'Lietuvių' },
+  { code: 'mk-MK', name: 'Macedonian', nativeName: 'Македонски' },
+  { code: 'ms', name: 'Malay', nativeName: 'Bahasa Melayu' },
+  { code: 'ms-MY', name: 'Malay (Malaysia)', nativeName: 'Bahasa Melayu' },
+  { code: 'ml-IN', name: 'Malayalam', nativeName: 'മലയാളം' },
+  { code: 'mr-IN', name: 'Marathi', nativeName: 'मराठी' },
+  { code: 'mn-MN', name: 'Mongolian', nativeName: 'Монгол' },
+  { code: 'ne-NP', name: 'Nepali', nativeName: 'नेपाली' },
+  { code: 'no-NO', name: 'Norwegian', nativeName: 'Norsk' },
+  { code: 'fa', name: 'Persian', nativeName: 'فارسی' },
+  { code: 'pl-PL', name: 'Polish', nativeName: 'Polski' },
+  { code: 'pt-BR', name: 'Portuguese (Brazil)', nativeName: 'Português' },
+  { code: 'pt-PT', name: 'Portuguese (Portugal)', nativeName: 'Português' },
+  { code: 'pa', name: 'Punjabi', nativeName: 'ਪੰਜਾਬੀ' },
+  { code: 'ro', name: 'Romanian', nativeName: 'Română' },
+  { code: 'rm', name: 'Romansh', nativeName: 'Rumantsch' },
+  { code: 'ru-RU', name: 'Russian', nativeName: 'Русский' },
+  { code: 'sr', name: 'Serbian', nativeName: 'Српски' },
+  { code: 'si-LK', name: 'Sinhala', nativeName: 'සිංහල' },
+  { code: 'sk', name: 'Slovak', nativeName: 'Slovenčina' },
+  { code: 'sl', name: 'Slovenian', nativeName: 'Slovenščina' },
+  { code: 'es-419', name: 'Spanish (Latin America)', nativeName: 'Español' },
+  { code: 'es-ES', name: 'Spanish (Spain)', nativeName: 'Español' },
+  { code: 'es-US', name: 'Spanish (US)', nativeName: 'Español' },
+  { code: 'sw', name: 'Swahili', nativeName: 'Kiswahili' },
+  { code: 'sv-SE', name: 'Swedish', nativeName: 'Svenska' },
+  { code: 'ta-IN', name: 'Tamil', nativeName: 'தமிழ்' },
+  { code: 'te-IN', name: 'Telugu', nativeName: 'తెలుగు' },
+  { code: 'th', name: 'Thai', nativeName: 'ไทย' },
+  { code: 'tr-TR', name: 'Turkish', nativeName: 'Türkçe' },
+  { code: 'uk', name: 'Ukrainian', nativeName: 'Українська' },
+  { code: 'ur', name: 'Urdu', nativeName: 'اردو' },
+  { code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt' },
+  { code: 'zu', name: 'Zulu', nativeName: 'isiZulu' },
+];
+
+// Get languages for specific platform
+export const getLanguagesForPlatform = (platform: Platform): Language[] => {
+  return platform === 'android' ? GOOGLE_PLAY_LANGUAGES : APP_STORE_LANGUAGES;
+};
+
+export const getLanguageName = (code: string, platform?: Platform): string => {
+  const languages = platform ? getLanguagesForPlatform(platform) : [...APP_STORE_LANGUAGES, ...GOOGLE_PLAY_LANGUAGES];
+  const lang = languages.find(l => l.code === code);
   return lang ? lang.name : code;
 };

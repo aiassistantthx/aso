@@ -4,7 +4,7 @@ import { useAuth } from '../services/authContext';
 import { AppHeader } from './AppHeader';
 import { UpgradeModal, UpgradeLimitType } from './UpgradeModal';
 import { TONE_PRESETS, LAYOUT_PRESETS } from '../constants/tonePresets';
-import { APP_STORE_LANGUAGES, getLanguageName } from '../constants/languages';
+import { getLanguageName, getLanguagesForPlatform } from '../constants/languages';
 import { THEME_PRESETS, THEME_PRESET_GROUPS } from '../constants/templates';
 import { generateScreenshotImage } from '../services/canvas';
 import { StyleConfig, Screenshot, Decoration, ScreenshotStyleOverride, ScreenshotMockupSettings, Platform, PLATFORM_LIMITS, PLATFORM_FIELD_LABELS, getDeviceSizesForPlatform, DEVICE_SIZES } from '../types';
@@ -1700,7 +1700,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                           cursor: 'pointer',
                         }}
                       >
-                        {project.sourceLanguage ? APP_STORE_LANGUAGES.find(l => l.code === project.sourceLanguage)?.name || project.sourceLanguage : 'Source'}
+                        {project.sourceLanguage ? getLanguageName(project.sourceLanguage, project.platform) : 'Source'}
                       </button>
                       {translatedLangs.map(lang => (
                         <button
@@ -1717,7 +1717,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                             cursor: 'pointer',
                           }}
                         >
-                          {APP_STORE_LANGUAGES.find(l => l.code === lang)?.name || lang}
+                          {getLanguageName(lang, project.platform)}
                         </button>
                       ))}
                     </div>
@@ -1777,7 +1777,8 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
           const hasTranslations = !!(project.translatedHeadlines || project.translatedMetadata);
           const untranslatedLangs = targetLangs.filter(l => !project.translatedHeadlines?.[l]);
           const needsRetranslation = hasTranslations && untranslatedLangs.length > 0;
-          const availableLangs = APP_STORE_LANGUAGES.filter(l => l.code !== project.sourceLanguage);
+          const platformLanguages = getLanguagesForPlatform(project.platform);
+          const availableLangs = platformLanguages.filter(l => l.code !== project.sourceLanguage);
           const allSelected = availableLangs.every(l => project.targetLanguages.includes(l.code));
 
           return (
@@ -1818,7 +1819,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
               )}
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '24px' }}>
-              {APP_STORE_LANGUAGES
+              {platformLanguages
                 .filter(l => l.code !== project.sourceLanguage)
                 .map(l => {
                   const selected = project.targetLanguages.includes(l.code);
