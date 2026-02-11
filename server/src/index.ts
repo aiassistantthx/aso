@@ -2,6 +2,8 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
+import rateLimit from '@fastify/rate-limit';
+import helmet from '@fastify/helmet';
 import rawBody from 'fastify-raw-body';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -59,6 +61,27 @@ async function start() {
       ? false
       : ['http://localhost:3000', 'http://localhost:5173'],
     credentials: true,
+  });
+
+  // Security headers (CSP, XSS protection, etc.)
+  await fastify.register(helmet, {
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://apis.google.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        imgSrc: ["'self'", "data:", "blob:", "https:"],
+        connectSrc: ["'self'", "https://identitytoolkit.googleapis.com", "https://securetoken.googleapis.com", "https://firebaseinstallations.googleapis.com"],
+        frameSrc: ["'self'", "https://accounts.google.com"],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+  });
+
+  // Rate limiting for auth endpoints (brute force protection)
+  await fastify.register(rateLimit, {
+    global: false, // Don't apply globally, only to specific routes
   });
 
   // Multipart uploads

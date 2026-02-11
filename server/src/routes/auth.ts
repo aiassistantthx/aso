@@ -1,9 +1,21 @@
 import { FastifyInstance } from 'fastify';
 import bcrypt from 'bcrypt';
 
+// Rate limit config for auth endpoints
+const authRateLimit = {
+  max: 10, // 10 requests
+  timeWindow: '1 minute',
+  errorResponseBuilder: () => ({
+    error: 'Too many requests',
+    message: 'Too many authentication attempts. Please try again later.',
+  }),
+};
+
 export default async function authRoutes(fastify: FastifyInstance) {
   // Firebase Auth - verify Firebase token and return/create user
-  fastify.post('/api/auth/firebase', async (request, reply) => {
+  fastify.post('/api/auth/firebase', {
+    config: { rateLimit: authRateLimit },
+  }, async (request, reply) => {
     const { idToken } = request.body as { idToken: string };
 
     if (!idToken) {
@@ -81,7 +93,9 @@ export default async function authRoutes(fastify: FastifyInstance) {
   });
 
   // Register
-  fastify.post('/api/auth/register', async (request, reply) => {
+  fastify.post('/api/auth/register', {
+    config: { rateLimit: authRateLimit },
+  }, async (request, reply) => {
     const { email, password, name } = request.body as {
       email: string;
       password: string;
@@ -114,7 +128,9 @@ export default async function authRoutes(fastify: FastifyInstance) {
   });
 
   // Login
-  fastify.post('/api/auth/login', async (request, reply) => {
+  fastify.post('/api/auth/login', {
+    config: { rateLimit: authRateLimit },
+  }, async (request, reply) => {
     const { email, password } = request.body as {
       email: string;
       password: string;
