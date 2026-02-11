@@ -733,20 +733,40 @@ const calculateTextArea = (
   );
 
   // Calculate horizontal text area
-  // For top/bottom layouts, text and mockup don't overlap horizontally,
-  // so we don't need to constrain text width based on mockup position.
-  // Only constrain if mockup is significantly off-center (> 15% from center)
+  // For top/bottom layouts, text and mockup are in different vertical bands,
+  // so we should NOT constrain text width based on mockup's horizontal position.
+  // Only constrain if text and mockup actually overlap vertically.
   const gapFromMockup = 15; // Gap between text and mockup
   const minSidePadding = sidePadding;
 
   let textLeft = minSidePadding;
   let textRight = canvasWidth - minSidePadding;
 
-  // Only apply horizontal constraints for significantly off-center mockups
+  // Calculate vertical regions to check for overlap
+  // Text at top occupies roughly paddingTop to ~35% of canvas height
+  // Text at bottom occupies roughly ~65% to (canvasHeight - paddingBottom)
+  const textAreaEstimatedHeight = canvasHeight * 0.35;
+  let textAreaTop: number;
+  let textAreaBottom: number;
+
+  if (textPosition === 'top') {
+    textAreaTop = paddingTop;
+    textAreaBottom = paddingTop + textAreaEstimatedHeight;
+  } else {
+    textAreaBottom = canvasHeight - paddingBottom;
+    textAreaTop = textAreaBottom - textAreaEstimatedHeight;
+  }
+
+  // Check if mockup and text area overlap vertically
+  const verticalOverlap = rotatedBounds.bottom > textAreaTop && rotatedBounds.top < textAreaBottom;
+
+  // Only apply horizontal constraints if:
+  // 1. Mockup is significantly off-center (> 15% from center)
+  // 2. Text and mockup overlap vertically (they're in the same band)
   const mockupOffsetRatio = Math.abs(mockupCenterX - canvasWidth / 2) / canvasWidth;
   const significantOffset = mockupOffsetRatio > 0.15; // More than 15% from center
 
-  if (significantOffset) {
+  if (significantOffset && verticalOverlap) {
     const mockupLeft = rotatedBounds.left;
     const mockupRight = rotatedBounds.right;
 
