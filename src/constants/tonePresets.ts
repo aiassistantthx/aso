@@ -127,36 +127,32 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
   {
     id: 'spanning',
     name: 'Spanning',
-    description: 'One mockup spans two consecutive screenshots, rest is out of box',
+    description: 'One mockup spans two consecutive screenshots',
     getStyle: (index: number) => {
-      // Only first two screenshots (0 and 1) use spanning effect
+      // Screenshots 0 and 1 share the same mockup image spanning across both
       if (index === 0) {
         return {
           textPosition: 'top' as const,
           mockupAlignment: 'bottom' as const,
           mockupVisibility: 'full' as const,
-          mockupOffset: { x: 250, y: 180 }, // Offset right to exit canvas
-          mockupContinuation: 'left-start' as const,
-          mockupRotation: -8, // Tilted angle
-          mockupScreenshotIndex: 0, // Use screenshot 0
+          mockupOffset: { x: 350, y: 170 }, // Offset right - mockup exits right edge
+          mockupScreenshotIndex: 0, // Use screenshot 0's image
         };
       } else if (index === 1) {
         return {
           textPosition: 'top' as const,
           mockupAlignment: 'bottom' as const,
           mockupVisibility: 'full' as const,
-          mockupOffset: { x: -250, y: 180 }, // Offset left to enter from left
-          mockupContinuation: 'left-end' as const,
-          mockupRotation: 8, // Tilted angle (opposite direction)
-          mockupScreenshotIndex: 0, // Use same screenshot 0
+          mockupOffset: { x: -350, y: 170 }, // Offset left - mockup enters from left
+          mockupScreenshotIndex: 0, // Use same screenshot 0's image
         };
       } else {
-        // Rest of screenshots use out of box style
+        // Rest of screenshots - normal centered layout
         return {
           textPosition: 'top' as const,
           mockupAlignment: 'bottom' as const,
           mockupVisibility: 'full' as const,
-          mockupOffset: { x: 0, y: 200 },
+          mockupOffset: { x: 0, y: 60 },
         };
       }
     },
