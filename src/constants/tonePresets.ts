@@ -129,17 +129,17 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     name: 'Spanning',
     description: 'One mockup spans two consecutive screenshots',
     getStyle: (index: number) => {
-      // Screenshots 0 and 1 share the same mockup image spanning across both
-      // Mockup center should be at canvas edge for seamless continuation:
-      // - Screenshot 0: center at right edge (offset = +canvasWidth/2 = +660 for 6.9")
-      // - Screenshot 1: center at left edge (offset = -canvasWidth/2 = -660 for 6.9")
-      // When placed side by side, the two halves form one complete mockup
+      // Screenshots 0 and 1 share the same mockup spanning across both
+      // For 6.9" device (1320px width), mockup center needs to be at canvas edge:
+      // - Screenshot 0: center at x=1320 (right edge) -> offset = +660
+      // - Screenshot 1: center at x=0 (left edge) -> offset = -660
+      // When placed side by side, the halves form one complete mockup at the seam
       if (index === 0) {
         return {
           textPosition: 'top' as const,
           mockupAlignment: 'bottom' as const,
           mockupVisibility: 'full' as const,
-          mockupOffset: { x: 660, y: 200 }, // Right edge - half of 1320px canvas
+          mockupOffset: { x: 660, y: 60 }, // Center at right edge (660 = 1320/2)
           mockupRotation: 0,
           mockupScreenshotIndex: 0,
         };
@@ -148,7 +148,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
           textPosition: 'top' as const,
           mockupAlignment: 'bottom' as const,
           mockupVisibility: 'full' as const,
-          mockupOffset: { x: -660, y: 200 }, // Left edge - mirrored position
+          mockupOffset: { x: -660, y: 60 }, // Center at left edge (mirror of screenshot 0)
           mockupRotation: 0,
           mockupScreenshotIndex: 0, // Use same screenshot 0's image
         };
