@@ -146,7 +146,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
     });
   });
 
-  // Toggle plan (admin only - vorobyeviv@gmail.com)
+  // Toggle plan (admin only - uses ADMIN_EMAILS env var)
   fastify.post('/api/auth/toggle-plan', {
     onRequest: [fastify.authenticate],
   }, async (request, reply) => {
@@ -155,7 +155,9 @@ export default async function authRoutes(fastify: FastifyInstance) {
       include: { subscription: true },
     });
 
-    if (!user || user.email !== 'vorobyeviv@gmail.com') {
+    // Check if user email is in admin list
+    const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase());
+    if (!user || !adminEmails.includes(user.email.toLowerCase())) {
       return reply.status(403).send({ error: 'Not authorized' });
     }
 

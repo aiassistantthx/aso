@@ -115,11 +115,14 @@ API endpoints (`server/src/routes/unified.ts`):
 
 ## Deployment Commands
 
-**Coolify API Token** is stored in `/Users/ivorobyev/projects/.claude/settings.local.json` (in permissions allow list).
+**IMPORTANT: Coolify API Token location:**
+- Token: `2|hjAbdUPchFI55QuEEHIpxJinD2xqtO59gOSPJIvB8736c446`
+- Also stored in `/Users/ivorobyev/projects/.claude/settings.local.json`
+- Search command: `grep -r "COOLIFY\|hjAbdUPchFI55" /Users/ivorobyev/projects --include="*.json" 2>/dev/null | grep -v node_modules`
 
 ```bash
-# Deploy to Coolify (restart)
-curl -s -X POST "http://46.225.26.104:8000/api/v1/applications/agk8kwowcc48kkwkcsk844wo/restart" \
+# Deploy to Coolify (use /start, not /restart)
+curl -s -X POST "http://46.225.26.104:8000/api/v1/applications/agk8kwowcc48kkwkcsk844wo/start" \
   -H "Authorization: Bearer 2|hjAbdUPchFI55QuEEHIpxJinD2xqtO59gOSPJIvB8736c446"
 
 # Run DB migrations on production

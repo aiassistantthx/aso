@@ -23,6 +23,7 @@ const OPTIONAL_ENV_VARS: EnvConfig[] = [
   { name: 'POLAR_WEBHOOK_SECRET', required: false, description: 'Polar.sh webhook secret' },
   { name: 'ADMIN_EMAIL', required: false, description: 'Admin panel login email' },
   { name: 'ADMIN_PASSWORD', required: false, description: 'Admin panel login password' },
+  { name: 'ADMIN_EMAILS', required: false, description: 'Comma-separated list of admin user emails (for API admin actions)' },
 ];
 
 export function validateEnv(): void {
