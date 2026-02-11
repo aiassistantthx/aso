@@ -16,9 +16,6 @@ model User {
   firebaseUid      String?          @unique
   authProvider     String           @default("legacy") // "legacy" | "firebase"
   createdAt        DateTime         @default(now())
-  projects         Project[]
-  metadataProjects MetadataProject[]
-  wizardProjects   WizardProject[]
   unifiedProjects  UnifiedProject[]
   subscription     Subscription?
 }
@@ -38,84 +35,7 @@ enum Plan {
   PRO
 }
 
-model Project {
-  id              String       @id @default(cuid())
-  userId          String
-  user            User         @relation(fields: [userId], references: [id])
-  name            String
-  styleConfig     Json
-  deviceSize      String       @default("6.9")
-  sourceLanguage  String       @default("en")
-  targetLanguages String[]     @default([])
-  translationData Json?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  screenshots     Screenshot[]
-}
-
-model MetadataProject {
-  id                String   @id @default(cuid())
-  userId            String
-  user              User     @relation(fields: [userId], references: [id])
-  name              String
-  platform          String   // "ios" | "android"
-  inputMode         String   @default("description") // "description" | "keywords"
-  appName           String   @default("")
-  briefDescription  String   @default("")
-  targetKeywords    String   @default("")
-  generatedMetadata Json?
-  editedMetadata    Json?
-  translations      Json?
-  sourceLanguage    String   @default("en-US")
-  targetLanguages   String[] @default([])
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-}
-
-model Screenshot {
-  id             String  @id @default(cuid())
-  projectId      String
-  project        Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  order          Int
-  imagePath      String?
-  text           String  @default("")
-  decorations    Json?
-  styleOverride  Json?
-  mockupSettings Json?
-}
-
-model WizardProject {
-  id                  String   @id @default(cuid())
-  userId              String
-  user                User     @relation(fields: [userId], references: [id])
-  appName             String   @default("")
-  briefDescription    String   @default("")
-  targetKeywords      String   @default("")
-  uploadedScreenshots Json?
-  generateScreenshots Boolean  @default(true)
-  generateIcon        Boolean  @default(true)
-  generateMetadata    Boolean  @default(true)
-  tone                String   @default("bright")
-  layoutPreset        String   @default("bottom")
-  selectedTemplateId  String?
-  sourceLanguage      String   @default("en-US")
-  targetLanguages     String[] @default([])
-  generatedHeadlines  Json?
-  editedHeadlines     Json?
-  generatedMetadata   Json?
-  editedMetadata      Json?
-  generatedIconUrl    String?
-  translatedHeadlines Json?
-  translatedMetadata  Json?
-  styleConfig             Json?
-  screenshotEditorData    Json?
-  currentStep             Int      @default(1)
-  status              String   @default("draft")
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-}
-
-// Unified Project Model - combines Project, WizardProject, and MetadataProject
+// Unified Project Model - combines all project types
 model UnifiedProject {
   id              String   @id @default(cuid())
   userId          String
