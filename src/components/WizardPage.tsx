@@ -1557,6 +1557,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                         <p style={{ marginTop: '12px', fontSize: '14px', color: '#86868b' }}>Loading previews...</p>
                       </div>
                     ) : editorScreenshots.length > 0 ? (
+                      (() => { console.log('[WizardPage] platform:', project.platform, 'deviceSizes:', getDeviceSizesForPlatform(project.platform)); return null; })(),
                       <ScreensFlowEditor
                         screenshots={editorScreenshots}
                         selectedIndex={editorSelectedIndex}
