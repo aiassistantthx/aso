@@ -130,14 +130,17 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     description: 'One mockup spans two consecutive screenshots',
     getStyle: (index: number) => {
       // Screenshots 0 and 1 share the same mockup image spanning across both
-      // Values based on: X:41% Y:12% R:27° for linked pair
+      // Mockup center should be at canvas edge for seamless continuation:
+      // - Screenshot 0: center at right edge (offset = +canvasWidth/2 = +660 for 6.9")
+      // - Screenshot 1: center at left edge (offset = -canvasWidth/2 = -660 for 6.9")
+      // When placed side by side, the two halves form one complete mockup
       if (index === 0) {
         return {
           textPosition: 'top' as const,
           mockupAlignment: 'bottom' as const,
           mockupVisibility: 'full' as const,
-          mockupOffset: { x: 530, y: 335 }, // ~41% X, 12% Y
-          mockupRotation: 27,
+          mockupOffset: { x: 660, y: 200 }, // Right edge - half of 1320px canvas
+          mockupRotation: 0,
           mockupScreenshotIndex: 0,
         };
       } else if (index === 1) {
@@ -145,17 +148,17 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
           textPosition: 'top' as const,
           mockupAlignment: 'bottom' as const,
           mockupVisibility: 'full' as const,
-          mockupOffset: { x: -530, y: 335 }, // Mirrored X position
-          mockupRotation: 27,
+          mockupOffset: { x: -660, y: 200 }, // Left edge - mirrored position
+          mockupRotation: 0,
           mockupScreenshotIndex: 0, // Use same screenshot 0's image
         };
       } else {
-        // Rest of screenshots: X:-1% Y:11%
+        // Rest of screenshots: centered mockup at bottom
         return {
           textPosition: 'top' as const,
           mockupAlignment: 'bottom' as const,
           mockupVisibility: 'full' as const,
-          mockupOffset: { x: -13, y: 307 }, // ~-1% X, 11% Y
+          mockupOffset: { x: 0, y: 60 },
         };
       }
     },
