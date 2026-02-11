@@ -2,8 +2,6 @@ import { initializeApp } from 'firebase/app';
 import {
   getAuth,
   signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
   GoogleAuthProvider,
   sendSignInLinkToEmail,
   isSignInWithEmailLink,
@@ -39,37 +37,8 @@ export async function signInWithGoogle(): Promise<string> {
     throw new Error('Firebase is not configured');
   }
 
-  try {
-    // Try popup first
-    const result = await signInWithPopup(auth, googleProvider);
-    return result.user.getIdToken();
-  } catch (err: unknown) {
-    // If popup blocked or failed, fall back to redirect
-    const error = err as { code?: string };
-    if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
-      console.log('Popup blocked, falling back to redirect');
-      await signInWithRedirect(auth, googleProvider);
-      // This won't return - page will redirect
-      throw new Error('Redirecting to Google sign-in...');
-    }
-    throw err;
-  }
-}
-
-export async function handleGoogleRedirectResult(): Promise<string | null> {
-  if (!auth) {
-    return null;
-  }
-
-  try {
-    const result = await getRedirectResult(auth);
-    if (result?.user) {
-      return result.user.getIdToken();
-    }
-  } catch (err) {
-    console.error('Redirect result error:', err);
-  }
-  return null;
+  const result = await signInWithPopup(auth, googleProvider);
+  return result.user.getIdToken();
 }
 
 export async function sendMagicLink(email: string): Promise<void> {
