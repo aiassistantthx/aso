@@ -6,7 +6,7 @@ import { TONE_PRESETS, LAYOUT_PRESETS } from '../constants/tonePresets';
 import { APP_STORE_LANGUAGES, getLanguageName } from '../constants/languages';
 import { THEME_PRESETS, THEME_PRESET_GROUPS } from '../constants/templates';
 import { generateScreenshotImage } from '../services/canvas';
-import { StyleConfig, DeviceSize, Screenshot, Decoration, ScreenshotStyleOverride, ScreenshotMockupSettings } from '../types';
+import { StyleConfig, Screenshot, Decoration, ScreenshotStyleOverride, ScreenshotMockupSettings, Platform, PLATFORM_LIMITS, PLATFORM_FIELD_LABELS, getDeviceSizesForPlatform, DEVICE_SIZES } from '../types';
 import { ScreensFlowEditor } from './ScreensFlowEditor';
 import { StyleEditor } from './StyleEditor';
 import JSZip from 'jszip';
@@ -16,6 +16,7 @@ import JSZip from 'jszip';
 type WizardProjectData = {
   id: string;
   userId: string;
+  platform: Platform;
   appName: string;
   briefDescription: string;
   targetKeywords: string;
@@ -64,6 +65,7 @@ function toWizardData(p: UnifiedProjectFull): WizardProjectData {
   return {
     id: p.id,
     userId: p.userId,
+    platform: (p.metadataPlatform as Platform) || 'ios',
     appName: p.appName,
     briefDescription: p.briefDescription,
     targetKeywords: p.targetKeywords,
@@ -105,6 +107,7 @@ function toUnifiedUpdate(data: Record<string, unknown>): Record<string, unknown>
   if ('sourceLanguage' in data) result.sourceLanguage = data.sourceLanguage;
   if ('targetLanguages' in data) result.targetLanguages = data.targetLanguages;
   if ('styleConfig' in data) result.styleConfig = data.styleConfig;
+  if ('platform' in data) result.metadataPlatform = data.platform;
 
   // Wizard-specific field mappings
   if ('tone' in data) result.wizardTone = data.tone;
@@ -140,20 +143,10 @@ const STEPS = [
   { num: 8, label: 'Export' },
 ];
 
-const IOS_LIMITS: Record<string, number> = {
-  appName: 30,
-  subtitle: 30,
-  description: 4000,
-  whatsNew: 4000,
-  keywords: 100,
-};
-
-const IOS_FIELD_LABELS: Record<string, string> = {
-  appName: 'App Name',
-  subtitle: 'Subtitle',
-  description: 'Description',
-  whatsNew: "What's New",
-  keywords: 'Keywords',
+// Platform-specific metadata field order
+const METADATA_FIELDS: Record<Platform, string[]> = {
+  ios: ['appName', 'subtitle', 'keywords', 'description', 'whatsNew'],
+  android: ['appName', 'shortDescription', 'fullDescription', 'whatsNew'],
 };
 
 // Helper: resolve StyleConfig from wizard project data
@@ -764,8 +757,9 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
           ? screenshots.map((_, i) => langEditorSettings[i] || editorData[i] || {})
           : editorData;
 
-        // Generate screenshots for each device size
-        for (const size of ['6.9', '6.5'] as DeviceSize[]) {
+        // Generate screenshots for each device size based on platform
+        const platformSizes = getDeviceSizesForPlatform(project.platform);
+        for (const size of platformSizes) {
           for (let i = 0; i < Math.min(screenshots.length, langHeadlines.length); i++) {
             if (!baseStyle) continue;
 
@@ -818,8 +812,9 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
             const mockupScreenshot = screenshots[mockupScreenshotIdx] ?? screenshots[i];
 
             // Get mockup settings from editor data, with fallback to layout preset
-            const deviceWidth = size === '6.9' ? 1290 : 1242;
-            const deviceHeight = size === '6.9' ? 2796 : 2688;
+            const deviceDims = DEVICE_SIZES[size];
+            const deviceWidth = deviceDims.width;
+            const deviceHeight = deviceDims.height;
             const isSpanningLayout = layoutStyle.mockupScreenshotIndex !== undefined;
 
             let mockupSettings: ScreenshotMockupSettings | undefined;
@@ -857,7 +852,12 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                 mockupSettings,
               });
 
-              const sizeLabel = size === '6.9' ? '6.9-inch' : '6.5-inch';
+              // Create folder name based on device size
+              const sizeLabel = size === '6.9' ? '6.9-inch'
+                : size === '6.5' ? '6.5-inch'
+                : size === 'android-phone' ? 'phone'
+                : size === 'android-tablet-7' ? 'tablet-7'
+                : size;
               const arrayBuffer = await blob.arrayBuffer();
               zip.file(
                 `${lang}/${sizeLabel}/screenshot_${String(i + 1).padStart(2, '0')}.png`,
@@ -988,6 +988,64 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
           <div style={pageStyles.stepContent} className="wizard-step-content">
             <h2 style={pageStyles.stepTitle} className="wizard-step-title">App Information</h2>
             <p style={pageStyles.stepDesc} className="wizard-step-desc">Tell us about your app</p>
+
+            <label style={pageStyles.label}>Platform</label>
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setProject({ ...project, platform: 'ios' });
+                  saveField({ platform: 'ios' });
+                }}
+                style={{
+                  flex: 1,
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  border: `2px solid ${project.platform === 'ios' ? '#FF6B4A' : '#e5e5ea'}`,
+                  backgroundColor: project.platform === 'ios' ? '#FFF5F3' : '#fff',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  fontWeight: project.platform === 'ios' ? 600 : 400,
+                  color: project.platform === 'ios' ? '#FF6B4A' : '#1d1d1f',
+                  transition: 'all 0.2s',
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                </svg>
+                iOS (App Store)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setProject({ ...project, platform: 'android' });
+                  saveField({ platform: 'android' });
+                }}
+                style={{
+                  flex: 1,
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  border: `2px solid ${project.platform === 'android' ? '#FF6B4A' : '#e5e5ea'}`,
+                  backgroundColor: project.platform === 'android' ? '#FFF5F3' : '#fff',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  fontWeight: project.platform === 'android' ? 600 : 400,
+                  color: project.platform === 'android' ? '#FF6B4A' : '#1d1d1f',
+                  transition: 'all 0.2s',
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24c-1.47-.59-3.07-.93-4.77-.93s-3.3.34-4.77.93L5.05 5.67c-.18-.28-.54-.37-.83-.22-.3.16-.42.54-.26.85l1.84 3.18C2.55 11.04.5 13.97.5 17.5h23c0-3.53-2.05-6.46-5.34-8.02zM7 15.25c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25zm10 0c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25z"/>
+                </svg>
+                Android (Google Play)
+              </button>
+            </div>
 
             <label style={pageStyles.label}>
               App Name *
@@ -1506,14 +1564,19 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                 {/* Metadata */}
                 {project.generateMetadata && project.editedMetadata && (
                   <div style={{ marginBottom: '32px' }}>
-                    <h3 style={pageStyles.sectionTitle}>App Store Metadata</h3>
-                    {Object.entries(IOS_LIMITS).map(([field, limit]) => {
+                    <h3 style={pageStyles.sectionTitle}>
+                      {project.platform === 'ios' ? 'App Store' : 'Google Play'} Metadata
+                    </h3>
+                    {METADATA_FIELDS[project.platform].map((field) => {
+                      const limits = PLATFORM_LIMITS[project.platform] as Record<string, number>;
+                      const labels = PLATFORM_FIELD_LABELS[project.platform] as Record<string, string>;
+                      const limit = limits[field] || 100;
                       const value = (project.editedMetadata as Record<string, string>)?.[field] || '';
                       const pct = value.length / limit;
                       return (
                         <div key={field} style={{ marginBottom: '16px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <label style={pageStyles.label}>{IOS_FIELD_LABELS[field] || field}</label>
+                            <label style={pageStyles.label}>{labels[field] || field}</label>
                             <span style={{
                               fontSize: '12px', fontWeight: 500,
                               color: pct > 0.95 ? '#dc2626' : pct > 0.8 ? '#f59e0b' : '#34c759',

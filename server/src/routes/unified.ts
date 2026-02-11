@@ -42,6 +42,32 @@ const IOS_LIMITS: Record<string, number> = {
   keywords: 100,
 };
 
+const ANDROID_LIMITS: Record<string, number> = {
+  appName: 30,
+  shortDescription: 80,
+  fullDescription: 4000,
+  whatsNew: 500,
+};
+
+type Platform = 'ios' | 'android';
+
+function getPlatformLimits(platform: Platform): Record<string, number> {
+  return platform === 'android' ? ANDROID_LIMITS : IOS_LIMITS;
+}
+
+function getMetadataPromptKey(platform: Platform, type: 'generation' | 'fix' | 'translation' | 'translation_fix'): string {
+  if (platform === 'android') {
+    return type === 'generation' ? 'android_metadata_generation'
+      : type === 'fix' ? 'android_metadata_fix'
+      : type === 'translation' ? 'android_metadata_translation'
+      : 'android_metadata_translation_fix';
+  }
+  return type === 'generation' ? 'metadata_generation'
+    : type === 'fix' ? 'metadata_fix'
+    : type === 'translation' ? 'metadata_translation'
+    : 'metadata_translation_fix';
+}
+
 const TONE_ADJECTIVES: Record<string, string> = {
   bright: 'vibrant, bold',
   pastel: 'soft, pastel',
@@ -105,6 +131,7 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
       id: p.id,
       name: p.name,
       mode: p.mode,
+      platform: p.metadataPlatform || 'ios',
       appName: p.appName,
       wizardStatus: p.wizardStatus,
       wizardCurrentStep: p.wizardCurrentStep,
@@ -510,7 +537,9 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
 
     // 2. Generate metadata if enabled
     if (project.wizardGenerateMetadata) {
-      const fieldsDescription = Object.entries(IOS_LIMITS)
+      const platform = (project.metadataPlatform as Platform) || 'ios';
+      const platformLimits = getPlatformLimits(platform);
+      const fieldsDescription = Object.entries(platformLimits)
         .map(([field, limit]) => `${field} (max ${limit} chars)`)
         .join(', ');
 
@@ -518,8 +547,8 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
         ? `\nTarget keywords to incorporate: "${project.targetKeywords}"`
         : '';
 
-      // Load prompt from DB
-      const metadataConfig = await getPrompt(fastify.prisma, 'metadata_generation');
+      // Load prompt from DB (platform-specific)
+      const metadataConfig = await getPrompt(fastify.prisma, getMetadataPromptKey(platform, 'generation'));
       const metadataPrompt = renderPrompt(metadataConfig.userTemplate, {
         appName: project.appName,
         briefDescription: project.briefDescription,
@@ -554,7 +583,7 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
         let metadata = JSON.parse(content) as Record<string, string>;
 
         // Fix fields exceeding limits
-        const overFields = Object.entries(IOS_LIMITS).filter(
+        const overFields = Object.entries(platformLimits).filter(
           ([field, limit]) => metadata[field] && metadata[field].length > limit,
         );
 
@@ -563,8 +592,8 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
             .map(([field, limit]) => `- "${field}": currently ${metadata[field].length} chars, max ${limit}. Current value: "${metadata[field]}"`)
             .join('\n');
 
-          // Load fix prompt from DB
-          const fixConfig = await getPrompt(fastify.prisma, 'metadata_fix');
+          // Load fix prompt from DB (platform-specific)
+          const fixConfig = await getPrompt(fastify.prisma, getMetadataPromptKey(platform, 'fix'));
           const fixPrompt = renderPrompt(fixConfig.userTemplate, {
             appName: project.appName,
             keywordsLine: project.targetKeywords ? `Target keywords: "${project.targetKeywords}"` : '',

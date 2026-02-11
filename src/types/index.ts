@@ -160,12 +160,16 @@ export interface TranslationData {
   };
 }
 
-export type DeviceSize = '6.9' | '6.5';
+// Platform type
+export type Platform = 'ios' | 'android';
+
+export type DeviceSize = '6.9' | '6.5' | 'android-phone' | 'android-tablet-7';
 
 export interface DeviceDimensions {
   width: number;
   height: number;
   name: string;
+  platform: Platform;
   // iPhone screen dimensions within the frame
   screenWidth: number;
   screenHeight: number;
@@ -176,10 +180,12 @@ export interface DeviceDimensions {
 }
 
 export const DEVICE_SIZES: Record<DeviceSize, DeviceDimensions> = {
+  // iOS devices
   '6.9': {
     width: 1320,
     height: 2868,
     name: 'iPhone 16 Pro Max (6.9")',
+    platform: 'ios',
     screenWidth: 1320,
     screenHeight: 2868,
     cornerRadius: 140,
@@ -191,13 +197,80 @@ export const DEVICE_SIZES: Record<DeviceSize, DeviceDimensions> = {
     width: 1284,
     height: 2778,
     name: 'iPhone 11 Pro Max (6.5")',
+    platform: 'ios',
     screenWidth: 1284,
     screenHeight: 2778,
     cornerRadius: 130,
     bezelWidth: 12,
     dynamicIslandWidth: 290,
     dynamicIslandHeight: 90
+  },
+  // Android devices
+  'android-phone': {
+    width: 1080,
+    height: 1920,
+    name: 'Android Phone',
+    platform: 'android',
+    screenWidth: 1080,
+    screenHeight: 1920,
+    cornerRadius: 60,
+    bezelWidth: 8,
+    dynamicIslandWidth: 0,
+    dynamicIslandHeight: 0
+  },
+  'android-tablet-7': {
+    width: 1200,
+    height: 1920,
+    name: 'Android Tablet 7"',
+    platform: 'android',
+    screenWidth: 1200,
+    screenHeight: 1920,
+    cornerRadius: 40,
+    bezelWidth: 8,
+    dynamicIslandWidth: 0,
+    dynamicIslandHeight: 0
   }
+};
+
+// Platform-specific field limits
+export const PLATFORM_LIMITS = {
+  ios: {
+    appName: 30,
+    subtitle: 30,
+    keywords: 100,
+    description: 4000,
+    whatsNew: 4000,
+  },
+  android: {
+    appName: 30,
+    shortDescription: 80,
+    fullDescription: 4000,
+    whatsNew: 500,
+  }
+};
+
+// Platform-specific field labels
+export const PLATFORM_FIELD_LABELS = {
+  ios: {
+    appName: 'App Name',
+    subtitle: 'Subtitle',
+    keywords: 'Keywords',
+    description: 'Description',
+    whatsNew: "What's New",
+  },
+  android: {
+    appName: 'App Name',
+    shortDescription: 'Short Description',
+    fullDescription: 'Full Description',
+    whatsNew: "What's New",
+  }
+};
+
+// Get device sizes for a platform
+export const getDeviceSizesForPlatform = (platform: Platform): DeviceSize[] => {
+  return (Object.entries(DEVICE_SIZES) as [DeviceSize, DeviceDimensions][])
+    .filter(([_, dim]) => dim.platform === platform)
+    .map(([size]) => size);
 };
 
 // ============== TEMPLATE SYSTEM ==============

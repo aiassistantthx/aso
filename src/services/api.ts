@@ -273,6 +273,7 @@ export interface UnifiedProjectListItem {
   id: string;
   name: string;
   mode: 'wizard' | 'manual';
+  platform: 'ios' | 'android';
   appName: string;
   wizardStatus: string;
   wizardCurrentStep: number;

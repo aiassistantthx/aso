@@ -74,6 +74,104 @@ Before writing ANY field, list all words you've used. NEVER repeat a word (or it
     temperature: 0.7,
   },
 
+  // Android/Google Play metadata generation
+  android_metadata_generation: {
+    systemMessage: 'You are an ASO expert for Google Play. Return only valid JSON.',
+    userTemplate: `You are an expert ASO (App Store Optimization) copywriter. Generate optimized Google Play (Android) metadata.
+
+App Name: "{{appName}}"
+Brief Description: "{{briefDescription}}"{{keywordsLine}}
+
+IMPORTANT: Generate all metadata in English (en-US), regardless of the language of the app name or description provided.
+
+Return a JSON object with these fields: {{fieldsDescription}}
+
+Google Play ASO Best Practices — FOLLOW STRICTLY:
+
+1. appName (30 chars): Format as "{{appName}} - [Key Benefit Phrase]" or "{{appName}}: [Key Benefit Phrase]". Keep it natural and readable.
+
+2. shortDescription (80 chars): This is the most important field! It's visible without expanding. Write a compelling one-liner that:
+   - Summarizes the core value proposition
+   - Includes primary keywords naturally
+   - Creates urgency or highlights unique benefits
+   - Reads like a tagline, not a keyword list
+
+3. fullDescription (4000 chars):
+   - First 2-3 lines are crucial (visible before "Read More")
+   - Use short paragraphs (2-3 sentences max)
+   - Include bullet points with ✓ or • for features
+   - Add keywords naturally throughout (Google indexes the full text!)
+   - Include social proof if applicable
+   - End with clear call-to-action and download prompt
+
+4. whatsNew (500 chars): Keep it concise! Use:
+   - Quick intro line
+   - 2-4 bullet points (• character) for key changes
+   - Brief closing
+
+- Respect character limits strictly
+- Return ONLY valid JSON, no markdown fences`,
+    model: 'gpt-4o-mini',
+    temperature: 0.7,
+  },
+
+  android_metadata_fix: {
+    systemMessage: 'You are an ASO expert for Google Play. Return only valid JSON. Every field MUST respect its character limit.',
+    userTemplate: `These generated Google Play ASO fields exceed character limits. Rewrite ONLY these fields to fit.
+
+App name: "{{appName}}"
+{{keywordsLine}}
+
+Fields to fix:
+{{fixList}}
+
+Rules:
+- Keep app name "{{appName}}" in appName
+- Incorporate keywords naturally
+- Stay marketing-friendly
+- Return ONLY valid JSON with just the fixed fields`,
+    model: 'gpt-4o-mini',
+    temperature: 0.3,
+  },
+
+  android_metadata_translation: {
+    systemMessage: 'You are a professional ASO translator for Google Play. Return only valid JSON. Every field MUST respect its character limit.',
+    userTemplate: `Translate this Google Play (Android) metadata from {{sourceLanguage}} to {{targetLanguage}}.
+
+App name: "{{appName}}"{{keywordsContext}}
+
+Current metadata:
+{{metadata}}
+
+Rules:
+- Adapt the marketing tone to the target culture
+- STRICTLY respect character limits: {{fieldsDescription}}
+- The app name "{{appName}}" MUST remain in appName field
+- For short fields (appName, shortDescription): if the direct translation exceeds the limit, rewrite it shorter
+- fullDescription: maintain bullet points and formatting
+- whatsNew: keep it very concise (500 chars max)
+- Return ONLY valid JSON with the same field names`,
+    model: 'gpt-4o-mini',
+    temperature: 0.3,
+  },
+
+  android_metadata_translation_fix: {
+    systemMessage: 'You are a professional ASO translator for Google Play. Return only valid JSON. Every field MUST respect its character limit.',
+    userTemplate: `The following translated fields exceed their character limits. Rewrite ONLY these fields to fit within limits.
+
+App name: "{{appName}}"{{keywordsContext}}
+
+Fields to fix:
+{{fixList}}
+
+Rules:
+- Keep the app name "{{appName}}" in the appName field
+- Keep it marketing-friendly and natural in {{targetLanguage}}
+- Return ONLY valid JSON with just the fixed fields`,
+    model: 'gpt-4o-mini',
+    temperature: 0.2,
+  },
+
   metadata_fix: {
     systemMessage: 'You are an ASO expert. Return only valid JSON. Every field MUST respect its character limit.',
     userTemplate: `These generated ASO fields exceed character limits. Rewrite ONLY these fields to fit.
