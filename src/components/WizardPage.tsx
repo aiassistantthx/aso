@@ -1788,28 +1788,21 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                         </div>
                       )}
 
-                      {/* Translated screenshot previews */}
-                      {project.translatedHeadlines?.[activeLang] && project.uploadedScreenshots?.length && (
+                      {/* Translated screenshot previews using ScreensFlowEditor */}
+                      {project.translatedHeadlines?.[activeLang] && project.uploadedScreenshots?.length && editorStyle && editorScreenshots.length > 0 && (
                         <div style={{ marginBottom: '24px' }}>
                           <h4 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '8px' }}>Screenshot Previews</h4>
-                          {translatedPreviewLoading ? (
-                            <div style={{ textAlign: 'center', padding: '24px 0' }}>
-                              <div style={pageStyles.spinner} />
-                              <p style={{ marginTop: '12px', fontSize: '14px', color: '#86868b' }}>Generating previews...</p>
-                            </div>
-                          ) : translatedPreviews.length > 0 ? (
-                            <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '12px' }}>
-                              {translatedPreviews.map((canvas, i) => (
-                                <div key={`${activeLang}-${i}`} style={{ flexShrink: 0, width: '180px' }}>
-                                  <img
-                                    src={canvas.toDataURL()}
-                                    alt={`Preview ${i + 1}`}
-                                    style={{ width: '100%', borderRadius: '12px', border: '1px solid #e5e5ea' }}
-                                  />
-                                </div>
-                              ))}
-                            </div>
-                          ) : null}
+                          <ScreensFlowEditor
+                            screenshots={editorScreenshots}
+                            selectedIndex={0}
+                            onSelectIndex={() => {}}
+                            onScreenshotsChange={() => {}}
+                            style={editorStyle}
+                            deviceSize="6.9"
+                            translationData={{ headlines: project.translatedHeadlines || {}, laurelTexts: {} }}
+                            selectedLanguage={activeLang}
+                            readOnly={true}
+                          />
                         </div>
                       )}
 
