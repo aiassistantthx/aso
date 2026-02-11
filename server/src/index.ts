@@ -73,7 +73,7 @@ async function start() {
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "blob:", "https:"],
         connectSrc: ["'self'", "https://identitytoolkit.googleapis.com", "https://securetoken.googleapis.com", "https://firebaseinstallations.googleapis.com"],
-        frameSrc: ["'self'", "https://accounts.google.com"],
+        frameSrc: ["'self'", "https://accounts.google.com", "https://*.firebaseapp.com"],
       },
     },
     crossOriginEmbedderPolicy: false,
