@@ -1281,8 +1281,8 @@ const drawMockupWithScreenshot = async (
   const hiddenHeight = fullPhoneHeight - visiblePhoneHeight;
   let adjustedMockupY: number;
 
-  // Calculate text area height for positioning (same as ScreensFlowEditor)
-  const textAreaForAlignment = style.textPosition === 'top' ? canvasHeight * 0.38 : 0;
+  // Calculate text area height for positioning (must match generateScreenshotImage's textAreaHeightForMockup)
+  const textAreaForAlignment = style.textPosition === 'top' ? canvasHeight * 0.35 : 0;
 
   switch (style.mockupAlignment) {
     case 'top':

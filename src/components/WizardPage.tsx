@@ -665,18 +665,34 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
         const mockupScreenshotIdx = layoutStyle.mockupScreenshotIndex ?? i;
         const mockupScreenshot = screenshots[mockupScreenshotIdx] ?? screenshots[i];
 
-        // Use saved mockupSettings or convert from layout preset
+        // Use layout preset mockupSettings for spanning layout (each screen needs different offset)
+        // For non-spanning layouts, use saved mockupSettings or convert from layout preset
         const deviceWidth = 1290;
         const deviceHeight = 2796;
-        let mockupSettings = editorData[i]?.mockupSettings as { offsetX: number; offsetY: number; scale: number; rotation: number } | undefined;
+        const isSpanningLayout = layoutStyle.mockupScreenshotIndex !== undefined;
 
-        if (!mockupSettings && layoutStyle.mockupOffset) {
+        let mockupSettings: { offsetX: number; offsetY: number; scale: number; rotation: number } | undefined;
+
+        if (isSpanningLayout && layoutStyle.mockupOffset) {
+          // For spanning layout, always use layout preset values (each screen has unique offset)
           mockupSettings = {
             offsetX: (layoutStyle.mockupOffset.x / deviceWidth) * 100,
             offsetY: (layoutStyle.mockupOffset.y / deviceHeight) * 100,
             scale: layoutStyle.mockupScale ?? 1,
             rotation: layoutStyle.mockupRotation ?? 0,
           };
+        } else {
+          // For other layouts, use saved editor settings or fallback to layout preset
+          mockupSettings = editorData[i]?.mockupSettings as { offsetX: number; offsetY: number; scale: number; rotation: number } | undefined;
+
+          if (!mockupSettings && layoutStyle.mockupOffset) {
+            mockupSettings = {
+              offsetX: (layoutStyle.mockupOffset.x / deviceWidth) * 100,
+              offsetY: (layoutStyle.mockupOffset.y / deviceHeight) * 100,
+              scale: layoutStyle.mockupScale ?? 1,
+              rotation: layoutStyle.mockupRotation ?? 0,
+            };
+          }
         }
 
         try {
@@ -810,16 +826,30 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
             // Get mockup settings from editor data, with fallback to layout preset
             const deviceWidth = size === '6.9' ? 1290 : 1242;
             const deviceHeight = size === '6.9' ? 2796 : 2688;
-            let mockupSettings = editorData[i]?.mockupSettings as ScreenshotMockupSettings | undefined;
+            const isSpanningLayout = layoutStyle.mockupScreenshotIndex !== undefined;
 
-            // If no saved editor settings, convert layout preset offset to percentage-based settings
-            if (!mockupSettings && layoutStyle.mockupOffset && !savedStyle) {
+            let mockupSettings: ScreenshotMockupSettings | undefined;
+
+            if (isSpanningLayout && layoutStyle.mockupOffset) {
+              // For spanning layout, always use layout preset values (each screen has unique offset)
               mockupSettings = {
                 offsetX: (layoutStyle.mockupOffset.x / deviceWidth) * 100,
                 offsetY: (layoutStyle.mockupOffset.y / deviceHeight) * 100,
                 scale: layoutStyle.mockupScale ?? 1,
                 rotation: layoutStyle.mockupRotation ?? 0,
               };
+            } else {
+              // For other layouts, use saved editor settings or fallback to layout preset
+              mockupSettings = editorData[i]?.mockupSettings as ScreenshotMockupSettings | undefined;
+
+              if (!mockupSettings && layoutStyle.mockupOffset && !savedStyle) {
+                mockupSettings = {
+                  offsetX: (layoutStyle.mockupOffset.x / deviceWidth) * 100,
+                  offsetY: (layoutStyle.mockupOffset.y / deviceHeight) * 100,
+                  scale: layoutStyle.mockupScale ?? 1,
+                  rotation: layoutStyle.mockupRotation ?? 0,
+                };
+              }
             }
 
             try {
