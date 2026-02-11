@@ -1031,8 +1031,8 @@ function drawText(
   let textAreaY: number;
 
   // Fixed padding values for preview (not scaled from full size)
-  const paddingTop = 10; // Fixed 10px top padding for preview
-  const gapFromMockup = 8; // Fixed 8px gap between text and mockup
+  const paddingTop = 8; // Fixed 8px top padding for preview
+  const gapFromMockup = 4; // Fixed 4px gap between text and mockup
 
   if (mockupInfo && style.showMockup) {
     const mockupTop = getRotatedMockupTop(
