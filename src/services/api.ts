@@ -207,6 +207,15 @@ export const unified = {
     request<{ ok: boolean }>(`/api/unified/${id}`, { method: 'DELETE' }),
 
   uploadScreenshot: async (id: string, file: File) => {
+    // Client-side validation
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      throw new ApiError(400, 'File too large. Maximum size is 10MB');
+    }
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      throw new ApiError(400, 'Invalid file type. Allowed: PNG, JPEG, WebP');
+    }
     const formData = new FormData();
     formData.append('file', file);
     return request<{ screenshotUrl: string; project?: UnifiedProjectFull; screenshot?: UnifiedScreenshotRecord }>(

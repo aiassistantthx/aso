@@ -326,7 +326,7 @@ const SingleScreenPreview: React.FC<{
               <input
                 ref={uploadInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/png,image/jpeg,image/webp"
                 style={{ display: 'none' }}
                 onChange={(e) => {
                   const file = e.target.files?.[0];

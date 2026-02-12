@@ -49,7 +49,7 @@ const UploadCard: React.FC<{
         <input
           ref={inputRef}
           type="file"
-          accept="image/*"
+          accept="image/png,image/jpeg,image/webp"
           multiple
           style={{ display: 'none' }}
           onChange={(e) => e.target.files && onFilesSelected(e.target.files)}
@@ -149,7 +149,7 @@ const UploadCard: React.FC<{
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept="image/png,image/jpeg,image/webp"
         multiple
         style={{ display: 'none' }}
         onChange={(e) => e.target.files && onFilesSelected(e.target.files)}

@@ -336,6 +336,29 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({ error: 'No file uploaded' });
     }
 
+    // Validate file type
+    const allowedMimes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    if (!allowedMimes.includes(data.mimetype)) {
+      return reply.status(400).send({ error: 'Invalid file type. Allowed: PNG, JPEG, WebP' });
+    }
+
+    const buffer = await data.toBuffer();
+
+    // Validate file size (max 10MB)
+    const maxFileSize = 10 * 1024 * 1024;
+    if (buffer.length > maxFileSize) {
+      return reply.status(400).send({ error: 'File too large. Maximum size is 10MB' });
+    }
+
+    // Validate max screenshots per project
+    const maxScreenshots = 10;
+    const currentScreenshots = project.mode === 'wizard'
+      ? ((project.wizardUploadedScreenshots as string[] | null) || []).length
+      : await fastify.prisma.unifiedScreenshot.count({ where: { projectId: id } });
+    if (currentScreenshots >= maxScreenshots) {
+      return reply.status(400).send({ error: `Maximum ${maxScreenshots} screenshots per project` });
+    }
+
     const uploadDir = path.join(UPLOADS_DIR, request.user.id, 'unified', id);
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
@@ -344,8 +367,6 @@ export default async function unifiedRoutes(fastify: FastifyInstance) {
     const ext = path.extname(data.filename) || '.png';
     const fileName = `screenshot_${Date.now()}${ext}`;
     const filePath = path.join(uploadDir, fileName);
-
-    const buffer = await data.toBuffer();
     fs.writeFileSync(filePath, buffer);
 
     const relativePath = `/uploads/${request.user.id}/unified/${id}/${fileName}`;

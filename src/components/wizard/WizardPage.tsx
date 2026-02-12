@@ -893,7 +893,7 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
                   <span>Add</span>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/png,image/jpeg,image/webp"
                     multiple
                     style={{ display: 'none' }}
                     onChange={handleScreenshotUpload}
