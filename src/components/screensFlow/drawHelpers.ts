@@ -1,6 +1,6 @@
-import { StyleConfig, Screenshot, MockupStyle } from '../../types';
+import { Screenshot, StyleConfig, MockupStyle } from '../../types';
 import { wrapFormattedText, measureLineWidth } from '../../services/textFormatting';
-import { MOCKUP_PROPORTIONS as MP } from '../../constants/mockup';
+import { calculateRotatedBounds, drawScreenshotClipped, drawBackgroundPattern as drawSharedPattern } from '../../services/canvasShared';
 
 // Draw side buttons for preview mockups (centered coordinate system)
 export const drawPreviewSideButtons = (
@@ -12,7 +12,7 @@ export const drawPreviewSideButtons = (
 ): void => {
   const buttonColor = frameColor === '#F5F5F7' ? '#D1D1D6' :
                       frameColor === '#E3D5C8' ? '#C4B5A8' : '#0D0D0D';
-  const buttonWidth = mockupWidth * MP.BUTTON_WIDTH;
+  const buttonWidth = mockupWidth * 0.012;
   const buttonRadius = buttonWidth / 2;
   const x = -mockupWidth / 2;
   const y = -mockupHeight / 2;
@@ -24,18 +24,104 @@ export const drawPreviewSideButtons = (
     ctx.fillStyle = buttonColor;
   }
 
-  const buttons = [
-    { bx: x - buttonWidth, by: y + mockupHeight * 0.15, bh: mockupHeight * 0.035 },
-    { bx: x - buttonWidth, by: y + mockupHeight * 0.22, bh: mockupHeight * 0.065 },
-    { bx: x - buttonWidth, by: y + mockupHeight * 0.22 + mockupHeight * 0.065 + mockupHeight * 0.015, bh: mockupHeight * 0.065 },
-    { bx: -x, by: y + mockupHeight * 0.24, bh: mockupHeight * 0.08 },
-  ];
+  // Action button
+  const actionH = mockupHeight * 0.035;
+  const actionY = y + mockupHeight * 0.15;
+  ctx.beginPath();
+  ctx.roundRect(x - buttonWidth, actionY, buttonWidth, actionH, buttonRadius);
+  isOutline ? ctx.stroke() : ctx.fill();
 
-  for (const b of buttons) {
-    ctx.beginPath();
-    ctx.roundRect(b.bx, b.by, buttonWidth, b.bh, buttonRadius);
-    isOutline ? ctx.stroke() : ctx.fill();
+  // Volume Up
+  const volH = mockupHeight * 0.065;
+  const volUpY = y + mockupHeight * 0.22;
+  ctx.beginPath();
+  ctx.roundRect(x - buttonWidth, volUpY, buttonWidth, volH, buttonRadius);
+  isOutline ? ctx.stroke() : ctx.fill();
+
+  // Volume Down
+  const volDownY = volUpY + volH + mockupHeight * 0.015;
+  ctx.beginPath();
+  ctx.roundRect(x - buttonWidth, volDownY, buttonWidth, volH, buttonRadius);
+  isOutline ? ctx.stroke() : ctx.fill();
+
+  // Power button
+  const powerH = mockupHeight * 0.08;
+  const powerY = y + mockupHeight * 0.24;
+  ctx.beginPath();
+  ctx.roundRect(-x, powerY, buttonWidth, powerH, buttonRadius);
+  isOutline ? ctx.stroke() : ctx.fill();
+};
+
+// Draw Pixel mockup frame (centered at 0,0)
+export const drawPixelMockupFrame = (
+  ctx: CanvasRenderingContext2D,
+  mockupWidth: number,
+  mockupHeight: number,
+  frameColor: string,
+  img: HTMLImageElement | null
+): void => {
+  // Pixel proportions - thinner bezels than iPhone
+  const frameThickness = mockupWidth * 0.025;
+  const cornerRadius = mockupWidth * 0.08;
+  const screenCornerRadius = cornerRadius - frameThickness * 0.7;
+
+  // Punch-hole camera (centered at top, smaller than Dynamic Island)
+  const punchHoleRadius = mockupWidth * 0.025;
+  const punchHoleY = -mockupHeight / 2 + frameThickness + mockupHeight * 0.015;
+
+  // Draw shadow
+  ctx.save();
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
+  ctx.shadowBlur = 15;
+  ctx.shadowOffsetY = 6;
+
+  // Draw solid phone body
+  ctx.fillStyle = frameColor;
+  ctx.beginPath();
+  ctx.roundRect(-mockupWidth / 2, -mockupHeight / 2, mockupWidth, mockupHeight, cornerRadius);
+  ctx.fill();
+  ctx.restore();
+
+  // Draw screen area
+  const screenW = mockupWidth - frameThickness * 2;
+  const screenH = mockupHeight - frameThickness * 2;
+
+  // Black screen background
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.roundRect(-screenW / 2, -screenH / 2, screenW, screenH, screenCornerRadius);
+  ctx.fill();
+
+  // Draw screenshot if provided
+  if (img) {
+    drawScreenshotClipped(ctx, img, -screenW / 2, -screenH / 2, screenW, screenH, screenCornerRadius);
   }
+
+  // Draw punch-hole camera
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.arc(0, punchHoleY, punchHoleRadius, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Draw side buttons (Pixel style - on the right side)
+  const buttonColor = frameColor === '#F5F5F7' ? '#D2D2D7' :
+                      frameColor === '#E3D5C8' ? '#C5B5A6' : '#2D2D2F';
+  ctx.fillStyle = buttonColor;
+
+  // Power button (right side)
+  const powerWidth = mockupWidth * 0.015;
+  const powerHeight = mockupHeight * 0.045;
+  const powerY = -mockupHeight / 2 + mockupHeight * 0.18;
+  ctx.beginPath();
+  ctx.roundRect(mockupWidth / 2, powerY, powerWidth, powerHeight, 2);
+  ctx.fill();
+
+  // Volume rocker (right side, below power)
+  const volHeight = mockupHeight * 0.08;
+  const volY = powerY + powerHeight + mockupHeight * 0.02;
+  ctx.beginPath();
+  ctx.roundRect(mockupWidth / 2, volY, powerWidth, volHeight, 2);
+  ctx.fill();
 };
 
 // Draw mockup frame based on style (centered at 0,0)
@@ -45,51 +131,55 @@ export const drawMockupFrame = (
   mockupWidth: number,
   mockupHeight: number,
   frameColor: string,
-  img: HTMLImageElement | null
+  img: HTMLImageElement | null,
+  isAndroid: boolean = false
 ): void => {
-  const frameThickness = mockupWidth * MP.FRAME_THICKNESS;
-  const cornerRadius = mockupWidth * MP.CORNER_RADIUS;
-  const innerRadius = cornerRadius - frameThickness * MP.INNER_RADIUS_FACTOR;
-  const diWidth = mockupWidth * 0.30; // Preview approximation of DI width
-  const diHeight = mockupHeight * MP.DYNAMIC_ISLAND_HEIGHT;
-  const diY = -mockupHeight / 2 + frameThickness + mockupHeight * MP.DYNAMIC_ISLAND_Y_OFFSET;
+  // For Android, always use Pixel mockup
+  if (isAndroid) {
+    drawPixelMockupFrame(ctx, mockupWidth, mockupHeight, frameColor, img);
+    return;
+  }
 
-  // Shared screenshot clipping helper (centered coordinate system)
-  const drawScreenshot = (screenW: number, screenH: number, screenRadius: number) => {
-    ctx.fillStyle = '#000';
-    ctx.beginPath();
-    ctx.roundRect(-screenW / 2, -screenH / 2, screenW, screenH, screenRadius);
-    ctx.fill();
+  const frameThickness = mockupWidth * 0.035;
+  const cornerRadius = mockupWidth * 0.12;
+  const innerRadius = cornerRadius - frameThickness * 0.8;
 
-    if (!img) return;
-    ctx.save();
-    ctx.beginPath();
-    ctx.roundRect(-screenW / 2, -screenH / 2, screenW, screenH, screenRadius);
-    ctx.clip();
-    const imgAspect = img.width / img.height;
-    const screenAspect = screenW / screenH;
-    const drawH = imgAspect > screenAspect ? screenH : screenW / imgAspect;
-    const drawW = imgAspect > screenAspect ? drawH * imgAspect : screenW;
-    ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
-    ctx.restore();
-  };
+  // Dynamic Island dimensions
+  const diWidth = mockupWidth * 0.30;
+  const diHeight = mockupHeight * 0.022;
+  const diY = -mockupHeight / 2 + frameThickness + mockupHeight * 0.008;
 
   switch (mockupStyle) {
     case 'flat': {
+      // Shadow
       ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
       ctx.shadowBlur = 18;
       ctx.shadowOffsetY = 8;
+
+      // Solid phone body
       ctx.fillStyle = frameColor;
       ctx.beginPath();
       ctx.roundRect(-mockupWidth / 2, -mockupHeight / 2, mockupWidth, mockupHeight, cornerRadius);
       ctx.fill();
       ctx.shadowColor = 'transparent';
 
+      // Side buttons
       drawPreviewSideButtons(ctx, mockupWidth, mockupHeight, frameColor, false);
+
+      // Black screen background
       const screenW = mockupWidth - frameThickness * 2;
       const screenH = mockupHeight - frameThickness * 2;
-      drawScreenshot(screenW, screenH, innerRadius);
+      ctx.fillStyle = '#000';
+      ctx.beginPath();
+      ctx.roundRect(-screenW / 2, -screenH / 2, screenW, screenH, innerRadius);
+      ctx.fill();
 
+      // Screenshot
+      if (img) {
+        drawScreenshotClipped(ctx, img, -screenW / 2, -screenH / 2, screenW, screenH, innerRadius);
+      }
+
+      // Dynamic Island
       ctx.fillStyle = '#000';
       ctx.beginPath();
       ctx.roundRect(-diWidth / 2, diY, diWidth, diHeight, diHeight / 2);
@@ -98,23 +188,40 @@ export const drawMockupFrame = (
     }
 
     case 'minimal': {
-      const borderW = mockupWidth * MP.MINIMAL_BORDER;
-      const minRadius = mockupWidth * MP.MINIMAL_CORNER_RADIUS;
+      const borderW = mockupWidth * 0.02;
+      const minRadius = mockupWidth * 0.1;
       const minInnerRadius = minRadius - borderW;
 
+      // Shadow
       ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
       ctx.shadowBlur = 15;
       ctx.shadowOffsetY = 6;
+
+      // Border frame
       ctx.fillStyle = frameColor;
       ctx.beginPath();
       ctx.roundRect(-mockupWidth / 2, -mockupHeight / 2, mockupWidth, mockupHeight, minRadius);
       ctx.fill();
       ctx.shadowColor = 'transparent';
 
+      // Side buttons
       drawPreviewSideButtons(ctx, mockupWidth, mockupHeight, frameColor, false);
-      drawScreenshot(mockupWidth - borderW * 2, mockupHeight - borderW * 2, minInnerRadius);
 
-      const minDiY = -mockupHeight / 2 + borderW + mockupHeight * MP.MINIMAL_DI_Y_OFFSET;
+      // Black screen
+      const screenW = mockupWidth - borderW * 2;
+      const screenH = mockupHeight - borderW * 2;
+      ctx.fillStyle = '#000';
+      ctx.beginPath();
+      ctx.roundRect(-screenW / 2, -screenH / 2, screenW, screenH, minInnerRadius);
+      ctx.fill();
+
+      // Screenshot
+      if (img) {
+        drawScreenshotClipped(ctx, img, -screenW / 2, -screenH / 2, screenW, screenH, minInnerRadius);
+      }
+
+      // Dynamic Island
+      const minDiY = -mockupHeight / 2 + borderW + mockupHeight * 0.01;
       ctx.fillStyle = '#000';
       ctx.beginPath();
       ctx.roundRect(-diWidth / 2, minDiY, diWidth, diHeight, diHeight / 2);
@@ -123,12 +230,24 @@ export const drawMockupFrame = (
     }
 
     case 'outline': {
-      const borderW = mockupWidth * MP.OUTLINE_BORDER;
-      const outRadius = mockupWidth * MP.OUTLINE_CORNER_RADIUS;
+      const borderW = mockupWidth * 0.025;
+      const outRadius = mockupWidth * 0.11;
       const outInnerRadius = outRadius - borderW / 2;
 
-      drawScreenshot(mockupWidth - borderW * 2, mockupHeight - borderW * 2, outInnerRadius);
+      // Black screen background
+      const screenW = mockupWidth - borderW * 2;
+      const screenH = mockupHeight - borderW * 2;
+      ctx.fillStyle = '#000';
+      ctx.beginPath();
+      ctx.roundRect(-screenW / 2, -screenH / 2, screenW, screenH, outInnerRadius);
+      ctx.fill();
 
+      // Screenshot
+      if (img) {
+        drawScreenshotClipped(ctx, img, -screenW / 2, -screenH / 2, screenW, screenH, outInnerRadius);
+      }
+
+      // Outline frame
       ctx.strokeStyle = frameColor;
       ctx.lineWidth = borderW;
       ctx.beginPath();
@@ -136,9 +255,11 @@ export const drawMockupFrame = (
                     mockupWidth - borderW, mockupHeight - borderW, outRadius);
       ctx.stroke();
 
+      // Side buttons (outline style)
       drawPreviewSideButtons(ctx, mockupWidth, mockupHeight, frameColor, true);
 
-      const outDiY = -mockupHeight / 2 + borderW + mockupHeight * MP.OUTLINE_DI_Y_OFFSET;
+      // Dynamic Island
+      const outDiY = -mockupHeight / 2 + borderW + mockupHeight * 0.012;
       ctx.fillStyle = '#000';
       ctx.beginPath();
       ctx.roundRect(-diWidth / 2, outDiY, diWidth, diHeight, diHeight / 2);
@@ -147,6 +268,7 @@ export const drawMockupFrame = (
     }
 
     default: {
+      // Realistic style
       ctx.fillStyle = frameColor;
       ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
       ctx.shadowBlur = 20;
@@ -156,17 +278,12 @@ export const drawMockupFrame = (
       ctx.fill();
       ctx.shadowColor = 'transparent';
 
+      // Screenshot
       if (img) {
-        ctx.beginPath();
-        ctx.roundRect(-mockupWidth / 2, -mockupHeight / 2, mockupWidth, mockupHeight, cornerRadius);
-        ctx.clip();
-        const imgAspect = img.width / img.height;
-        const frameAspect = mockupWidth / mockupHeight;
-        const drawH = imgAspect > frameAspect ? mockupHeight : mockupWidth / imgAspect;
-        const drawW = imgAspect > frameAspect ? drawH * imgAspect : mockupWidth;
-        ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+        drawScreenshotClipped(ctx, img, -mockupWidth / 2, -mockupHeight / 2, mockupWidth, mockupHeight, cornerRadius);
       }
 
+      // Dynamic Island
       ctx.fillStyle = '#000';
       ctx.beginPath();
       ctx.roundRect(-diWidth / 2, -mockupHeight / 2 + 8, diWidth, mockupHeight * 0.035, 10);
@@ -175,7 +292,7 @@ export const drawMockupFrame = (
   }
 };
 
-// Draw background with gradient/solid and optional pattern
+// Draw background with gradient/solid color and pattern
 export function drawBackground(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -198,12 +315,13 @@ export function drawBackground(
   }
   ctx.fillRect(x, y, width, height);
 
+  // Draw pattern if present
   if (style.pattern && style.pattern.type !== 'none') {
     drawPreviewPattern(ctx, x, y, width, height, style.pattern);
   }
 }
 
-// Draw pattern for preview (simplified for performance)
+// Draw pattern for preview (delegates to shared pattern with 0.15 scale)
 export function drawPreviewPattern(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -213,80 +331,17 @@ export function drawPreviewPattern(
   pattern: StyleConfig['pattern']
 ) {
   if (!pattern || pattern.type === 'none') return;
-
-  const { type, color, opacity, size, spacing } = pattern;
-  const scale = 0.15;
-  const scaledSize = Math.max(1, size * scale);
-  const scaledSpacing = spacing * scale;
-
-  ctx.save();
-  ctx.globalAlpha = opacity;
-  ctx.translate(x, y);
-
-  switch (type) {
-    case 'dots':
-      ctx.fillStyle = color;
-      for (let px = scaledSpacing / 2; px < width; px += scaledSpacing) {
-        for (let py = scaledSpacing / 2; py < height; py += scaledSpacing) {
-          ctx.beginPath();
-          ctx.arc(px, py, scaledSize / 2, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-      break;
-    case 'grid':
-      ctx.strokeStyle = color;
-      ctx.lineWidth = scaledSize;
-      for (let px = 0; px <= width; px += scaledSpacing) {
-        ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, height); ctx.stroke();
-      }
-      for (let py = 0; py <= height; py += scaledSpacing) {
-        ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(width, py); ctx.stroke();
-      }
-      break;
-    case 'diagonal-lines':
-      ctx.strokeStyle = color;
-      ctx.lineWidth = scaledSize;
-      for (let i = -height; i < width + height; i += scaledSpacing) {
-        ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + height, height); ctx.stroke();
-      }
-      break;
-    case 'circles':
-      ctx.strokeStyle = color;
-      ctx.lineWidth = scaledSize;
-      for (let px = scaledSpacing; px < width; px += scaledSpacing * 2) {
-        for (let py = scaledSpacing; py < height; py += scaledSpacing * 2) {
-          ctx.beginPath(); ctx.arc(px, py, scaledSpacing / 2, 0, Math.PI * 2); ctx.stroke();
-        }
-      }
-      break;
-    case 'squares':
-      ctx.strokeStyle = color;
-      ctx.lineWidth = scaledSize;
-      const squareSize = scaledSpacing * 0.6;
-      for (let px = scaledSpacing / 2; px < width; px += scaledSpacing) {
-        for (let py = scaledSpacing / 2; py < height; py += scaledSpacing) {
-          ctx.strokeRect(px - squareSize / 2, py - squareSize / 2, squareSize, squareSize);
-        }
-      }
-      break;
-  }
-
-  ctx.restore();
+  drawSharedPattern(ctx, x, y, width, height, pattern, 0.15);
 }
 
-// Calculate rotated bounding box top position
+// Calculate rotated bounding box top position (delegates to shared)
 export function getRotatedMockupTop(
   centerY: number,
   mockupWidth: number,
   mockupHeight: number,
   rotationDegrees: number
 ): number {
-  const rad = (rotationDegrees * Math.PI) / 180;
-  const cos = Math.abs(Math.cos(rad));
-  const sin = Math.abs(Math.sin(rad));
-  const bboxHeight = mockupWidth * sin + mockupHeight * cos;
-  return centerY - bboxHeight / 2;
+  return calculateRotatedBounds(0, centerY, mockupWidth, mockupHeight, rotationDegrees).top;
 }
 
 // Calculate adaptive font size for preview
@@ -323,7 +378,7 @@ export function calculatePreviewFontSize(
 }
 
 // Simple wrap for font size calculation (strips formatting)
-function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+export function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
   const words = text.replace(/\[|\]/g, '').split(' ');
   const lines: string[] = [];
   let currentLine = '';
@@ -341,14 +396,7 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
   return lines;
 }
 
-interface MockupInfo {
-  centerY: number;
-  height: number;
-  width: number;
-  rotation: number;
-}
-
-// Draw text with adaptive sizing for preview
+// Draw text with adaptive sizing, highlight support, and positioning
 export function drawText(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -357,72 +405,147 @@ export function drawText(
   width: number,
   style: StyleConfig,
   override?: Screenshot['styleOverride'],
-  mockupInfo?: MockupInfo
+  mockupInfo?: { centerY: number; height: number; width: number; rotation: number },
+  textOffsetOverride?: { x: number; y: number }
 ) {
   if (!text) return;
 
   const textColor = override?.textColor ?? style.textColor;
-  const maxWidth = width * 0.85;
+  const highlightColor = override?.highlightColor ?? style.highlightColor ?? '#FFE135';
+  const textPosition = override?.textPosition ?? style.textPosition;
+  const maxWidth = width * 0.80; // 10% padding on each side
 
+  // Calculate available text area based on mockup position
   let availableHeight: number;
   let textAreaY: number;
 
-  if (mockupInfo && style.showMockup) {
-    const mockupTop = getRotatedMockupTop(mockupInfo.centerY, mockupInfo.width, mockupInfo.height, mockupInfo.rotation);
-    const paddingTop = style.paddingTop * 0.04;
-    const gapFromMockup = 4;
+  // Fixed padding values for preview (not scaled from full size)
+  const paddingTop = 6; // Fixed 6px top padding for preview
+  const gapFromMockup = 2; // Fixed 2px gap between text and mockup
 
-    if (style.textPosition === 'top') {
-      availableHeight = Math.max(mockupTop - gapFromMockup - paddingTop, 20);
+  if (mockupInfo && style.showMockup) {
+    const mockupTop = getRotatedMockupTop(
+      mockupInfo.centerY,
+      mockupInfo.width,
+      mockupInfo.height,
+      mockupInfo.rotation
+    );
+    const mockupBottom = mockupInfo.centerY + mockupInfo.height / 2;
+
+    if (textPosition === 'top') {
+      // Space above mockup - text must fit ABOVE the mockup, no overlay
+      const spaceAboveMockup = Math.max(mockupTop - gapFromMockup - paddingTop, 30);
+      availableHeight = spaceAboveMockup;
       textAreaY = paddingTop;
     } else {
-      const mockupBottom = mockupInfo.centerY + mockupInfo.height / 2;
-      availableHeight = Math.max(canvasHeight - mockupBottom - gapFromMockup - 8, 20);
+      // Space below mockup
+      const spaceBelowMockup = Math.max(canvasHeight - mockupBottom - gapFromMockup - 8, 30);
+      availableHeight = spaceBelowMockup;
       textAreaY = mockupBottom + gapFromMockup;
     }
   } else {
-    availableHeight = canvasHeight * 0.3;
-    textAreaY = style.textPosition === 'top' ? 8 : canvasHeight - availableHeight - 8;
+    availableHeight = canvasHeight * 0.35;
+    textAreaY = textPosition === 'top' ? paddingTop : canvasHeight - availableHeight - 8;
   }
 
-  const fontSize = calculatePreviewFontSize(ctx, text, maxWidth, availableHeight, style.fontFamily);
+  // Adaptive font sizing based on available space
+  // Preview scale: convert full-size font (72px) to preview size (~18px)
+  const previewScaleFactor = 0.25;
+  const baseFontSize = (style.fontSize ?? 72) * previewScaleFactor;
+
+  // Calculate base available height (at mockup scale 1.0 with default positioning)
+  // This is our reference point - 35% of canvas is the "normal" text space
+  const baseAvailableHeight = canvasHeight * 0.35;
+
+  // Scale factor: how much space we have compared to base
+  const spaceRatio = availableHeight / baseAvailableHeight;
+
+  // Apply linear scaling for more responsive size changes
+  // Clamp between 0.4 and 1.3 to keep text readable but allow significant shrinking
+  const adaptiveScale = Math.max(0.4, Math.min(1.3, spaceRatio));
+  const targetFontSize = Math.max(8, Math.min(baseFontSize * adaptiveScale, baseFontSize * 1.3));
+
+  // Check if text fits at target size
+  ctx.font = `bold ${targetFontSize}px ${style.fontFamily}`;
+  const testLines = wrapFormattedText(ctx, text, maxWidth);
+  const testLineHeight = targetFontSize * 1.3;
+  const testTotalHeight = testLines.length * testLineHeight;
+
+  let fontSize: number;
+  if (testTotalHeight <= availableHeight) {
+    // Text fits at adaptive target size
+    fontSize = targetFontSize;
+  } else {
+    // Text doesn't fit - shrink to fit (but maintain minimum readability)
+    fontSize = Math.max(10, calculatePreviewFontSize(ctx, text, maxWidth, availableHeight, style.fontFamily));
+  }
+
   ctx.font = `bold ${fontSize}px ${style.fontFamily}`;
 
   const lines = wrapFormattedText(ctx, text, maxWidth);
   const lineHeight = fontSize * 1.3;
   const totalTextHeight = lines.length * lineHeight;
 
-  const textOffsetX = (style.textOffset?.x || 0) * width / 100;
-  const textOffsetY = (style.textOffset?.y || 0) * canvasHeight / 100;
+  // Apply text offset
+  const effectiveTextOffset = textOffsetOverride ?? style.textOffset ?? { x: 0, y: 0 };
+  const textOffsetX = (effectiveTextOffset.x || 0) * width / 100;
+  const textOffsetY = (effectiveTextOffset.y || 0) * canvasHeight / 100;
 
+  // Position text within available area
   let textY: number;
-  if (style.textPosition === 'top') {
+  if (textPosition === 'top') {
     textY = textAreaY + fontSize + (availableHeight - totalTextHeight) / 4 + textOffsetY;
   } else {
     textY = textAreaY + (availableHeight - totalTextHeight) / 2 + fontSize + textOffsetY;
   }
 
+  // Draw each line with highlights
+  const textAlign = style.textAlign || 'center';
+  const sidePadding = width * 0.10; // 10% padding on each side for text area
+
   lines.forEach((line, lineIndex) => {
     const y = textY + lineIndex * lineHeight;
     const lineWidth = measureLineWidth(ctx, line);
-    let lineX = x + (width - lineWidth) / 2 + textOffsetX;
+
+    // Calculate line X based on text alignment
+    let lineX: number;
+    switch (textAlign) {
+      case 'left':
+        lineX = x + sidePadding + textOffsetX;
+        break;
+      case 'right':
+        lineX = x + width - sidePadding - lineWidth + textOffsetX;
+        break;
+      case 'center':
+      default:
+        lineX = x + (width - lineWidth) / 2 + textOffsetX;
+        break;
+    }
 
     for (const segment of line.segments) {
       const segmentWidth = ctx.measureText(segment.text).width;
 
       if (segment.highlighted && segment.text.trim()) {
-        const paddingH = fontSize * 0.25;
-        const paddingV = fontSize * 0.15;
+        // Draw highlight background - adaptive padding based on font size
+        const paddingH = fontSize * 0.25; // Horizontal padding
+        const paddingV = fontSize * 0.15; // Vertical padding
         const radius = fontSize * 0.15;
 
         ctx.save();
-        ctx.fillStyle = style.highlightColor || '#FFE135';
+        ctx.fillStyle = highlightColor;
         ctx.beginPath();
-        ctx.roundRect(lineX - paddingH, y - fontSize * 0.9 - paddingV, segmentWidth + paddingH * 2, fontSize * 1.1 + paddingV * 2, radius);
+        ctx.roundRect(
+          lineX - paddingH,
+          y - fontSize * 0.9 - paddingV,
+          segmentWidth + paddingH * 2,
+          fontSize * 1.1 + paddingV * 2,
+          radius
+        );
         ctx.fill();
         ctx.restore();
       }
 
+      // Draw text
       ctx.fillStyle = textColor;
       ctx.textAlign = 'left';
       ctx.fillText(segment.text, lineX, y);
