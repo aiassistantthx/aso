@@ -196,7 +196,7 @@ export function buildEditorScreenshots(project: WizardProjectData, lang?: string
         offsetX: (layoutStyle.mockupOffset.x / deviceWidth) * 100,
         offsetY: (layoutStyle.mockupOffset.y / deviceHeight) * 100,
         rotation: layoutStyle.mockupRotation ?? 0,
-        scale: layoutStyle.mockupScale, // Use layout preset scale if provided
+        // scale intentionally omitted — falls back to style.mockupScale from global slider
         linkedToNext: isSpanningStart, // Link to next for spanning layout
       } as ScreenshotMockupSettings;
     } else if (mockupSettings && isSpanningStart && !mockupSettings.linkedToNext) {

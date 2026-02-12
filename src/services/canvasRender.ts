@@ -91,10 +91,10 @@ const calculateMockupLayout = (
   const availableHeight = canvasHeight - textAreaHeightForMockup - 40;
   const baseMockupHeight = Math.min(availableHeight, canvasHeight * 0.75);
   const clampedScale = Math.max(0.3, Math.min(2.0, mockupScale));
-  const mockupHeight = baseMockupHeight * clampedScale;
-
   const dimensions = DEVICE_SIZES[deviceSize];
   const isAndroid = dimensions.platform === 'android';
+  const androidBoost = isAndroid ? 1.04 : 1;
+  const mockupHeight = baseMockupHeight * clampedScale * androidBoost;
   const config = isAndroid ? PIXEL_CONFIG : MOCKUP_CONFIG;
   const phoneAspect = config.phoneWidth / config.phoneHeight;
   const mockupWidth = mockupHeight * phoneAspect;
@@ -301,8 +301,8 @@ export const getElementBounds = (style: StyleConfig, deviceSize: DeviceSize): El
 
   const availableHeight = dimensions.height - textAreaHeightForMockup - 40;
   const baseMockupHeight = Math.min(availableHeight, dimensions.height * 0.75);
-  const mockupHeight = baseMockupHeight * mockupScale;
   const isAndroidBounds = dimensions.platform === 'android';
+  const mockupHeight = baseMockupHeight * mockupScale * (isAndroidBounds ? 1.04 : 1);
   const configBounds = isAndroidBounds ? PIXEL_CONFIG : MOCKUP_CONFIG;
   const phoneAspect = configBounds.phoneWidth / configBounds.phoneHeight;
   const mockupWidth = mockupHeight * phoneAspect;
