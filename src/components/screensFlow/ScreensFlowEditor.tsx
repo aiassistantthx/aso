@@ -412,7 +412,7 @@ export const ScreensFlowEditor: React.FC<Props> = ({
         {renderItems.map((item) => {
           if (item.type === 'pair') {
             return (
-              <div key={`pair-${item.index1}-scale-${style.mockupScale}`} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div key={`pair-${item.index1}`} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ position: 'relative' }}>
                   <LinkedPairCanvas
                     screen1={screenshots[item.index1]}
@@ -475,7 +475,7 @@ export const ScreensFlowEditor: React.FC<Props> = ({
             if (isLastLinkedScreen) return null; // Skip - already rendered in pair
 
             return (
-              <div key={`${screen.id}-scale-${style.mockupScale}`} style={{ display: 'flex', flexDirection: 'column', gap: readOnly ? '0' : '8px' }}>
+              <div key={screen.id} style={{ display: 'flex', flexDirection: 'column', gap: readOnly ? '0' : '8px' }}>
                 <div style={{ position: 'relative' }}>
                   {/* Delete button - hide in readOnly mode */}
                   {!readOnly && (
@@ -508,7 +508,7 @@ export const ScreensFlowEditor: React.FC<Props> = ({
                     </button>
                   )}
                   <SingleScreenPreview
-                    key={`single-${item.index}-scale-${style.mockupScale}`}
+                    key={`single-${item.index}`}
                     screenshot={screen}
                     index={item.index}
                     isSelected={item.index === selectedIndex}

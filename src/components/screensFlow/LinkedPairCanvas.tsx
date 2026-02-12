@@ -35,6 +35,7 @@ const LinkedPairCanvas: React.FC<{
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const cachedImgRef = useRef<{ src: string; img: HTMLImageElement } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
@@ -64,15 +65,13 @@ const LinkedPairCanvas: React.FC<{
     return screen?.text || '';
   };
 
-  // Draw canvas - same pattern as SingleScreenPreview
-  useEffect(() => {
+  // Full canvas draw using a loaded image (or null if no mockup)
+  const drawCanvas = useCallback((loadedImg: HTMLImageElement | null) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
-    let isCancelled = false;
 
     const previewHeight = 340;
     const aspectRatio = dimensions.width / dimensions.height;
@@ -97,38 +96,31 @@ const LinkedPairCanvas: React.FC<{
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Pre-calculate mockup dimensions using exact same formulas as generatePreviewCanvas
     const currentMockupScale = Math.max(0.3, Math.min(2.0, style.mockupScale ?? 1.0));
     const visibilityRatio = style.mockupVisibility === '2/3' ? 2/3 : style.mockupVisibility === '1/2' ? 0.5 : 1;
 
-    // Use CONSISTENT text area height for mockup size calculation (35%)
-    // This ensures mockups are the same size regardless of text position
     const textAreaHeightForMockup = previewHeight * 0.35;
 
     const availableHeight = previewHeight - textAreaHeightForMockup - (40 * previewHeight / dimensions.height);
     const baseMockupHeight = Math.min(availableHeight, previewHeight * 0.75);
     const mockupHeight = baseMockupHeight * currentMockupScale;
-    // Use Pixel aspect ratio (450/980) for Android, iPhone (0.49) for iOS
     const phoneAspectLinked = dimensions.platform === 'android' ? 0.459 : 0.49;
     const mockupWidth = mockupHeight * phoneAspectLinked;
 
-    // Calculate visible portion
     const visiblePhoneHeight = mockupHeight * visibilityRatio;
     const hiddenHeight = mockupHeight - visiblePhoneHeight;
 
-    // Calculate base position (exact same formula as generatePreviewCanvas)
     let baseMockupCenterX = singleScreenWidth / 2;
     let baseMockupCenterY: number;
 
-    // Scale factor for padding
     const scaleFactor = previewHeight / dimensions.height;
 
     switch (style.mockupAlignment) {
-      case 'top':
-        // When text is at top, offset mockup down to leave room for text
+      case 'top': {
         const textAreaOffsetTop = style.textPosition === 'top' ? textAreaHeightForMockup : 0;
         baseMockupCenterY = textAreaOffsetTop - hiddenHeight + mockupHeight / 2;
         break;
+      }
       case 'bottom':
         baseMockupCenterY = previewHeight - visiblePhoneHeight - (40 * scaleFactor) + mockupHeight / 2;
         break;
@@ -138,7 +130,6 @@ const LinkedPairCanvas: React.FC<{
         break;
     }
 
-    // Add percentage offset
     const mockupCenterX = baseMockupCenterX + (localOffsetX / 100) * singleScreenWidth;
     const mockupCenterY = baseMockupCenterY + (localOffsetY / 100) * previewHeight;
     const frameColor = style.mockupColor === 'white' ? '#F5F5F7' :
@@ -146,42 +137,33 @@ const LinkedPairCanvas: React.FC<{
     const currentRotation = localRotation;
     const currentMockupStyle = style.mockupStyle || 'realistic';
 
-    // Draw mockup - create image inside effect like SingleScreenPreview
-    if (screen1.preview && style.showMockup) {
-      const img = new Image();
-      img.onload = () => {
-        if (isCancelled) return; // Don't draw if effect was cleaned up
+    if (loadedImg && style.showMockup) {
+      ctx.save();
+      ctx.translate(mockupCenterX, mockupCenterY);
+      ctx.rotate((currentRotation * Math.PI) / 180);
 
-        ctx.save();
-        ctx.translate(mockupCenterX, mockupCenterY);
-        ctx.rotate((currentRotation * Math.PI) / 180);
+      const isAndroid = dimensions.platform === 'android';
+      drawMockupFrame(ctx, currentMockupStyle, mockupWidth, mockupHeight, frameColor, loadedImg, isAndroid);
 
-        const isAndroid = dimensions.platform === 'android';
-        drawMockupFrame(ctx, currentMockupStyle, mockupWidth, mockupHeight, frameColor, img, isAndroid);
+      ctx.restore();
 
-        ctx.restore();
-
-        // Draw text with mockup info for auto-sizing
-        const mockupInfo = {
-          centerY: mockupCenterY,
-          height: mockupHeight,
-          width: mockupWidth,
-          rotation: currentRotation
-        };
-        const screen1TextOffset = {
-          x: screen1.mockupSettings?.textOffsetX ?? style.textOffset?.x ?? 0,
-          y: screen1.mockupSettings?.textOffsetY ?? style.textOffset?.y ?? 0
-        };
-        const screen2TextOffset = {
-          x: screen2.mockupSettings?.textOffsetX ?? style.textOffset?.x ?? 0,
-          y: screen2.mockupSettings?.textOffsetY ?? style.textOffset?.y ?? 0
-        };
-        drawText(ctx, getDisplayText(screen1, index1), 0, previewHeight, singleScreenWidth, style, screen1.styleOverride, mockupInfo, screen1TextOffset);
-        drawText(ctx, getDisplayText(screen2, index2), singleScreenWidth, previewHeight, singleScreenWidth, style, screen2.styleOverride, mockupInfo, screen2TextOffset);
+      const mockupInfo = {
+        centerY: mockupCenterY,
+        height: mockupHeight,
+        width: mockupWidth,
+        rotation: currentRotation
       };
-      img.src = screen1.preview;
+      const screen1TextOffset = {
+        x: screen1.mockupSettings?.textOffsetX ?? style.textOffset?.x ?? 0,
+        y: screen1.mockupSettings?.textOffsetY ?? style.textOffset?.y ?? 0
+      };
+      const screen2TextOffset = {
+        x: screen2.mockupSettings?.textOffsetX ?? style.textOffset?.x ?? 0,
+        y: screen2.mockupSettings?.textOffsetY ?? style.textOffset?.y ?? 0
+      };
+      drawText(ctx, getDisplayText(screen1, index1), 0, previewHeight, singleScreenWidth, style, screen1.styleOverride, mockupInfo, screen1TextOffset);
+      drawText(ctx, getDisplayText(screen2, index2), singleScreenWidth, previewHeight, singleScreenWidth, style, screen2.styleOverride, mockupInfo, screen2TextOffset);
     } else {
-      // No mockup - just draw text
       const screen1TextOffset = {
         x: screen1.mockupSettings?.textOffsetX ?? style.textOffset?.x ?? 0,
         y: screen1.mockupSettings?.textOffsetY ?? style.textOffset?.y ?? 0
@@ -193,11 +175,37 @@ const LinkedPairCanvas: React.FC<{
       drawText(ctx, getDisplayText(screen1, index1), 0, previewHeight, singleScreenWidth, style, screen1.styleOverride, undefined, screen1TextOffset);
       drawText(ctx, getDisplayText(screen2, index2), singleScreenWidth, previewHeight, singleScreenWidth, style, screen2.styleOverride, undefined, screen2TextOffset);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dimensions, style, screen1, screen2, localOffsetX, localOffsetY, localRotation, index1, index2, translationData, selectedLanguage]);
 
-    return () => {
-      isCancelled = true;
-    };
-  }, [dimensions, style, style.mockupScale, style.mockupAlignment, style.mockupVisibility, style.textPosition, style.paddingTop, style.paddingBottom, style.fontSize, style.textOffset, screen1, screen2, localOffsetX, localOffsetY, localRotation, index1, index2, translationData, selectedLanguage]);
+  // Draw canvas — cache mockup image in ref for instant redraws on style changes
+  useEffect(() => {
+    const mockupSrc = screen1.preview;
+
+    if (mockupSrc && style.showMockup) {
+      // Reuse cached image if URL hasn't changed
+      if (cachedImgRef.current && cachedImgRef.current.src === mockupSrc) {
+        drawCanvas(cachedImgRef.current.img);
+        return;
+      }
+
+      // Load new image and cache it
+      const img = new Image();
+      img.onload = () => {
+        cachedImgRef.current = { src: mockupSrc, img };
+        drawCanvas(img);
+      };
+      img.src = mockupSrc;
+      if (img.complete && img.naturalWidth > 0) {
+        cachedImgRef.current = { src: mockupSrc, img };
+        drawCanvas(img);
+      }
+    } else {
+      cachedImgRef.current = null;
+      drawCanvas(null);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drawCanvas]);
 
   // Handle drag (mouse)
   const handleMouseDown = useCallback((e: React.MouseEvent) => {

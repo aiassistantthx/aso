@@ -46,6 +46,7 @@ const SingleScreenPreview: React.FC<{
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const cachedImgRef = useRef<{ src: string; img: HTMLImageElement } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
@@ -68,8 +69,8 @@ const SingleScreenPreview: React.FC<{
     return screenshot.preview || null;
   };
 
-  // Draw single screen canvas
-  useEffect(() => {
+  // Full canvas draw using a loaded image (or null if no mockup)
+  const drawCanvas = useCallback((loadedImg: HTMLImageElement | null) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -87,90 +88,70 @@ const SingleScreenPreview: React.FC<{
     // Draw background
     drawBackground(ctx, 0, 0, previewWidth, previewHeight, style, screenshot.styleOverride);
 
-    // Draw mockup
-    const mockupScreenshot = getMockupScreenshot();
-    if (mockupScreenshot && style.showMockup) {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      const drawMockup = () => {
-        // Global style.mockupScale is the source of truth for the slider
-        const mockupScale = Math.max(0.3, Math.min(2.0, style.mockupScale ?? 1));
-        const visibilityRatio = style.mockupVisibility === '2/3' ? 2/3 : style.mockupVisibility === '1/2' ? 0.5 : 1;
+    if (loadedImg && style.showMockup) {
+      const mockupScale = Math.max(0.3, Math.min(2.0, style.mockupScale ?? 1));
+      const visibilityRatio = style.mockupVisibility === '2/3' ? 2/3 : style.mockupVisibility === '1/2' ? 0.5 : 1;
 
-        // Get effective text position and mockup alignment (per-screenshot override takes precedence)
-        const effectiveTextPosition = screenshot.styleOverride?.textPosition ?? style.textPosition;
-        const effectiveMockupAlignment = screenshot.styleOverride?.mockupAlignment ?? style.mockupAlignment;
+      const effectiveTextPosition = screenshot.styleOverride?.textPosition ?? style.textPosition;
+      const effectiveMockupAlignment = screenshot.styleOverride?.mockupAlignment ?? style.mockupAlignment;
 
-        // Use CONSISTENT text area height for mockup size calculation (35%)
-        const textAreaHeightForMockup = previewHeight * 0.35;
-        const textAreaHeight = previewHeight * 0.35;
+      const textAreaHeightForMockup = previewHeight * 0.35;
+      const textAreaHeight = previewHeight * 0.35;
 
-        const availableHeight = previewHeight - textAreaHeightForMockup - (40 * previewHeight / dimensions.height);
-        const baseMockupHeight = Math.min(availableHeight, previewHeight * 0.75);
-        const mockupHeight = baseMockupHeight * mockupScale;
-        const phoneAspectSingle = dimensions.platform === 'android' ? 0.459 : 0.49;
-        const mockupWidth = mockupHeight * phoneAspectSingle;
+      const availableHeight = previewHeight - textAreaHeightForMockup - (40 * previewHeight / dimensions.height);
+      const baseMockupHeight = Math.min(availableHeight, previewHeight * 0.75);
+      const mockupHeight = baseMockupHeight * mockupScale;
+      const phoneAspectSingle = dimensions.platform === 'android' ? 0.459 : 0.49;
+      const mockupWidth = mockupHeight * phoneAspectSingle;
 
-        // Calculate visible portion
-        const visiblePhoneHeight = mockupHeight * visibilityRatio;
-        const hiddenHeight = mockupHeight - visiblePhoneHeight;
+      const visiblePhoneHeight = mockupHeight * visibilityRatio;
+      const hiddenHeight = mockupHeight - visiblePhoneHeight;
 
-        // Calculate base position (exact same formula as generatePreviewCanvas)
-        let baseMockupCenterX = previewWidth / 2;
-        let baseMockupCenterY: number;
+      let baseMockupCenterX = previewWidth / 2;
+      let baseMockupCenterY: number;
 
-        // Scale factor for padding
-        const scaleFactor = previewHeight / dimensions.height;
+      const scaleFactor = previewHeight / dimensions.height;
 
-        switch (effectiveMockupAlignment) {
-          case 'top': {
-            const textAreaOffsetTop = effectiveTextPosition === 'top' ? textAreaHeight : 0;
-            baseMockupCenterY = textAreaOffsetTop - hiddenHeight + mockupHeight / 2;
-            break;
-          }
-          case 'bottom':
-            baseMockupCenterY = previewHeight - visiblePhoneHeight - (40 * scaleFactor) + mockupHeight / 2;
-            break;
-          case 'center':
-          default:
-            baseMockupCenterY = (previewHeight - mockupHeight) / 2 + mockupHeight / 2;
-            break;
+      switch (effectiveMockupAlignment) {
+        case 'top': {
+          const textAreaOffsetTop = effectiveTextPosition === 'top' ? textAreaHeight : 0;
+          baseMockupCenterY = textAreaOffsetTop - hiddenHeight + mockupHeight / 2;
+          break;
         }
-
-        // Add percentage offset
-        const mockupCenterX = baseMockupCenterX + (settings.offsetX / 100) * previewWidth;
-        const mockupCenterY = baseMockupCenterY + (settings.offsetY / 100) * previewHeight;
-        const frameColor = style.mockupColor === 'white' ? '#F5F5F7' :
-                          style.mockupColor === 'natural' ? '#E3D5C8' : '#1D1D1F';
-
-        ctx.save();
-        ctx.translate(mockupCenterX, mockupCenterY);
-        ctx.rotate((settings.rotation * Math.PI) / 180);
-
-        const isAndroidSingle = dimensions.platform === 'android';
-        drawMockupFrame(ctx, style.mockupStyle || 'realistic', mockupWidth, mockupHeight, frameColor, img, isAndroidSingle);
-
-        ctx.restore();
-
-        // Draw text with mockup info for auto-sizing
-        const mockupInfo = {
-          centerY: mockupCenterY,
-          height: mockupHeight,
-          width: mockupWidth,
-          rotation: settings.rotation
-        };
-        const textOffsetOverride = {
-          x: settings.textOffsetX ?? style.textOffset?.x ?? 0,
-          y: settings.textOffsetY ?? style.textOffset?.y ?? 0
-        };
-        drawText(ctx, getDisplayText(), 0, previewHeight, previewWidth, style, screenshot.styleOverride, mockupInfo, textOffsetOverride);
-      };
-      img.onload = drawMockup;
-      img.src = mockupScreenshot;
-      // Handle cached images that may not fire onload on mobile browsers
-      if (img.complete && img.naturalWidth > 0) {
-        drawMockup();
+        case 'bottom':
+          baseMockupCenterY = previewHeight - visiblePhoneHeight - (40 * scaleFactor) + mockupHeight / 2;
+          break;
+        case 'center':
+        default:
+          baseMockupCenterY = (previewHeight - mockupHeight) / 2 + mockupHeight / 2;
+          break;
       }
+
+      const mockupCenterX = baseMockupCenterX + (settings.offsetX / 100) * previewWidth;
+      const mockupCenterY = baseMockupCenterY + (settings.offsetY / 100) * previewHeight;
+      const frameColor = style.mockupColor === 'white' ? '#F5F5F7' :
+                        style.mockupColor === 'natural' ? '#E3D5C8' : '#1D1D1F';
+
+      ctx.save();
+      ctx.translate(mockupCenterX, mockupCenterY);
+      ctx.rotate((settings.rotation * Math.PI) / 180);
+
+      const isAndroidSingle = dimensions.platform === 'android';
+      drawMockupFrame(ctx, style.mockupStyle || 'realistic', mockupWidth, mockupHeight, frameColor, loadedImg, isAndroidSingle);
+
+      ctx.restore();
+
+      const mockupInfo = {
+        centerY: mockupCenterY,
+        height: mockupHeight,
+        width: mockupWidth,
+        rotation: settings.rotation
+      };
+      const textOffsetOverride = {
+        x: settings.textOffsetX ?? style.textOffset?.x ?? 0,
+        y: settings.textOffsetY ?? style.textOffset?.y ?? 0
+      };
+      drawText(ctx, getDisplayText(), 0, previewHeight, previewWidth, style, screenshot.styleOverride, mockupInfo, textOffsetOverride);
     } else {
       const textOffsetOverride = {
         x: settings.textOffsetX ?? style.textOffset?.x ?? 0,
@@ -178,7 +159,39 @@ const SingleScreenPreview: React.FC<{
       };
       drawText(ctx, getDisplayText(), 0, previewHeight, previewWidth, style, screenshot.styleOverride, undefined, textOffsetOverride);
     }
-  }, [screenshot, style, style.mockupScale, style.mockupAlignment, style.mockupVisibility, style.textPosition, style.paddingTop, style.paddingBottom, style.fontSize, style.textColor, style.highlightColor, style.textOffset, deviceSize, settings, translationData, selectedLanguage, allScreenshots]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screenshot, style, dimensions, settings, translationData, selectedLanguage, allScreenshots]);
+
+  // Draw single screen canvas — cache mockup image in ref for instant redraws
+  useEffect(() => {
+    const mockupScreenshot = getMockupScreenshot();
+
+    if (mockupScreenshot && style.showMockup) {
+      // Reuse cached image if URL hasn't changed
+      if (cachedImgRef.current && cachedImgRef.current.src === mockupScreenshot) {
+        drawCanvas(cachedImgRef.current.img);
+        return;
+      }
+
+      // Load new image and cache it
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        cachedImgRef.current = { src: mockupScreenshot, img };
+        drawCanvas(img);
+      };
+      img.src = mockupScreenshot;
+      // Handle synchronously cached images
+      if (img.complete && img.naturalWidth > 0) {
+        cachedImgRef.current = { src: mockupScreenshot, img };
+        drawCanvas(img);
+      }
+    } else {
+      cachedImgRef.current = null;
+      drawCanvas(null);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drawCanvas]);
 
   // Handle drag (mouse)
   const handleMouseDown = useCallback((e: React.MouseEvent) => {

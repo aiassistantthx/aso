@@ -517,9 +517,12 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
             }
 
             // Apply alternating colors from saved style or theme preset
+            // Only skip if the override explicitly has color properties (backgroundColor or gradient)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const altColors = (baseStyle as any).alternatingColors || themePreset?.alternatingColors;
-            if (altColors && i > 0 && !langEditorData[i]?.styleOverride) {
+            const override = langEditorData[i]?.styleOverride as Record<string, unknown> | undefined;
+            const overrideHasColors = override && (override.backgroundColor || override.gradient);
+            if (altColors && i > 0 && !overrideHasColors) {
               const altIdx = (i - 1) % altColors.length;
               const alt = altColors[altIdx];
               effectiveStyle.backgroundColor = alt.backgroundColor;
