@@ -1,4 +1,5 @@
 import { StyleConfig, DeviceSize, DEVICE_SIZES, Decoration, StarRatingDecoration, LaurelDecoration, ScreenshotStyleOverride, BackgroundPattern, MockupContinuation, ScreenshotMockupSettings } from '../types';
+import { MOCKUP_PROPORTIONS as MP } from '../constants/mockup';
 
 export interface ElementBounds {
   mockup: { x: number; y: number; width: number; height: number };
@@ -925,7 +926,7 @@ const drawProgrammaticSideButtons = (
   const buttonColor = frameColor === '#F5F5F7' ? '#D1D1D6' :
                       frameColor === '#E3D5C8' ? '#C4B5A8' : '#0D0D0D';
 
-  const buttonWidth = width * 0.012;
+  const buttonWidth = width * MP.BUTTON_WIDTH;
   const buttonRadius = buttonWidth / 2;
 
   ctx.fillStyle = buttonColor;
@@ -968,16 +969,15 @@ const drawFlatMockup = (
   frameColor: string,
   screenshot: HTMLImageElement | null
 ): void => {
-  // iPhone proportions - frame is about 3% of width on sides
-  const frameThickness = width * 0.035;
-  const cornerRadius = width * 0.12;
-  const screenCornerRadius = cornerRadius - frameThickness * 0.8;
+  const frameThickness = width * MP.FRAME_THICKNESS;
+  const cornerRadius = width * MP.CORNER_RADIUS;
+  const screenCornerRadius = cornerRadius - frameThickness * MP.INNER_RADIUS_FACTOR;
 
   // Dynamic Island dimensions (relative to screen)
   const screenWidth = width - frameThickness * 2;
-  const dynamicIslandWidth = screenWidth * 0.32;
-  const dynamicIslandHeight = height * 0.022;
-  const dynamicIslandY = y + frameThickness + height * 0.008;
+  const dynamicIslandWidth = screenWidth * MP.DYNAMIC_ISLAND_WIDTH_RATIO;
+  const dynamicIslandHeight = height * MP.DYNAMIC_ISLAND_HEIGHT;
+  const dynamicIslandY = y + frameThickness + height * MP.DYNAMIC_ISLAND_Y_OFFSET;
 
   // Draw shadow first
   ctx.save();
@@ -1056,14 +1056,14 @@ const drawMinimalMockup = (
   frameColor: string,
   screenshot: HTMLImageElement | null
 ): void => {
-  const borderWidth = width * 0.02;
-  const cornerRadius = width * 0.1;
+  const borderWidth = width * MP.MINIMAL_BORDER;
+  const cornerRadius = width * MP.MINIMAL_CORNER_RADIUS;
   const innerRadius = cornerRadius - borderWidth;
 
   // Dynamic Island
-  const dynamicIslandWidth = width * 0.28;
-  const dynamicIslandHeight = height * 0.018;
-  const dynamicIslandY = y + borderWidth + height * 0.01;
+  const dynamicIslandWidth = width * MP.MINIMAL_DI_WIDTH;
+  const dynamicIslandHeight = height * MP.MINIMAL_DI_HEIGHT;
+  const dynamicIslandY = y + borderWidth + height * MP.MINIMAL_DI_Y_OFFSET;
 
   // Draw shadow
   ctx.save();
@@ -1145,7 +1145,7 @@ const drawOutlineSideButtons = (
   ctx.strokeStyle = frameColor;
   ctx.lineWidth = lineWidth;
 
-  const buttonWidth = width * 0.012;
+  const buttonWidth = width * MP.BUTTON_WIDTH;
 
   // Left side - Action button (small, top)
   const actionBtnHeight = height * 0.035;
@@ -1185,14 +1185,14 @@ const drawOutlineMockup = (
   frameColor: string,
   screenshot: HTMLImageElement | null
 ): void => {
-  const borderWidth = width * 0.025;
-  const cornerRadius = width * 0.11;
+  const borderWidth = width * MP.OUTLINE_BORDER;
+  const cornerRadius = width * MP.OUTLINE_CORNER_RADIUS;
   const innerRadius = cornerRadius - borderWidth / 2;
 
   // Dynamic Island
-  const dynamicIslandWidth = width * 0.28;
-  const dynamicIslandHeight = height * 0.018;
-  const dynamicIslandY = y + borderWidth + height * 0.012;
+  const dynamicIslandWidth = width * MP.MINIMAL_DI_WIDTH;
+  const dynamicIslandHeight = height * MP.MINIMAL_DI_HEIGHT;
+  const dynamicIslandY = y + borderWidth + height * MP.OUTLINE_DI_Y_OFFSET;
 
   // Screen area
   const screenX = x + borderWidth;
