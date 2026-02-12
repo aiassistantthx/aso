@@ -91,10 +91,10 @@ const SingleScreenPreview: React.FC<{
     const mockupScreenshot = getMockupScreenshot();
     if (mockupScreenshot && style.showMockup) {
       const img = new Image();
-      img.onload = () => {
-        // Use exact same formulas as generatePreviewCanvas
-        // Per-screenshot scale (settings.scale) takes precedence over global style.mockupScale
-        const mockupScale = Math.max(0.3, Math.min(2.0, settings.scale ?? style.mockupScale ?? 1));
+      img.crossOrigin = 'anonymous';
+      const drawMockup = () => {
+        // Global style.mockupScale is the source of truth for the slider
+        const mockupScale = Math.max(0.3, Math.min(2.0, style.mockupScale ?? 1));
         const visibilityRatio = style.mockupVisibility === '2/3' ? 2/3 : style.mockupVisibility === '1/2' ? 0.5 : 1;
 
         // Get effective text position and mockup alignment (per-screenshot override takes precedence)
@@ -102,13 +102,8 @@ const SingleScreenPreview: React.FC<{
         const effectiveMockupAlignment = screenshot.styleOverride?.mockupAlignment ?? style.mockupAlignment;
 
         // Use CONSISTENT text area height for mockup size calculation (35%)
-        // This ensures mockups are the same size regardless of text position
         const textAreaHeightForMockup = previewHeight * 0.35;
-
-        // Text area height for positioning (can vary by text position)
-        const textAreaHeight = effectiveTextPosition === 'top'
-          ? previewHeight * 0.35  // 35% when at top
-          : previewHeight * 0.35; // 35% when at bottom (same for consistency)
+        const textAreaHeight = previewHeight * 0.35;
 
         const availableHeight = previewHeight - textAreaHeightForMockup - (40 * previewHeight / dimensions.height);
         const baseMockupHeight = Math.min(availableHeight, previewHeight * 0.75);
@@ -128,11 +123,11 @@ const SingleScreenPreview: React.FC<{
         const scaleFactor = previewHeight / dimensions.height;
 
         switch (effectiveMockupAlignment) {
-          case 'top':
-            // When text is at bottom, mockup goes to top
+          case 'top': {
             const textAreaOffsetTop = effectiveTextPosition === 'top' ? textAreaHeight : 0;
             baseMockupCenterY = textAreaOffsetTop - hiddenHeight + mockupHeight / 2;
             break;
+          }
           case 'bottom':
             baseMockupCenterY = previewHeight - visiblePhoneHeight - (40 * scaleFactor) + mockupHeight / 2;
             break;
@@ -170,7 +165,12 @@ const SingleScreenPreview: React.FC<{
         };
         drawText(ctx, getDisplayText(), 0, previewHeight, previewWidth, style, screenshot.styleOverride, mockupInfo, textOffsetOverride);
       };
+      img.onload = drawMockup;
       img.src = mockupScreenshot;
+      // Handle cached images that may not fire onload on mobile browsers
+      if (img.complete && img.naturalWidth > 0) {
+        drawMockup();
+      }
     } else {
       const textOffsetOverride = {
         x: settings.textOffsetX ?? style.textOffset?.x ?? 0,

@@ -513,11 +513,15 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
               if (override.highlightColor) effectiveStyle.highlightColor = override.highlightColor as string;
               if (override.gradient) effectiveStyle.gradient = override.gradient as StyleConfig['gradient'];
               if (override.textPosition) effectiveStyle.textPosition = override.textPosition as StyleConfig['textPosition'];
+              if (override.mockupAlignment) effectiveStyle.mockupAlignment = override.mockupAlignment as StyleConfig['mockupAlignment'];
             }
 
-            if (!savedStyle && themePreset?.alternatingColors && i > 0 && !langEditorData[i]?.styleOverride) {
-              const altIdx = (i - 1) % themePreset.alternatingColors.length;
-              const alt = themePreset.alternatingColors[altIdx];
+            // Apply alternating colors from saved style or theme preset
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const altColors = (baseStyle as any).alternatingColors || themePreset?.alternatingColors;
+            if (altColors && i > 0 && !langEditorData[i]?.styleOverride) {
+              const altIdx = (i - 1) % altColors.length;
+              const alt = altColors[altIdx];
               effectiveStyle.backgroundColor = alt.backgroundColor;
               effectiveStyle.gradient = alt.gradient;
               if (alt.textColor) effectiveStyle.textColor = alt.textColor;
