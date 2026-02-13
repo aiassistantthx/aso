@@ -312,7 +312,7 @@ export const StyleEditor: React.FC<Props> = ({
       textColor: preset.textColor,
       highlightColor: preset.highlightColor,
       mockupColor: preset.mockupColor,
-      pattern: preset.pattern || { type: 'none', color: '#000', opacity: 0, size: 0, spacing: 0 },
+      pattern: preset.pattern || { type: 'none', color: '#000000', opacity: 0.15, size: 4, spacing: 30 },
       fontFamily: preset.fontFamily,
       fontSize: preset.fontSize,
       textAlign: preset.textAlign || 'center',
@@ -361,7 +361,7 @@ export const StyleEditor: React.FC<Props> = ({
   const updatePattern = (updates: Partial<StyleConfig['pattern']>) => {
     onStyleChange({
       ...style,
-      pattern: { ...(style.pattern || { type: 'none', color: '#000', opacity: 0, size: 0, spacing: 0 }), ...updates }
+      pattern: { ...(style.pattern || { type: 'none', color: '#000000', opacity: 0.15, size: 4, spacing: 30 }), ...updates }
     });
   };
 
@@ -559,10 +559,11 @@ export const StyleEditor: React.FC<Props> = ({
       </div>
 
       {style.pattern && style.pattern.type !== 'none' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '12px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '12px' }}>
           <ColorPicker label="Pattern Color" value={style.pattern.color} onChange={(color) => updatePattern({ color })} />
-          <Slider label="Opacity" min={1} max={50} value={Math.round((style.pattern.opacity || 0.1) * 100)} onChange={(value) => updatePattern({ opacity: value / 100 })} unit="%" />
+          <Slider label="Opacity" min={1} max={50} value={Math.round((style.pattern.opacity || 0.15) * 100)} onChange={(value) => updatePattern({ opacity: value / 100 })} unit="%" />
           <Slider label="Size" min={1} max={20} value={style.pattern.size || 4} onChange={(value) => updatePattern({ size: value })} unit="px" />
+          <Slider label="Spacing" min={10} max={100} value={style.pattern.spacing || 30} onChange={(value) => updatePattern({ spacing: value })} unit="px" />
         </div>
       )}
 

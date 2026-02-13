@@ -101,8 +101,9 @@ export const drawBackgroundPattern = (
   if (!pattern || pattern.type === 'none') return;
 
   const { type, color, opacity, size, spacing } = pattern;
+  if (spacing <= 0) return;
   const scaledSize = scale === 1.0 ? size : Math.max(1, size * scale);
-  const scaledSpacing = spacing * scale;
+  const scaledSpacing = Math.max(1, spacing * scale);
 
   ctx.save();
   ctx.globalAlpha = opacity;
