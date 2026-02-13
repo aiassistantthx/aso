@@ -152,10 +152,30 @@ export const translate = {
     }),
 };
 
+// Pricing types
+export interface PricingOption {
+  productId: string;
+  priceCents: number;
+  interval: 'month' | 'year';
+  perMonthCents?: number;
+}
+
+export interface PricingResponse {
+  monthly: PricingOption;
+  yearly: PricingOption;
+  savingsPercent: number;
+}
+
 // Polar
 export const polar = {
-  checkout: () =>
-    request<{ url: string }>('/api/polar/checkout', { method: 'POST' }),
+  prices: () =>
+    request<PricingResponse>('/api/polar/prices'),
+
+  checkout: (productId?: string) =>
+    request<{ url: string }>('/api/polar/checkout', {
+      method: 'POST',
+      body: JSON.stringify(productId ? { productId } : {}),
+    }),
 
   portal: () =>
     request<{ url: string }>('/api/polar/portal', { method: 'POST' }),
@@ -163,7 +183,8 @@ export const polar = {
 
 // Unified billing helper (Polar only)
 export const billing = {
-  checkout: () => polar.checkout(),
+  prices: () => polar.prices(),
+  checkout: (productId?: string) => polar.checkout(productId),
   portal: () => polar.portal(),
 };
 

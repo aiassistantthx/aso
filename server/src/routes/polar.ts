@@ -1,7 +1,85 @@
 import { FastifyInstance } from 'fastify';
 import { validateEvent, WebhookVerificationError } from '@polar-sh/sdk/webhooks';
 
+// In-memory price cache (5 minutes)
+let priceCache: { data: unknown; expiry: number } | null = null;
+const CACHE_TTL = 5 * 60 * 1000;
+
+function getAllowedProductIds(): string[] {
+  const ids: string[] = [];
+  const monthly = process.env.POLAR_MONTHLY_PRODUCT_ID;
+  const yearly = process.env.POLAR_YEARLY_PRODUCT_ID;
+  const legacy = process.env.POLAR_PRO_PRODUCT_ID;
+  if (monthly) ids.push(monthly);
+  if (yearly) ids.push(yearly);
+  if (legacy) ids.push(legacy);
+  return ids;
+}
+
 export default async function polarRoutes(fastify: FastifyInstance) {
+  // Get pricing info
+  fastify.get('/api/polar/prices', async (_request, reply) => {
+    if (!fastify.polar) {
+      return reply.status(503).send({ error: 'Polar not configured' });
+    }
+
+    const monthlyProductId = process.env.POLAR_MONTHLY_PRODUCT_ID;
+    const yearlyProductId = process.env.POLAR_YEARLY_PRODUCT_ID;
+
+    if (!monthlyProductId || !yearlyProductId) {
+      return reply.status(503).send({ error: 'Polar products not configured' });
+    }
+
+    // Return cached data if valid
+    if (priceCache && Date.now() < priceCache.expiry) {
+      return priceCache.data;
+    }
+
+    try {
+      const [monthlyProduct, yearlyProduct] = await Promise.all([
+        fastify.polar.products.get({ id: monthlyProductId }),
+        fastify.polar.products.get({ id: yearlyProductId }),
+      ]);
+
+      // Extract fixed price in cents from each product
+      const monthlyPrice = monthlyProduct.prices.find(
+        (p: { type: string }) => p.type === 'one_time' || p.type === 'recurring',
+      );
+      const yearlyPrice = yearlyProduct.prices.find(
+        (p: { type: string }) => p.type === 'one_time' || p.type === 'recurring',
+      );
+
+      const monthlyPriceCents = (monthlyPrice as { priceAmount: number })?.priceAmount ?? 0;
+      const yearlyPriceCents = (yearlyPrice as { priceAmount: number })?.priceAmount ?? 0;
+
+      const yearlyPerMonthCents = Math.round(yearlyPriceCents / 12);
+      const savingsPercent = monthlyPriceCents > 0
+        ? Math.round((1 - yearlyPerMonthCents / monthlyPriceCents) * 100)
+        : 0;
+
+      const result = {
+        monthly: {
+          productId: monthlyProductId,
+          priceCents: monthlyPriceCents,
+          interval: 'month' as const,
+        },
+        yearly: {
+          productId: yearlyProductId,
+          priceCents: yearlyPriceCents,
+          perMonthCents: yearlyPerMonthCents,
+          interval: 'year' as const,
+        },
+        savingsPercent,
+      };
+
+      priceCache = { data: result, expiry: Date.now() + CACHE_TTL };
+      return result;
+    } catch (error) {
+      fastify.log.error(error, 'Failed to fetch Polar prices');
+      return reply.status(500).send({ error: 'Failed to fetch pricing' });
+    }
+  });
+
   // Create checkout session
   fastify.post('/api/polar/checkout', {
     onRequest: [fastify.authenticate],
@@ -18,7 +96,21 @@ export default async function polarRoutes(fastify: FastifyInstance) {
       return reply.status(404).send({ error: 'User not found' });
     }
 
-    const productId = process.env.POLAR_PRO_PRODUCT_ID;
+    // Accept optional productId from body
+    const body = (request.body as { productId?: string }) || {};
+    let productId = body.productId;
+
+    if (productId) {
+      // Validate against whitelist
+      const allowed = getAllowedProductIds();
+      if (!allowed.includes(productId)) {
+        return reply.status(400).send({ error: 'Invalid product ID' });
+      }
+    } else {
+      // Fallback: monthly > legacy
+      productId = process.env.POLAR_MONTHLY_PRODUCT_ID || process.env.POLAR_PRO_PRODUCT_ID;
+    }
+
     if (!productId) {
       return reply.status(503).send({ error: 'Polar product not configured' });
     }

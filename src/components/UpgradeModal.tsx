@@ -1,5 +1,5 @@
 import React from 'react';
-import { billing } from '../services/api';
+import { billing, PricingResponse } from '../services/api';
 
 export type UpgradeLimitType =
   | 'lifetimeProjects'
@@ -67,25 +67,55 @@ const LIMIT_CONTENT: Record<UpgradeLimitType, {
   },
 };
 
+const fmt = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 2,
+});
+
+function formatPrice(cents: number): string {
+  return fmt.format(cents / 100);
+}
+
 export function UpgradeModal({ isOpen, onClose, limitType, currentUsage, maxAllowed }: UpgradeModalProps) {
-  const [loading, setLoading] = React.useState(false);
+  const [checkoutLoading, setCheckoutLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [pricing, setPricing] = React.useState<PricingResponse | null>(null);
+  const [priceLoading, setPriceLoading] = React.useState(false);
+  const [selectedInterval, setSelectedInterval] = React.useState<'month' | 'year'>('year');
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    setPriceLoading(true);
+    setError(null);
+    billing.prices()
+      .then(data => setPricing(data))
+      .catch(() => setError('Failed to load pricing'))
+      .finally(() => setPriceLoading(false));
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const content = LIMIT_CONTENT[limitType];
 
+  const selectedProductId = pricing
+    ? (selectedInterval === 'year' ? pricing.yearly.productId : pricing.monthly.productId)
+    : undefined;
+
   const handleUpgrade = async () => {
-    setLoading(true);
+    setCheckoutLoading(true);
     setError(null);
     try {
-      const { url } = await billing.checkout();
+      const { url } = await billing.checkout(selectedProductId);
       window.location.href = url;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start checkout');
-      setLoading(false);
+      setCheckoutLoading(false);
     }
   };
+
+  const isMonthSelected = selectedInterval === 'month';
+  const isYearSelected = selectedInterval === 'year';
 
   return (
     <div style={styles.overlay} onClick={onClose}>
@@ -126,6 +156,51 @@ export function UpgradeModal({ isOpen, onClose, limitType, currentUsage, maxAllo
           ))}
         </div>
 
+        {/* Pricing cards */}
+        {priceLoading && (
+          <div style={styles.priceLoading}>Loading prices...</div>
+        )}
+
+        {!priceLoading && pricing && (
+          <div style={styles.cardsRow}>
+            {/* Monthly card */}
+            <div
+              style={{
+                ...styles.card,
+                borderColor: isMonthSelected ? '#FF6B4A' : '#e5e7eb',
+                backgroundColor: isMonthSelected ? '#fff8f6' : '#fff',
+              }}
+              onClick={() => setSelectedInterval('month')}
+            >
+              <div style={styles.cardLabel}>Monthly</div>
+              <div style={styles.cardPrice}>{formatPrice(pricing.monthly.priceCents)}</div>
+              <div style={styles.cardSub}>per month</div>
+            </div>
+
+            {/* Yearly card */}
+            <div
+              style={{
+                ...styles.card,
+                borderColor: isYearSelected ? '#FF6B4A' : '#e5e7eb',
+                backgroundColor: isYearSelected ? '#fff8f6' : '#fff',
+              }}
+              onClick={() => setSelectedInterval('year')}
+            >
+              {pricing.savingsPercent > 0 && (
+                <div style={styles.badge}>Save {pricing.savingsPercent}%</div>
+              )}
+              <div style={styles.cardLabel}>Yearly</div>
+              <div style={styles.cardPrice}>
+                {formatPrice(pricing.yearly.perMonthCents ?? 0)}
+              </div>
+              <div style={styles.cardSub}>per month</div>
+              <div style={styles.cardYearlyTotal}>
+                {formatPrice(pricing.yearly.priceCents)} / year
+              </div>
+            </div>
+          </div>
+        )}
+
         {error && (
           <div style={styles.error}>{error}</div>
         )}
@@ -133,12 +208,12 @@ export function UpgradeModal({ isOpen, onClose, limitType, currentUsage, maxAllo
         <button
           style={{
             ...styles.upgradeButton,
-            opacity: loading ? 0.7 : 1,
+            opacity: checkoutLoading || priceLoading ? 0.7 : 1,
           }}
           onClick={handleUpgrade}
-          disabled={loading}
+          disabled={checkoutLoading || priceLoading || !pricing}
         >
-          {loading ? 'Loading...' : 'Upgrade to Pro'}
+          {checkoutLoading ? 'Loading...' : 'Upgrade to Pro'}
         </button>
 
         <button style={styles.cancelButton} onClick={onClose}>
@@ -167,7 +242,7 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: '#fff',
     borderRadius: 16,
     padding: 32,
-    maxWidth: 420,
+    maxWidth: 520,
     width: '100%',
     position: 'relative',
     boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
@@ -255,6 +330,61 @@ const styles: Record<string, React.CSSProperties> = {
   checkmark: {
     color: '#22c55e',
     fontWeight: 700,
+  },
+  priceLoading: {
+    textAlign: 'center',
+    color: '#999',
+    fontSize: 14,
+    padding: '16px 0',
+  },
+  cardsRow: {
+    display: 'flex',
+    gap: 12,
+    marginBottom: 24,
+  },
+  card: {
+    flex: 1,
+    border: '2px solid #e5e7eb',
+    borderRadius: 12,
+    padding: '20px 16px',
+    textAlign: 'center',
+    cursor: 'pointer',
+    transition: 'border-color 0.2s, background-color 0.2s',
+    position: 'relative',
+  },
+  cardLabel: {
+    fontSize: 13,
+    fontWeight: 600,
+    color: '#666',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    marginBottom: 8,
+  },
+  cardPrice: {
+    fontSize: 28,
+    fontWeight: 700,
+    color: '#1a1a1a',
+  },
+  cardSub: {
+    fontSize: 13,
+    color: '#999',
+    marginTop: 2,
+  },
+  cardYearlyTotal: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 8,
+  },
+  badge: {
+    position: 'absolute',
+    top: -10,
+    right: -6,
+    background: 'linear-gradient(135deg, #FF6B4A 0%, #FF8F6B 100%)',
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: 700,
+    padding: '3px 8px',
+    borderRadius: 6,
   },
   error: {
     backgroundColor: '#fee2e2',
