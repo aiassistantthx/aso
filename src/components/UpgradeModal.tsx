@@ -130,38 +130,41 @@ export function UpgradeModal({ isOpen, onClose, limitType, currentUsage, maxAllo
 
         <p style={styles.description}>{content.description}</p>
 
-        {currentUsage !== undefined && maxAllowed !== undefined && (
-          <div style={styles.usageBar}>
-            <div style={styles.usageLabel}>
-              {currentUsage} / {maxAllowed} used
-            </div>
-            <div style={styles.usageTrack}>
-              <div
-                style={{
-                  ...styles.usageFill,
-                  width: `${Math.min(100, (currentUsage / maxAllowed) * 100)}%`,
-                }}
-              />
-            </div>
-          </div>
-        )}
-
-        <div style={styles.features}>
-          <div style={styles.featuresTitle}>PRO includes:</div>
-          {content.features.map((feature, i) => (
-            <div key={i} style={styles.featureItem}>
-              <span style={styles.checkmark}>✓</span>
-              {feature}
-            </div>
-          ))}
-        </div>
-
-        {/* Pricing cards */}
         {priceLoading && (
           <div style={styles.priceLoading}>Loading prices...</div>
         )}
 
-        {!priceLoading && pricing && (
+        {error && !priceLoading && (
+          <div style={styles.error}>{error}</div>
+        )}
+
+        {!priceLoading && pricing && (<>
+          {currentUsage !== undefined && maxAllowed !== undefined && (
+            <div style={styles.usageBar}>
+              <div style={styles.usageLabel}>
+                {currentUsage} / {maxAllowed} used
+              </div>
+              <div style={styles.usageTrack}>
+                <div
+                  style={{
+                    ...styles.usageFill,
+                    width: `${Math.min(100, (currentUsage / maxAllowed) * 100)}%`,
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          <div style={styles.features}>
+            <div style={styles.featuresTitle}>PRO includes:</div>
+            {content.features.map((feature, i) => (
+              <div key={i} style={styles.featureItem}>
+                <span style={styles.checkmark}>✓</span>
+                {feature}
+              </div>
+            ))}
+          </div>
+
           <div style={styles.cardsRow}>
             {/* Monthly card */}
             <div
@@ -199,26 +202,22 @@ export function UpgradeModal({ isOpen, onClose, limitType, currentUsage, maxAllo
               </div>
             </div>
           </div>
-        )}
 
-        {error && (
-          <div style={styles.error}>{error}</div>
-        )}
+          <button
+            style={{
+              ...styles.upgradeButton,
+              opacity: checkoutLoading ? 0.7 : 1,
+            }}
+            onClick={handleUpgrade}
+            disabled={checkoutLoading}
+          >
+            {checkoutLoading ? 'Loading...' : 'Upgrade to Pro'}
+          </button>
 
-        <button
-          style={{
-            ...styles.upgradeButton,
-            opacity: checkoutLoading || priceLoading ? 0.7 : 1,
-          }}
-          onClick={handleUpgrade}
-          disabled={checkoutLoading || priceLoading || !pricing}
-        >
-          {checkoutLoading ? 'Loading...' : 'Upgrade to Pro'}
-        </button>
-
-        <button style={styles.cancelButton} onClick={onClose}>
-          Maybe later
-        </button>
+          <button style={styles.cancelButton} onClick={onClose}>
+            Maybe later
+          </button>
+        </>)}
       </div>
     </div>
   );
