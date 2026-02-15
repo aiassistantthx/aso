@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { billing, PricingResponse } from '../services/api';
 
 interface Props {
   onGetStarted: () => void;
@@ -43,12 +44,24 @@ const SectionHeader: React.FC<{ label: string; title: string; subtitle: string }
 export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) => {
   const [scrolled, setScrolled] = useState(false);
   const [billingYearly, setBillingYearly] = useState(true);
+  const [pricing, setPricing] = useState<PricingResponse | null>(null);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    billing.prices()
+      .then(data => setPricing(data))
+      .catch(() => {/* fallback to hardcoded values */});
+  }, []);
+
+  const monthlyPrice = pricing ? (pricing.monthly.priceCents / 100).toFixed(2) : '9.99';
+  const yearlyPerMonth = pricing ? ((pricing.yearly.perMonthCents ?? 0) / 100).toFixed(2) : '4.99';
+  const yearlyTotal = pricing ? (pricing.yearly.priceCents / 100).toFixed(2) : '59.99';
+  const savingsPercent = pricing ? pricing.savingsPercent : 50;
 
   return (
     <div style={styles.container}>
@@ -373,7 +386,7 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
           >
             Yearly
           </span>
-          <span style={styles.billingSaveBadge}>Save 50%</span>
+          <span style={styles.billingSaveBadge}>Save {savingsPercent}%</span>
         </div>
 
         <div style={styles.pricingCards} className="landing-pricing-cards">
@@ -409,11 +422,11 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
               <span style={{ ...styles.pricingPlan, color: colors.accent }}>Pro</span>
               <div style={styles.pricingPriceRow}>
                 <span style={{ ...styles.pricingCurrency, color: colors.accent }}>$</span>
-                <span style={styles.pricingPrice}>{billingYearly ? '4.99' : '9.99'}</span>
+                <span style={styles.pricingPrice}>{billingYearly ? yearlyPerMonth : monthlyPrice}</span>
                 <span style={styles.pricingPeriod}>/mo</span>
               </div>
               {billingYearly && (
-                <div style={styles.pricingBilled}>$59.99 billed yearly</div>
+                <div style={styles.pricingBilled}>${yearlyTotal} billed yearly</div>
               )}
               <div style={{ ...styles.pricingDivider, backgroundColor: `${colors.accent}30` }} />
             </div>
