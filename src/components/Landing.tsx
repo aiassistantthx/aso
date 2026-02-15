@@ -42,6 +42,7 @@ const SectionHeader: React.FC<{ label: string; title: string; subtitle: string }
 
 export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) => {
   const [scrolled, setScrolled] = useState(false);
+  const [billingYearly, setBillingYearly] = useState(true);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -341,6 +342,40 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
           subtitle="Start free, upgrade when you need more"
         />
 
+        {/* Billing Toggle */}
+        <div style={styles.billingToggle}>
+          <span
+            style={{
+              ...styles.billingOption,
+              ...(billingYearly ? {} : styles.billingOptionActive),
+            }}
+            onClick={() => setBillingYearly(false)}
+          >
+            Monthly
+          </span>
+          <div
+            style={styles.billingSwitch}
+            onClick={() => setBillingYearly(!billingYearly)}
+          >
+            <div
+              style={{
+                ...styles.billingSwitchThumb,
+                transform: billingYearly ? 'translateX(20px)' : 'translateX(0)',
+              }}
+            />
+          </div>
+          <span
+            style={{
+              ...styles.billingOption,
+              ...(billingYearly ? styles.billingOptionActive : {}),
+            }}
+            onClick={() => setBillingYearly(true)}
+          >
+            Yearly
+          </span>
+          <span style={styles.billingSaveBadge}>Save 50%</span>
+        </div>
+
         <div style={styles.pricingCards} className="landing-pricing-cards">
           {/* Free Plan */}
           <div style={styles.pricingCard} className="landing-pricing-card">
@@ -374,9 +409,12 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
               <span style={{ ...styles.pricingPlan, color: colors.accent }}>Pro</span>
               <div style={styles.pricingPriceRow}>
                 <span style={{ ...styles.pricingCurrency, color: colors.accent }}>$</span>
-                <span style={styles.pricingPrice}>9</span>
+                <span style={styles.pricingPrice}>{billingYearly ? '4.99' : '9.99'}</span>
                 <span style={styles.pricingPeriod}>/mo</span>
               </div>
+              {billingYearly && (
+                <div style={styles.pricingBilled}>$59.99 billed yearly</div>
+              )}
               <div style={{ ...styles.pricingDivider, backgroundColor: `${colors.accent}30` }} />
             </div>
             <ul style={styles.pricingFeatures}>
@@ -964,9 +1002,56 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 400,
     marginLeft: 4,
   },
+  pricingBilled: {
+    fontSize: 13,
+    color: colors.textMuted,
+    marginTop: 4,
+  },
   pricingDivider: {
     height: '0.5px',
     backgroundColor: colors.borderLight,
+  },
+  billingToggle: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    marginBottom: 40,
+  },
+  billingOption: {
+    fontSize: 14,
+    fontWeight: 400,
+    color: colors.textMuted,
+    cursor: 'pointer',
+    userSelect: 'none' as const,
+  },
+  billingOptionActive: {
+    fontWeight: 600,
+    color: colors.text,
+  },
+  billingSwitch: {
+    width: 44,
+    height: 24,
+    backgroundColor: colors.accent,
+    borderRadius: 12,
+    padding: 2,
+    cursor: 'pointer',
+    position: 'relative' as const,
+  },
+  billingSwitchThumb: {
+    width: 20,
+    height: 20,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    transition: 'transform 0.2s ease',
+  },
+  billingSaveBadge: {
+    fontSize: 11,
+    fontWeight: 600,
+    color: colors.accent,
+    backgroundColor: `${colors.accent}15`,
+    padding: '3px 8px',
+    borderRadius: 10,
   },
   pricingFeatures: {
     listStyle: 'none',

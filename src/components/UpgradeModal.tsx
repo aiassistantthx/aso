@@ -83,6 +83,8 @@ export function UpgradeModal({ isOpen, onClose, limitType, currentUsage, maxAllo
   const [pricing, setPricing] = React.useState<PricingResponse | null>(null);
   const [priceLoading, setPriceLoading] = React.useState(false);
   const [selectedInterval, setSelectedInterval] = React.useState<'month' | 'year'>('year');
+  const [promoOpen, setPromoOpen] = React.useState(false);
+  const [promoCode, setPromoCode] = React.useState('');
 
   React.useEffect(() => {
     if (!isOpen) return;
@@ -106,7 +108,8 @@ export function UpgradeModal({ isOpen, onClose, limitType, currentUsage, maxAllo
     setCheckoutLoading(true);
     setError(null);
     try {
-      const { url } = await billing.checkout(selectedProductId);
+      const code = promoCode.trim() || undefined;
+      const { url } = await billing.checkout(selectedProductId, code);
       window.location.href = url;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start checkout');
@@ -201,6 +204,29 @@ export function UpgradeModal({ isOpen, onClose, limitType, currentUsage, maxAllo
                 {formatPrice(pricing.yearly.priceCents)} / year
               </div>
             </div>
+          </div>
+
+          {/* Promo code collapsible */}
+          <div style={styles.promoSection}>
+            <div
+              style={styles.promoToggle}
+              onClick={() => setPromoOpen(!promoOpen)}
+            >
+              <span>Have a promo code?</span>
+              <span style={{
+                ...styles.promoChevron,
+                transform: promoOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              }}>&#9662;</span>
+            </div>
+            {promoOpen && (
+              <input
+                style={styles.promoInput}
+                type="text"
+                placeholder="Enter promo code"
+                value={promoCode}
+                onChange={e => setPromoCode(e.target.value)}
+              />
+            )}
           </div>
 
           <button
@@ -393,6 +419,35 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 14,
     marginBottom: 16,
     textAlign: 'center',
+  },
+  promoSection: {
+    marginBottom: 16,
+  },
+  promoToggle: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    fontSize: 13,
+    color: '#999',
+    cursor: 'pointer',
+    userSelect: 'none' as const,
+    padding: '4px 0',
+  },
+  promoChevron: {
+    fontSize: 10,
+    transition: 'transform 0.2s ease',
+  },
+  promoInput: {
+    width: '100%',
+    marginTop: 8,
+    padding: '10px 12px',
+    fontSize: 14,
+    border: '1.5px solid #e5e7eb',
+    borderRadius: 8,
+    outline: 'none',
+    color: '#1a1a1a',
+    boxSizing: 'border-box' as const,
   },
   upgradeButton: {
     width: '100%',

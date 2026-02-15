@@ -96,9 +96,10 @@ export default async function polarRoutes(fastify: FastifyInstance) {
       return reply.status(404).send({ error: 'User not found' });
     }
 
-    // Accept optional productId from body
-    const body = (request.body as { productId?: string }) || {};
+    // Accept optional productId and discountCode from body
+    const body = (request.body as { productId?: string; discountCode?: string }) || {};
     let productId = body.productId;
+    const discountCode = body.discountCode;
 
     if (productId) {
       // Validate against whitelist
@@ -119,6 +120,22 @@ export default async function polarRoutes(fastify: FastifyInstance) {
       `${process.env.APP_URL || 'http://localhost:3000'}/dashboard?checkout=success&checkout_id={CHECKOUT_ID}`;
 
     try {
+      // Resolve discount code to ID if provided
+      let discountId: string | undefined;
+      if (discountCode) {
+        let found = false;
+        for await (const discount of fastify.polar.discounts.list({})) {
+          if (discount.code && discount.code.toLowerCase() === discountCode.toLowerCase()) {
+            discountId = discount.id;
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          return reply.status(400).send({ error: 'Invalid promo code' });
+        }
+      }
+
       // Create checkout with customer info
       const checkout = await fastify.polar.checkouts.create({
         products: [productId],
@@ -127,6 +144,7 @@ export default async function polarRoutes(fastify: FastifyInstance) {
         customerName: user.name || undefined,
         externalCustomerId: user.id,
         customerId: user.polarCustomerId || undefined,
+        ...(discountId ? { discountId } : {}),
       });
 
       return { url: checkout.url };

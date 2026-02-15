@@ -171,10 +171,13 @@ export const polar = {
   prices: () =>
     request<PricingResponse>('/api/polar/prices'),
 
-  checkout: (productId?: string) =>
+  checkout: (productId?: string, discountCode?: string) =>
     request<{ url: string }>('/api/polar/checkout', {
       method: 'POST',
-      body: JSON.stringify(productId ? { productId } : {}),
+      body: JSON.stringify({
+        ...(productId ? { productId } : {}),
+        ...(discountCode ? { discountCode } : {}),
+      }),
     }),
 
   portal: () =>
@@ -184,7 +187,7 @@ export const polar = {
 // Unified billing helper (Polar only)
 export const billing = {
   prices: () => polar.prices(),
-  checkout: (productId?: string) => polar.checkout(productId),
+  checkout: (productId?: string, discountCode?: string) => polar.checkout(productId, discountCode),
   portal: () => polar.portal(),
 };
 
