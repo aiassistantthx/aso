@@ -47,82 +47,101 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Handle magic link and Google redirect completion on page load
+  // Single unified auth init: resolve redirect/magic-link FIRST,
+  // then subscribe to onAuthStateChanged. This prevents the race where
+  // onAuthStateChanged(null) fires before getRedirectResult resolves,
+  // prematurely setting loading=false with no user.
   useEffect(() => {
-    async function handleAuthCallbacks() {
-      try {
-        // Check Google redirect result first
-        const googleToken = await completeGoogleRedirectSignIn();
-        if (googleToken) {
-          const { user } = await authApi.firebaseVerify(googleToken);
-          setState({ user, loading: false, error: null });
-          return;
-        }
+    let cancelled = false;
+    let unsubscribe: (() => void) | undefined;
 
-        // Then check magic link
-        const magicLinkToken = await completeMagicLinkSignIn();
-        if (magicLinkToken) {
-          const { user } = await authApi.firebaseVerify(magicLinkToken);
-          setState({ user, loading: false, error: null });
-        }
-      } catch (err) {
-        console.error('Auth callback failed:', err);
-        setState(s => ({
-          ...s,
-          loading: false,
-          error: err instanceof Error ? err.message : 'Sign-in failed',
-        }));
-      }
-    }
-
-    if (isFirebaseEnabled()) {
-      handleAuthCallbacks();
-    }
-  }, []);
-
-  // Firebase auth state listener
-  useEffect(() => {
-    if (!isFirebaseEnabled()) {
-      // No Firebase - check for legacy token
-      if (authApi.hasLegacyToken()) {
-        refreshUser();
-      } else {
-        setState({ user: null, loading: false, error: null });
-      }
-      return;
-    }
-
-    const unsubscribe = subscribeToAuthState(async (firebaseUser) => {
-      if (firebaseUser) {
-        // User is signed in with Firebase
-        if (!firebaseAuthInitialized.current) {
-          firebaseAuthInitialized.current = true;
-          try {
-            const idToken = await firebaseUser.getIdToken();
-            const { user } = await authApi.firebaseVerify(idToken);
-            setState({ user, loading: false, error: null });
-          } catch (err) {
-            console.error('Firebase auth verification failed:', err);
-            // Fallback to legacy token check
-            if (authApi.hasLegacyToken()) {
-              refreshUser();
-            } else {
-              setState({ user: null, loading: false, error: null });
+    function setupAuthListener() {
+      if (cancelled) return;
+      unsubscribe = subscribeToAuthState(async (firebaseUser) => {
+        if (cancelled) return;
+        if (firebaseUser) {
+          if (!firebaseAuthInitialized.current) {
+            firebaseAuthInitialized.current = true;
+            try {
+              const idToken = await firebaseUser.getIdToken();
+              const { user } = await authApi.firebaseVerify(idToken);
+              if (!cancelled) setState({ user, loading: false, error: null });
+            } catch (err) {
+              console.error('Firebase auth verification failed:', err);
+              if (authApi.hasLegacyToken()) {
+                refreshUser();
+              } else {
+                if (!cancelled) setState({ user: null, loading: false, error: null });
+              }
             }
           }
+        } else {
+          firebaseAuthInitialized.current = false;
+          if (authApi.hasLegacyToken()) {
+            refreshUser();
+          } else {
+            if (!cancelled) setState({ user: null, loading: false, error: null });
+          }
         }
-      } else {
-        // No Firebase user - check for legacy token
-        firebaseAuthInitialized.current = false;
+      });
+    }
+
+    async function initAuth() {
+      if (!isFirebaseEnabled()) {
         if (authApi.hasLegacyToken()) {
           refreshUser();
         } else {
           setState({ user: null, loading: false, error: null });
         }
+        return;
       }
-    });
 
-    return () => unsubscribe();
+      // Step 1: Resolve any pending redirect / magic-link BEFORE
+      // subscribing to auth state, so onAuthStateChanged(null) can't
+      // prematurely end the loading state.
+      try {
+        const googleToken = await completeGoogleRedirectSignIn();
+        if (googleToken && !cancelled) {
+          const { user } = await authApi.firebaseVerify(googleToken);
+          setState({ user, loading: false, error: null });
+          firebaseAuthInitialized.current = true;
+          setupAuthListener();
+          return;
+        }
+
+        const magicLinkToken = await completeMagicLinkSignIn();
+        if (magicLinkToken && !cancelled) {
+          const { user } = await authApi.firebaseVerify(magicLinkToken);
+          setState({ user, loading: false, error: null });
+          firebaseAuthInitialized.current = true;
+          setupAuthListener();
+          return;
+        }
+      } catch (err) {
+        console.error('Auth callback failed:', err);
+        if (!cancelled) {
+          setState(s => ({
+            ...s,
+            loading: false,
+            error: err instanceof Error ? err.message : 'Sign-in failed',
+          }));
+        }
+        return;
+      }
+
+      // Step 2: No redirect / magic-link pending — subscribe to auth
+      // state for normal session restore + ongoing changes.
+      if (!cancelled) {
+        setupAuthListener();
+      }
+    }
+
+    initAuth();
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
   }, [refreshUser]);
 
   const login = useCallback(async (email: string, password: string) => {
