@@ -53,7 +53,9 @@ export const wrapFormattedText = (
 
       for (let i = 0; i < words.length; i++) {
         const word = words[i];
-        const wordWithSpace = i > 0 || currentLine.length > 0 ? ' ' + word : word;
+        if (!word) continue; // Skip empty strings from trailing/leading spaces in parsed segments
+        const needsSpace = i > 0 || currentLine.length > 0;
+        const wordWithSpace = needsSpace ? ' ' + word : word;
         const wordWidth = ctx.measureText(wordWithSpace).width;
 
         if (currentWidth + wordWidth > maxWidth && currentLine.length > 0) {
@@ -65,8 +67,17 @@ export const wrapFormattedText = (
         } else {
           if (currentLine.length > 0 && currentLine[currentLine.length - 1].highlighted === segment.highlighted) {
             currentLine[currentLine.length - 1].text += wordWithSpace;
+          } else if (needsSpace && currentLine.length > 0) {
+            // Space between segments with different highlight state —
+            // always put the space in the non-highlighted segment
+            if (segment.highlighted) {
+              currentLine[currentLine.length - 1].text += ' ';
+              currentLine.push({ text: word, highlighted: true });
+            } else {
+              currentLine.push({ text: ' ' + word, highlighted: false });
+            }
           } else {
-            currentLine.push({ text: wordWithSpace.trimStart() ? wordWithSpace : word, highlighted: segment.highlighted });
+            currentLine.push({ text: word, highlighted: segment.highlighted });
           }
           currentWidth += wordWidth;
         }

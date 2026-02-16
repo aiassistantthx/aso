@@ -438,7 +438,8 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
 
       // Collect all languages
       const allLangs = [project.sourceLanguage, ...project.targetLanguages.filter(l => l !== project.sourceLanguage)];
-      const totalSteps = allLangs.length * screenshots.length;
+      const platformSizes = getDeviceSizesForPlatform(project.platform);
+      const totalSteps = allLangs.length * screenshots.length * platformSizes.length;
       let completedSteps = 0;
 
       const baseStyle: StyleConfig = savedStyle || (themePreset ? {
@@ -493,7 +494,6 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
           : editorData;
 
         // Generate screenshots for each device size based on platform
-        const platformSizes = getDeviceSizesForPlatform(project.platform);
         for (const size of platformSizes) {
           for (let i = 0; i < Math.min(screenshots.length, langHeadlines.length); i++) {
             if (!baseStyle) continue;
@@ -1752,16 +1752,16 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
 
               {exporting ? (
                 <div>
-                  <div style={{ width: '300px', height: '8px', backgroundColor: '#e5e5ea', borderRadius: '4px', margin: '0 auto 12px' }}>
+                  <div style={{ width: '300px', height: '8px', backgroundColor: '#e5e5ea', borderRadius: '4px', margin: '0 auto 12px', overflow: 'hidden' }}>
                     <div style={{
-                      width: `${exportProgress}%`,
+                      width: `${Math.min(exportProgress, 100)}%`,
                       height: '100%',
-                      backgroundColor: '#FF6B4A',
+                      background: 'linear-gradient(90deg, #FF6B4A 0%, #FF8A65 100%)',
                       borderRadius: '4px',
-                      transition: 'width 0.3s',
+                      transition: 'width 0.4s ease-out',
                     }} />
                   </div>
-                  <p style={{ fontSize: '13px', color: '#86868b' }}>Generating and packaging... {exportProgress}%</p>
+                  <p style={{ fontSize: '13px', color: '#86868b' }}>Generating and packaging... {Math.min(exportProgress, 100)}%</p>
                 </div>
               ) : (
                 <button style={pageStyles.primaryButton} onClick={handleExport}>

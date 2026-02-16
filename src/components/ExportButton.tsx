@@ -609,7 +609,7 @@ export const ExportButton: React.FC<Props> = ({
             <div
               style={{
                 ...cssStyles.progressFill,
-                width: `${progress}%`
+                width: `${Math.min(progress, 100)}%`
               }}
             />
           </div>
