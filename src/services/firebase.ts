@@ -2,6 +2,8 @@ import { initializeApp } from 'firebase/app';
 import {
   getAuth,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider,
   sendSignInLinkToEmail,
   isSignInWithEmailLink,
@@ -27,6 +29,7 @@ const isFirebaseConfigured = Boolean(
 const app = isFirebaseConfigured ? initializeApp(firebaseConfig) : null;
 const auth = app ? getAuth(app) : null;
 const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export function isFirebaseEnabled(): boolean {
   return isFirebaseConfigured && auth !== null;
@@ -37,8 +40,33 @@ export async function signInWithGoogle(): Promise<string | null> {
     throw new Error('Firebase is not configured');
   }
 
-  const result = await signInWithPopup(auth, googleProvider);
-  return result.user.getIdToken();
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    return result.user.getIdToken();
+  } catch (error: any) {
+    // Popup blocked or closed — fallback to redirect flow
+    if (
+      error?.code === 'auth/popup-blocked' ||
+      error?.code === 'auth/popup-closed-by-user' ||
+      error?.code === 'auth/cancelled-popup-request'
+    ) {
+      await signInWithRedirect(auth, googleProvider);
+      return null; // Token will be handled via getRedirectResult on page load
+    }
+    throw error;
+  }
+}
+
+export async function completeGoogleRedirectSignIn(): Promise<string | null> {
+  if (!auth) {
+    return null;
+  }
+
+  const result = await getRedirectResult(auth);
+  if (result) {
+    return result.user.getIdToken();
+  }
+  return null;
 }
 
 export async function sendMagicLink(email: string): Promise<void> {

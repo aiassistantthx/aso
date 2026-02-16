@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { auth as authApi, UserWithPlan, setTokenSource } from './api';
 import {
   signInWithGoogle as firebaseSignInWithGoogle,
+  completeGoogleRedirectSignIn,
   sendMagicLink as firebaseSendMagicLink,
   completeMagicLinkSignIn,
   firebaseSignOut,
@@ -46,27 +47,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Handle magic link completion on page load
+  // Handle magic link and Google redirect completion on page load
   useEffect(() => {
-    async function handleMagicLinkCallback() {
+    async function handleAuthCallbacks() {
       try {
-        const idToken = await completeMagicLinkSignIn();
-        if (idToken) {
-          const { user } = await authApi.firebaseVerify(idToken);
+        // Check Google redirect result first
+        const googleToken = await completeGoogleRedirectSignIn();
+        if (googleToken) {
+          const { user } = await authApi.firebaseVerify(googleToken);
+          setState({ user, loading: false, error: null });
+          return;
+        }
+
+        // Then check magic link
+        const magicLinkToken = await completeMagicLinkSignIn();
+        if (magicLinkToken) {
+          const { user } = await authApi.firebaseVerify(magicLinkToken);
           setState({ user, loading: false, error: null });
         }
       } catch (err) {
-        console.error('Magic link sign-in failed:', err);
+        console.error('Auth callback failed:', err);
         setState(s => ({
           ...s,
           loading: false,
-          error: err instanceof Error ? err.message : 'Magic link sign-in failed',
+          error: err instanceof Error ? err.message : 'Sign-in failed',
         }));
       }
     }
 
     if (isFirebaseEnabled()) {
-      handleMagicLinkCallback();
+      handleAuthCallbacks();
     }
   }, []);
 
