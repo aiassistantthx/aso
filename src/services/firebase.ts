@@ -2,7 +2,6 @@ import { initializeApp } from 'firebase/app';
 import {
   getAuth,
   signInWithPopup,
-  signInWithRedirect,
   getRedirectResult,
   GoogleAuthProvider,
   sendSignInLinkToEmail,
@@ -40,30 +39,10 @@ export async function signInWithGoogle(): Promise<string | null> {
     throw new Error('Firebase is not configured');
   }
 
-  try {
-    // Try popup first — works on same origin, no cross-domain issues.
-    // Race against a 5s timeout so we don't hang forever if the popup
-    // is blocked silently (e.g. iOS Safari, strict third-party cookie policies).
-    const result = await Promise.race([
-      signInWithPopup(auth, googleProvider),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('popup-timeout')), 5000)
-      ),
-    ]);
-    return result.user.getIdToken();
-  } catch (error: any) {
-    // Popup blocked / closed / timed out — fall back to redirect
-    if (
-      error?.code === 'auth/popup-blocked' ||
-      error?.code === 'auth/popup-closed-by-user' ||
-      error?.code === 'auth/cancelled-popup-request' ||
-      error?.message === 'popup-timeout'
-    ) {
-      await signInWithRedirect(auth, googleProvider);
-      return null; // Token will be handled via getRedirectResult on page load
-    }
-    throw error;
-  }
+  // Use popup flow — reliable in Firebase v12+, no cross-origin issues.
+  // No timeout: user may need time to pick a Google account.
+  const result = await signInWithPopup(auth, googleProvider);
+  return result.user.getIdToken();
 }
 
 export async function completeGoogleRedirectSignIn(): Promise<string | null> {
