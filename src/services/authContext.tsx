@@ -119,18 +119,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (err) {
         console.error('Auth callback failed:', err);
-        if (!cancelled) {
-          setState(s => ({
-            ...s,
-            loading: false,
-            error: err instanceof Error ? err.message : 'Sign-in failed',
-          }));
-        }
-        return;
+        // Don't return — still set up auth listener below so that
+        // session restore (legacy JWT, Firebase persistence) keeps working.
       }
 
-      // Step 2: No redirect / magic-link pending — subscribe to auth
-      // state for normal session restore + ongoing changes.
+      // Step 2: No redirect / magic-link pending (or it failed) —
+      // subscribe to auth state for session restore + ongoing changes.
       if (!cancelled) {
         setupAuthListener();
       }
