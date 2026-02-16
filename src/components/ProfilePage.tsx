@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../services/authContext';
 import { AppHeader } from './AppHeader';
-import { billing } from '../services/api';
+import { billing, PricingResponse } from '../services/api';
 
 // Inject responsive styles for ProfilePage
 if (typeof document !== 'undefined' && !document.getElementById('profile-page-responsive')) {
@@ -148,35 +148,51 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     transition: 'all 0.2s ease',
   },
-  proFeaturesList: {
-    marginTop: '16px',
-    paddingLeft: '0',
-    listStyle: 'none',
-  },
-  proFeature: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    padding: '8px 0',
-    fontSize: '14px',
-    color: '#424245',
-  },
 };
+
+const fmt = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 2,
+});
+
+function formatPrice(cents: number): string {
+  return fmt.format(cents / 100);
+}
 
 export const ProfilePage: React.FC<Props> = ({ onNavigate }) => {
   const { user, logout } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pricing, setPricing] = useState<PricingResponse | null>(null);
+  const [priceLoading, setPriceLoading] = useState(false);
+  const [selectedInterval, setSelectedInterval] = useState<'month' | 'year'>('year');
+  const [promoOpen, setPromoOpen] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
+
+  const plan = user?.plan ?? 'FREE';
+
+  useEffect(() => {
+    if (plan !== 'FREE') return;
+    setPriceLoading(true);
+    billing.prices()
+      .then(data => setPricing(data))
+      .catch(() => {})
+      .finally(() => setPriceLoading(false));
+  }, [plan]);
 
   if (!user) return null;
 
-  const plan = user.plan ?? 'FREE';
+  const selectedProductId = pricing
+    ? (selectedInterval === 'year' ? pricing.yearly.productId : pricing.monthly.productId)
+    : undefined;
 
   const handleUpgrade = async () => {
     setLoading(true);
     setError(null);
     try {
-      const { url } = await billing.checkout();
+      const code = promoCode.trim() || undefined;
+      const { url } = await billing.checkout(selectedProductId, code);
       window.location.href = url;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start checkout');
@@ -256,47 +272,123 @@ export const ProfilePage: React.FC<Props> = ({ onNavigate }) => {
               <p style={{ fontSize: '15px', color: '#424245', marginBottom: '16px', lineHeight: 1.5 }}>
                 Upgrade to PRO to unlock all features:
               </p>
-              <ul style={styles.proFeaturesList}>
-                <li style={styles.proFeature}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" fill="#e8f9ed"/>
-                    <path d="M8 12l3 3 5-6" stroke="#248a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Unlimited projects
-                </li>
-                <li style={styles.proFeature}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" fill="#e8f9ed"/>
-                    <path d="M8 12l3 3 5-6" stroke="#248a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  All 40+ languages
-                </li>
-                <li style={styles.proFeature}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" fill="#e8f9ed"/>
-                    <path d="M8 12l3 3 5-6" stroke="#248a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  AI-powered ASO metadata generation
-                </li>
-                <li style={styles.proFeature}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" fill="#e8f9ed"/>
-                    <path d="M8 12l3 3 5-6" stroke="#248a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  AI app icon generation
-                </li>
-                <li style={styles.proFeature}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" fill="#e8f9ed"/>
-                    <path d="M8 12l3 3 5-6" stroke="#248a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Priority support
-                </li>
-              </ul>
+
+              <div style={{
+                backgroundColor: '#f8f9fa',
+                borderRadius: '12px',
+                padding: '16px',
+                marginBottom: '20px',
+              }}>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: '#86868b', textTransform: 'uppercase' as const, letterSpacing: '0.5px', marginBottom: '12px' }}>
+                  PRO includes:
+                </div>
+                {['Unlimited projects', 'All 40+ languages', 'AI-powered ASO metadata generation', 'AI app icon generation', 'Priority support'].map((feature, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 0', fontSize: '14px', color: '#424245' }}>
+                    <span style={{ color: '#22c55e', fontWeight: 700 }}>✓</span>
+                    {feature}
+                  </div>
+                ))}
+              </div>
+
+              {priceLoading && (
+                <div style={{ textAlign: 'center', color: '#86868b', fontSize: '14px', padding: '16px 0' }}>
+                  Loading prices...
+                </div>
+              )}
+
+              {!priceLoading && pricing && (
+                <>
+                  <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+                    {/* Monthly card */}
+                    <div
+                      style={{
+                        flex: 1,
+                        border: `2px solid ${selectedInterval === 'month' ? '#FF6B4A' : '#e0e0e5'}`,
+                        borderRadius: '12px',
+                        padding: '20px 16px',
+                        textAlign: 'center' as const,
+                        cursor: 'pointer',
+                        transition: 'border-color 0.2s, background-color 0.2s',
+                        backgroundColor: selectedInterval === 'month' ? '#fff8f6' : '#fff',
+                      }}
+                      onClick={() => setSelectedInterval('month')}
+                    >
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#86868b', textTransform: 'uppercase' as const, letterSpacing: '0.5px', marginBottom: '8px' }}>Monthly</div>
+                      <div style={{ fontSize: '28px', fontWeight: 700, color: '#1d1d1f' }}>{formatPrice(pricing.monthly.priceCents)}</div>
+                      <div style={{ fontSize: '13px', color: '#86868b', marginTop: '2px' }}>per month</div>
+                    </div>
+
+                    {/* Yearly card */}
+                    <div
+                      style={{
+                        flex: 1,
+                        border: `2px solid ${selectedInterval === 'year' ? '#FF6B4A' : '#e0e0e5'}`,
+                        borderRadius: '12px',
+                        padding: '20px 16px',
+                        textAlign: 'center' as const,
+                        cursor: 'pointer',
+                        transition: 'border-color 0.2s, background-color 0.2s',
+                        backgroundColor: selectedInterval === 'year' ? '#fff8f6' : '#fff',
+                        position: 'relative' as const,
+                      }}
+                      onClick={() => setSelectedInterval('year')}
+                    >
+                      {pricing.savingsPercent > 0 && (
+                        <div style={{
+                          position: 'absolute' as const,
+                          top: '-10px',
+                          right: '-6px',
+                          background: 'linear-gradient(135deg, #FF6B4A 0%, #FF8F6B 100%)',
+                          color: '#fff',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                        }}>Save {pricing.savingsPercent}%</div>
+                      )}
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#86868b', textTransform: 'uppercase' as const, letterSpacing: '0.5px', marginBottom: '8px' }}>Yearly</div>
+                      <div style={{ fontSize: '28px', fontWeight: 700, color: '#1d1d1f' }}>{formatPrice(pricing.yearly.perMonthCents ?? 0)}</div>
+                      <div style={{ fontSize: '13px', color: '#86868b', marginTop: '2px' }}>per month</div>
+                      <div style={{ fontSize: '12px', color: '#86868b', marginTop: '8px' }}>{formatPrice(pricing.yearly.priceCents)} / year</div>
+                    </div>
+                  </div>
+
+                  {/* Promo code */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <div
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '13px', color: '#86868b', cursor: 'pointer', userSelect: 'none' as const, padding: '4px 0' }}
+                      onClick={() => setPromoOpen(!promoOpen)}
+                    >
+                      <span>Have a promo code?</span>
+                      <span style={{ fontSize: '10px', transition: 'transform 0.2s ease', transform: promoOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>&#9662;</span>
+                    </div>
+                    {promoOpen && (
+                      <input
+                        style={{
+                          width: '100%',
+                          marginTop: '8px',
+                          padding: '10px 12px',
+                          fontSize: '14px',
+                          border: '1.5px solid #e0e0e5',
+                          borderRadius: '8px',
+                          outline: 'none',
+                          color: '#1d1d1f',
+                          boxSizing: 'border-box' as const,
+                        }}
+                        type="text"
+                        placeholder="Enter promo code"
+                        value={promoCode}
+                        onChange={e => setPromoCode(e.target.value)}
+                      />
+                    )}
+                  </div>
+                </>
+              )}
+
               <button
-                style={{ ...styles.upgradeButton, marginTop: '20px', opacity: loading ? 0.7 : 1 }}
+                style={{ ...styles.upgradeButton, marginTop: '4px', opacity: loading ? 0.7 : 1 }}
                 onClick={handleUpgrade}
-                disabled={loading}
+                disabled={loading || priceLoading}
                 onMouseEnter={(e) => {
                   if (!loading) e.currentTarget.style.transform = 'translateY(-1px)';
                 }}
