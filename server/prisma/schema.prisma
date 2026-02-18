@@ -131,6 +131,7 @@ model PromoCode {
   validFrom       DateTime  @default(now())
   validUntil      DateTime?                     // null = no expiration
   isActive        Boolean   @default(true)
+  polarDiscountId String?                       // synced Polar discount ID
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   redemptions     PromoRedemption[]

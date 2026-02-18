@@ -120,6 +120,8 @@ export default async function polarRoutes(fastify: FastifyInstance) {
       `${process.env.APP_URL || 'http://localhost:3000'}/dashboard?checkout=success&checkout_id={CHECKOUT_ID}`;
 
     try {
+      let discountId: string | undefined;
+
       // Check local promo codes first (created in admin panel)
       if (discountCode) {
         const localPromo = await fastify.prisma.promoCode.findUnique({
@@ -191,14 +193,16 @@ export default async function polarRoutes(fastify: FastifyInstance) {
             return { url: `${appUrl}/dashboard?promo=success&days=${localPromo.freeTrialDays}` };
           }
 
-          // For percent/fixed local codes: these need to exist in Polar too
-          // Fall through to Polar discount lookup below
+          // For percent/fixed local codes: use stored Polar discount ID
+          if (localPromo.polarDiscountId) {
+            discountId = localPromo.polarDiscountId;
+          }
+          // Fall through to Polar discount lookup if no stored ID
         }
       }
 
-      // Resolve discount code to Polar discount ID if provided
-      let discountId: string | undefined;
-      if (discountCode) {
+      // Resolve discount code to Polar discount ID if not already resolved
+      if (discountCode && !discountId) {
         try {
           for await (const discount of fastify.polar.discounts.list({})) {
             if (discount.code && discount.code.toLowerCase() === discountCode.toLowerCase()) {

@@ -301,10 +301,10 @@ export async function setupAdmin(fastify: FastifyInstance, prisma: PrismaClient)
         resource: { model: getModelByName('PromoCode', dmmf), client: prisma },
         options: {
           navigation: { name: 'Marketing', icon: 'Gift' },
-          listProperties: ['code', 'description', 'discountType', 'discountValue', 'usedCount', 'maxUses', 'isActive', 'validUntil'],
+          listProperties: ['code', 'description', 'discountType', 'discountValue', 'usedCount', 'maxUses', 'isActive', 'polarDiscountId', 'validUntil'],
           filterProperties: ['code', 'discountType', 'isActive'],
           editProperties: ['code', 'description', 'discountType', 'discountValue', 'freeTrialDays', 'maxUses', 'validFrom', 'validUntil', 'isActive'],
-          showProperties: ['id', 'code', 'description', 'discountType', 'discountValue', 'freeTrialDays', 'maxUses', 'usedCount', 'validFrom', 'validUntil', 'isActive', 'createdAt'],
+          showProperties: ['id', 'code', 'description', 'discountType', 'discountValue', 'freeTrialDays', 'maxUses', 'usedCount', 'validFrom', 'validUntil', 'isActive', 'polarDiscountId', 'createdAt'],
           properties: {
             code: {
               description: 'Unique promo code (will be uppercased)',
@@ -321,6 +321,10 @@ export async function setupAdmin(fastify: FastifyInstance, prisma: PrismaClient)
             },
             freeTrialDays: {
               description: 'Days of free PRO access (for free_trial type)',
+            },
+            polarDiscountId: {
+              isVisible: { list: true, filter: false, show: true, edit: false },
+              description: 'Auto-synced Polar discount ID (percent/fixed only)',
             },
           },
           actions: {
@@ -355,6 +359,70 @@ export async function setupAdmin(fastify: FastifyInstance, prisma: PrismaClient)
                   }
                 }
                 return request;
+              },
+              after: async (response: { record?: { params: Record<string, unknown> }; notice?: { message: string; type: string } }) => {
+                const record = response.record;
+                if (!record?.params?.id) return response;
+
+                const discountType = record.params.discountType as string;
+                const code = record.params.code as string;
+
+                // Only sync percent/fixed to Polar (free_trial is local-only)
+                if (discountType === 'free_trial') return response;
+                if (!fastify.polar) {
+                  fastify.log.warn('Polar not configured, skipping discount sync');
+                  return response;
+                }
+
+                try {
+                  const discountValue = Number(record.params.discountValue) || 0;
+                  const maxUses = record.params.maxUses ? Number(record.params.maxUses) : undefined;
+                  const validFrom = record.params.validFrom ? new Date(record.params.validFrom as string) : undefined;
+                  const validUntil = record.params.validUntil ? new Date(record.params.validUntil as string) : undefined;
+                  const description = (record.params.description as string) || code;
+
+                  let polarDiscount;
+                  if (discountType === 'percent') {
+                    polarDiscount = await fastify.polar.discounts.create({
+                      name: description,
+                      code,
+                      type: 'percentage',
+                      basisPoints: Math.round(discountValue * 100), // 25% → 2500
+                      duration: 'once',
+                      ...(maxUses ? { maxRedemptions: maxUses } : {}),
+                      ...(validFrom ? { startsAt: validFrom } : {}),
+                      ...(validUntil ? { endsAt: validUntil } : {}),
+                    });
+                  } else if (discountType === 'fixed') {
+                    polarDiscount = await fastify.polar.discounts.create({
+                      name: description,
+                      code,
+                      type: 'fixed',
+                      amount: Math.round(discountValue), // already in cents
+                      duration: 'once',
+                      ...(maxUses ? { maxRedemptions: maxUses } : {}),
+                      ...(validFrom ? { startsAt: validFrom } : {}),
+                      ...(validUntil ? { endsAt: validUntil } : {}),
+                    });
+                  }
+
+                  if (polarDiscount) {
+                    // Save Polar discount ID back to local record
+                    await prisma.promoCode.update({
+                      where: { id: record.params.id as string },
+                      data: { polarDiscountId: polarDiscount.id },
+                    });
+                    record.params.polarDiscountId = polarDiscount.id;
+                    fastify.log.info({ code, polarId: polarDiscount.id }, 'Promo code synced to Polar');
+                  }
+                } catch (err) {
+                  fastify.log.error(err, `Failed to sync promo code "${code}" to Polar`);
+                  if (response.notice) {
+                    response.notice.message += ' (Warning: failed to sync to Polar)';
+                  }
+                }
+
+                return response;
               },
             },
             edit: {
