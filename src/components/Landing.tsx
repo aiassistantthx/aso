@@ -684,7 +684,7 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: `0 4px 12px ${colors.accent}40`,
   },
   logoText: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: 500,
     color: colors.text,
     letterSpacing: '-0.3px',
@@ -694,7 +694,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 32,
   },
   navLink: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: 500,
     color: colors.textSecondary,
     textDecoration: 'none',
@@ -708,7 +708,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   loginBtn: {
     padding: '8px 16px',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: 500,
     color: colors.textSecondary,
     backgroundColor: 'transparent',
@@ -718,7 +718,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   ctaBtn: {
     padding: '10px 20px',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: 600,
     color: '#fff',
     backgroundColor: colors.accent,
@@ -751,14 +751,14 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: colors.border,
   },
   heroBadgeText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 600,
     color: colors.textMuted,
     letterSpacing: '2px',
     textTransform: 'uppercase',
   },
   heroTitle: {
-    fontSize: 52,
+    fontSize: 58,
     fontWeight: 400,
     color: colors.text,
     lineHeight: 1.15,
@@ -770,7 +770,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontStyle: 'italic',
   },
   heroSubtitle: {
-    fontSize: 17,
+    fontSize: 19,
     lineHeight: 1.7,
     color: colors.textSecondary,
     fontWeight: 400,
@@ -786,7 +786,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'inline-flex',
     alignItems: 'center',
     padding: '14px 28px',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 600,
     color: '#fff',
     backgroundColor: colors.accent,
@@ -798,7 +798,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   heroCtaSecondary: {
     padding: '14px 28px',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 500,
     color: colors.text,
     backgroundColor: 'transparent',
@@ -902,7 +902,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 16,
   },
   psTitle: {
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: 500,
     color: colors.text,
     marginBottom: 12,
@@ -916,7 +916,7 @@ const styles: Record<string, React.CSSProperties> = {
   psList: {
     margin: 0,
     paddingLeft: 16,
-    fontSize: 13,
+    fontSize: 15,
     lineHeight: 2.1,
     color: colors.textSecondary,
     fontWeight: 400,
@@ -940,7 +940,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 56,
   },
   sectionLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 600,
     color: colors.accent,
     letterSpacing: '2px',
@@ -949,7 +949,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'block',
   },
   sectionTitle: {
-    fontSize: 34,
+    fontSize: 38,
     fontWeight: 400,
     color: colors.text,
     letterSpacing: '-0.5px',
@@ -962,7 +962,7 @@ const styles: Record<string, React.CSSProperties> = {
     margin: '0 auto 16px',
   },
   sectionSubtitle: {
-    fontSize: 15,
+    fontSize: 17,
     color: colors.textSecondary,
     fontWeight: 400,
     letterSpacing: '0.2px',
@@ -990,7 +990,7 @@ const styles: Record<string, React.CSSProperties> = {
     border: `1px solid ${colors.borderLight}`,
   },
   stepNum: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 600,
     color: colors.textMuted,
     letterSpacing: '1px',
@@ -1000,14 +1000,14 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 16,
   },
   stepTitle: {
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: 500,
     color: colors.text,
     marginBottom: 8,
     letterSpacing: '-0.2px',
   },
   stepDesc: {
-    fontSize: 12,
+    fontSize: 14,
     color: colors.textSecondary,
     lineHeight: 1.6,
     margin: 0,
@@ -1051,7 +1051,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 18,
   },
   featureTitle: {
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: 500,
     color: colors.text,
     marginBottom: 10,
@@ -1064,7 +1064,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 12,
   },
   featureDescription: {
-    fontSize: 13,
+    fontSize: 15,
     lineHeight: 1.6,
     color: colors.textSecondary,
     margin: 0,
@@ -1115,7 +1115,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 24,
   },
   pricingPlan: {
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: 600,
     color: colors.textMuted,
     textTransform: 'uppercase',
@@ -1146,7 +1146,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginLeft: 4,
   },
   pricingBilled: {
-    fontSize: 13,
+    fontSize: 14,
     color: colors.textMuted,
     marginTop: 4,
   },
@@ -1162,7 +1162,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 40,
   },
   billingOption: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: 400,
     color: colors.textMuted,
     cursor: 'pointer',
@@ -1206,14 +1206,14 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: 12,
     padding: '10px 0',
-    fontSize: 13,
+    fontSize: 15,
     color: colors.text,
     fontWeight: 400,
   },
   pricingBtnSecondary: {
     width: '100%',
     padding: '13px 20px',
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: 600,
     color: colors.text,
     backgroundColor: colors.card,
@@ -1225,7 +1225,7 @@ const styles: Record<string, React.CSSProperties> = {
   pricingBtnPrimary: {
     width: '100%',
     padding: '13px 20px',
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: 600,
     color: '#fff',
     backgroundColor: colors.accent,
@@ -1260,14 +1260,14 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: 'rgba(255,255,255,0.15)',
   },
   finalCtaTitle: {
-    fontSize: 30,
+    fontSize: 34,
     fontWeight: 400,
     color: '#fff',
     marginBottom: 12,
     letterSpacing: '-0.3px',
   },
   finalCtaSubtitle: {
-    fontSize: 15,
+    fontSize: 17,
     color: 'rgba(255, 255, 255, 0.5)',
     marginBottom: 32,
     fontWeight: 400,
@@ -1277,7 +1277,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'inline-flex',
     alignItems: 'center',
     padding: '14px 30px',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 600,
     color: colors.text,
     backgroundColor: '#fff',
@@ -1382,7 +1382,7 @@ styleSheet.textContent = `
       padding-bottom: 40px !important;
     }
     .landing-hero-title {
-      font-size: 32px !important;
+      font-size: 36px !important;
       line-height: 1.2 !important;
       margin-bottom: 16px !important;
     }
@@ -1430,7 +1430,7 @@ styleSheet.textContent = `
 
     /* Section Headers */
     .landing-section-title {
-      font-size: 26px !important;
+      font-size: 28px !important;
     }
     .landing-section-header {
       margin-bottom: 32px !important;
@@ -1471,7 +1471,7 @@ styleSheet.textContent = `
       padding: 60px 20px !important;
     }
     .landing-final-cta-title {
-      font-size: 24px !important;
+      font-size: 26px !important;
     }
 
     /* Footer */
@@ -1487,7 +1487,7 @@ styleSheet.textContent = `
 
   @media (max-width: 480px) {
     .landing-hero-title {
-      font-size: 28px !important;
+      font-size: 30px !important;
     }
     .landing-steps-grid {
       grid-template-columns: 1fr !important;
