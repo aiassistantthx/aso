@@ -325,17 +325,61 @@ export async function setupAdmin(fastify: FastifyInstance, prisma: PrismaClient)
           },
           actions: {
             new: {
-              before: async (request: { payload?: { code?: string } }) => {
-                if (request.payload?.code) {
-                  request.payload.code = request.payload.code.toUpperCase();
+              before: async (request: { payload?: Record<string, unknown> }) => {
+                if (request.payload) {
+                  if (request.payload.code) {
+                    request.payload.code = (request.payload.code as string).toUpperCase();
+                  }
+                  // Convert numeric fields from strings
+                  if (request.payload.discountValue !== undefined && request.payload.discountValue !== '') {
+                    request.payload.discountValue = parseFloat(request.payload.discountValue as string);
+                  } else {
+                    request.payload.discountValue = 0;
+                  }
+                  if (request.payload.freeTrialDays !== undefined && request.payload.freeTrialDays !== '') {
+                    request.payload.freeTrialDays = parseInt(request.payload.freeTrialDays as string, 10);
+                  } else {
+                    request.payload.freeTrialDays = 0;
+                  }
+                  if (request.payload.maxUses !== undefined && request.payload.maxUses !== '') {
+                    request.payload.maxUses = parseInt(request.payload.maxUses as string, 10);
+                  } else {
+                    delete request.payload.maxUses;
+                  }
+                  // Clean up empty date strings so Prisma uses defaults/null
+                  if (request.payload.validFrom === '') {
+                    delete request.payload.validFrom;
+                  }
+                  if (request.payload.validUntil === '') {
+                    delete request.payload.validUntil;
+                  }
                 }
                 return request;
               },
             },
             edit: {
-              before: async (request: { payload?: { code?: string } }) => {
-                if (request.payload?.code) {
-                  request.payload.code = request.payload.code.toUpperCase();
+              before: async (request: { payload?: Record<string, unknown> }) => {
+                if (request.payload) {
+                  if (request.payload.code) {
+                    request.payload.code = (request.payload.code as string).toUpperCase();
+                  }
+                  if (request.payload.discountValue !== undefined && request.payload.discountValue !== '') {
+                    request.payload.discountValue = parseFloat(request.payload.discountValue as string);
+                  }
+                  if (request.payload.freeTrialDays !== undefined && request.payload.freeTrialDays !== '') {
+                    request.payload.freeTrialDays = parseInt(request.payload.freeTrialDays as string, 10);
+                  }
+                  if (request.payload.maxUses !== undefined && request.payload.maxUses !== '') {
+                    request.payload.maxUses = parseInt(request.payload.maxUses as string, 10);
+                  } else if (request.payload.maxUses === '') {
+                    request.payload.maxUses = null;
+                  }
+                  if (request.payload.validFrom === '') {
+                    delete request.payload.validFrom;
+                  }
+                  if (request.payload.validUntil === '') {
+                    request.payload.validUntil = null;
+                  }
                 }
                 return request;
               },
