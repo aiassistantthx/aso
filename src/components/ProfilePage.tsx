@@ -160,8 +160,16 @@ function formatPrice(cents: number): string {
   return fmt.format(cents / 100);
 }
 
+const CANCEL_REASONS: { value: string; label: string }[] = [
+  { value: 'too_expensive', label: 'Too expensive' },
+  { value: 'missing_features', label: 'Missing features I need' },
+  { value: 'unused', label: 'Not using it enough' },
+  { value: 'switched_service', label: 'Switched to another service' },
+  { value: 'other', label: 'Other reason' },
+];
+
 export const ProfilePage: React.FC<Props> = ({ onNavigate }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pricing, setPricing] = useState<PricingResponse | null>(null);
@@ -169,8 +177,12 @@ export const ProfilePage: React.FC<Props> = ({ onNavigate }) => {
   const [selectedInterval, setSelectedInterval] = useState<'month' | 'year'>('year');
   const [promoOpen, setPromoOpen] = useState(false);
   const [promoCode, setPromoCode] = useState('');
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   const plan = user?.plan ?? 'FREE';
+  const isCanceled = user?.subscription?.status === 'canceled';
 
   useEffect(() => {
     if (plan !== 'FREE') return;
@@ -212,6 +224,22 @@ export const ProfilePage: React.FC<Props> = ({ onNavigate }) => {
     }
   };
 
+  const handleCancelSubscription = async () => {
+    setCancelLoading(true);
+    setError(null);
+    try {
+      const reason = cancelReason || undefined;
+      await billing.cancel(reason);
+      await refreshUser();
+      setShowCancelConfirm(false);
+      setCancelReason('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to cancel subscription');
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
   return (
     <div style={styles.container}>
       <AppHeader currentPage="profile" onNavigate={onNavigate} />
@@ -241,8 +269,11 @@ export const ProfilePage: React.FC<Props> = ({ onNavigate }) => {
             >
               {plan === 'PRO' ? 'Pro' : 'Free'}
               {plan === 'PRO' && user.subscription && (
-                <span style={{ fontSize: '13px', fontWeight: 400, color: '#86868b' }}>
-                  (active until {new Date(user.subscription.currentPeriodEnd).toLocaleDateString()})
+                <span style={{ fontSize: '13px', fontWeight: 400, color: isCanceled ? '#92400e' : '#86868b' }}>
+                  {isCanceled
+                    ? `(canceled — active until ${new Date(user.subscription.currentPeriodEnd).toLocaleDateString()})`
+                    : `(active until ${new Date(user.subscription.currentPeriodEnd).toLocaleDateString()})`
+                  }
                 </span>
               )}
             </div>
@@ -401,9 +432,28 @@ export const ProfilePage: React.FC<Props> = ({ onNavigate }) => {
             </>
           ) : (
             <>
-              <p style={{ fontSize: '15px', color: '#424245', marginBottom: '16px', lineHeight: 1.5 }}>
-                You have access to all PRO features. Manage your subscription or view billing history.
-              </p>
+              {isCanceled && user?.subscription?.currentPeriodEnd && (
+                <div style={{
+                  padding: '12px 16px',
+                  backgroundColor: '#fffbeb',
+                  border: '1px solid #fde68a',
+                  borderRadius: '10px',
+                  color: '#92400e',
+                  fontSize: '14px',
+                  marginBottom: '16px',
+                  lineHeight: 1.5,
+                }}>
+                  Your subscription is canceled. You'll keep PRO access until{' '}
+                  <strong>{new Date(user.subscription.currentPeriodEnd).toLocaleDateString()}</strong>.
+                </div>
+              )}
+
+              {!isCanceled && (
+                <p style={{ fontSize: '15px', color: '#424245', marginBottom: '16px', lineHeight: 1.5 }}>
+                  You have access to all PRO features. Manage your subscription or view billing history.
+                </p>
+              )}
+
               <button
                 style={{ ...styles.manageButton, opacity: loading ? 0.7 : 1 }}
                 onClick={handleManageSubscription}
@@ -417,6 +467,114 @@ export const ProfilePage: React.FC<Props> = ({ onNavigate }) => {
               >
                 {loading ? 'Processing...' : 'Manage Subscription'}
               </button>
+
+              {!isCanceled && !showCancelConfirm && (
+                <button
+                  style={{
+                    ...styles.logoutButton,
+                    marginTop: '12px',
+                    color: '#ff3b30',
+                    border: '1px solid #ff3b30',
+                  }}
+                  onClick={() => setShowCancelConfirm(true)}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#fff5f5';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#fff';
+                  }}
+                >
+                  Cancel Subscription
+                </button>
+              )}
+
+              {showCancelConfirm && (
+                <div style={{
+                  marginTop: '16px',
+                  padding: '20px',
+                  backgroundColor: '#fef2f2',
+                  borderRadius: '12px',
+                  border: '1px solid #fecaca',
+                }}>
+                  <p style={{ fontSize: '15px', color: '#1d1d1f', fontWeight: 600, marginBottom: '8px' }}>
+                    Are you sure you want to cancel?
+                  </p>
+                  {user?.subscription?.currentPeriodEnd && (
+                    <p style={{ fontSize: '14px', color: '#424245', marginBottom: '16px', lineHeight: 1.5 }}>
+                      You'll keep PRO access until{' '}
+                      <strong>{new Date(user.subscription.currentPeriodEnd).toLocaleDateString()}</strong>.
+                      After that, your plan will revert to Free.
+                    </p>
+                  )}
+
+                  <div style={{ marginBottom: '16px' }}>
+                    <label style={{ fontSize: '13px', fontWeight: 600, color: '#86868b', display: 'block', marginBottom: '6px' }}>
+                      Reason for canceling (optional)
+                    </label>
+                    <select
+                      value={cancelReason}
+                      onChange={(e) => setCancelReason(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        fontSize: '14px',
+                        border: '1.5px solid #e0e0e5',
+                        borderRadius: '8px',
+                        backgroundColor: '#fff',
+                        color: '#1d1d1f',
+                        outline: 'none',
+                        boxSizing: 'border-box' as const,
+                      }}
+                    >
+                      <option value="">Select a reason...</option>
+                      {CANCEL_REASONS.map((r) => (
+                        <option key={r.value} value={r.value}>{r.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <button
+                      style={{
+                        flex: 1,
+                        padding: '12px',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        border: 'none',
+                        borderRadius: '10px',
+                        backgroundColor: '#ff3b30',
+                        color: '#fff',
+                        cursor: cancelLoading ? 'not-allowed' : 'pointer',
+                        opacity: cancelLoading ? 0.7 : 1,
+                      }}
+                      onClick={handleCancelSubscription}
+                      disabled={cancelLoading}
+                    >
+                      {cancelLoading ? 'Canceling...' : 'Confirm Cancellation'}
+                    </button>
+                    <button
+                      style={{
+                        flex: 1,
+                        padding: '12px',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        border: '1px solid #e0e0e5',
+                        borderRadius: '10px',
+                        backgroundColor: '#fff',
+                        color: '#1d1d1f',
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => {
+                        setShowCancelConfirm(false);
+                        setCancelReason('');
+                      }}
+                      disabled={cancelLoading}
+                    >
+                      Keep Subscription
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>

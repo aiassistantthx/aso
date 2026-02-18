@@ -182,6 +182,12 @@ export const polar = {
 
   portal: () =>
     request<{ url: string }>('/api/polar/portal', { method: 'POST' }),
+
+  cancel: (reason?: string, comment?: string) =>
+    request<{ success: boolean; currentPeriodEnd: string }>('/api/polar/cancel', {
+      method: 'POST',
+      body: JSON.stringify({ reason, comment }),
+    }),
 };
 
 // Unified billing helper (Polar only)
@@ -189,6 +195,7 @@ export const billing = {
   prices: () => polar.prices(),
   checkout: (productId?: string, discountCode?: string) => polar.checkout(productId, discountCode),
   portal: () => polar.portal(),
+  cancel: (reason?: string, comment?: string) => polar.cancel(reason, comment),
 };
 
 // User limits info

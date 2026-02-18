@@ -267,6 +267,62 @@ export default async function polarRoutes(fastify: FastifyInstance) {
     }
   });
 
+  // Cancel subscription
+  fastify.post('/api/polar/cancel', {
+    onRequest: [fastify.authenticate],
+  }, async (request, reply) => {
+    if (!fastify.polar) {
+      return reply.status(503).send({ error: 'Polar not configured' });
+    }
+
+    const { reason, comment } = (request.body as { reason?: string; comment?: string }) || {};
+
+    const subscription = await fastify.prisma.subscription.findUnique({
+      where: { userId: request.user.id },
+    });
+
+    if (!subscription) {
+      return reply.status(404).send({ error: 'No subscription found' });
+    }
+
+    if (!subscription.polarSubscriptionId) {
+      return reply.status(400).send({ error: 'Cannot cancel a manually granted subscription' });
+    }
+
+    if (subscription.status === 'canceled') {
+      return reply.status(400).send({ error: 'Subscription is already canceled' });
+    }
+
+    try {
+      const validReasons = ['customer_service', 'low_quality', 'missing_features', 'switched_service', 'too_complex', 'too_expensive', 'unused', 'other'] as const;
+      const cancellationReason = reason && validReasons.includes(reason as typeof validReasons[number])
+        ? reason as typeof validReasons[number]
+        : undefined;
+
+      await fastify.polar.subscriptions.update({
+        id: subscription.polarSubscriptionId,
+        subscriptionUpdate: {
+          cancelAtPeriodEnd: true,
+          ...(cancellationReason ? { customerCancellationReason: cancellationReason } : {}),
+          ...(comment ? { customerCancellationComment: comment } : {}),
+        },
+      });
+
+      await fastify.prisma.subscription.update({
+        where: { userId: request.user.id },
+        data: { status: 'canceled' },
+      });
+
+      return {
+        success: true,
+        currentPeriodEnd: subscription.currentPeriodEnd.toISOString(),
+      };
+    } catch (error) {
+      fastify.log.error(error, 'Failed to cancel subscription via Polar');
+      return reply.status(500).send({ error: 'Failed to cancel subscription' });
+    }
+  });
+
   // Webhook
   fastify.post('/api/polar/webhook', {
     config: { rawBody: true },
@@ -315,19 +371,24 @@ export default async function polarRoutes(fastify: FastifyInstance) {
               ? new Date(subscription.currentPeriodEnd)
               : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // Default 30 days
 
+            // If cancelAtPeriodEnd is set, keep PRO but mark as canceled
+            const cancelAtPeriodEnd = (subscription as unknown as { cancelAtPeriodEnd?: boolean }).cancelAtPeriodEnd;
+            const plan = cancelAtPeriodEnd ? 'PRO' : (subscription.status === 'active' ? 'PRO' : 'FREE');
+            const status = cancelAtPeriodEnd ? 'canceled' : subscription.status;
+
             await fastify.prisma.subscription.upsert({
               where: { userId: user.id },
               create: {
                 userId: user.id,
                 polarSubscriptionId: subscription.id,
-                plan: subscription.status === 'active' ? 'PRO' : 'FREE',
-                status: subscription.status,
+                plan,
+                status,
                 currentPeriodEnd,
               },
               update: {
                 polarSubscriptionId: subscription.id,
-                plan: subscription.status === 'active' ? 'PRO' : 'FREE',
-                status: subscription.status,
+                plan,
+                status,
                 currentPeriodEnd,
               },
             });
@@ -335,8 +396,20 @@ export default async function polarRoutes(fastify: FastifyInstance) {
           break;
         }
 
-        case 'subscription.canceled':
+        case 'subscription.canceled': {
+          // Canceled = cancel at period end confirmed, keep PRO until period ends
+          const subscription = event.data;
+          await fastify.prisma.subscription.updateMany({
+            where: { polarSubscriptionId: subscription.id },
+            data: {
+              status: 'canceled',
+            },
+          });
+          break;
+        }
+
         case 'subscription.revoked': {
+          // Revoked = subscription fully terminated, remove PRO access
           const subscription = event.data;
           await fastify.prisma.subscription.updateMany({
             where: { polarSubscriptionId: subscription.id },
