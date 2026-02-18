@@ -420,6 +420,32 @@ export default async function polarRoutes(fastify: FastifyInstance) {
           break;
         }
 
+        case 'order.refunded': {
+          // Refund = revoke PRO access immediately
+          const order = event.data;
+          fastify.log.info({ orderId: order.id, customerId: order.customerId, subscriptionId: order.subscriptionId }, 'Order refunded');
+
+          if (order.subscriptionId) {
+            // Revoke by subscription ID
+            await fastify.prisma.subscription.updateMany({
+              where: { polarSubscriptionId: order.subscriptionId },
+              data: { status: 'canceled', plan: 'FREE' },
+            });
+          } else if (order.customerId) {
+            // Fallback: revoke by Polar customer ID
+            const user = await fastify.prisma.user.findFirst({
+              where: { polarCustomerId: order.customerId },
+            });
+            if (user) {
+              await fastify.prisma.subscription.updateMany({
+                where: { userId: user.id },
+                data: { status: 'canceled', plan: 'FREE' },
+              });
+            }
+          }
+          break;
+        }
+
         case 'checkout.created': {
           fastify.log.info('Checkout created');
           break;
