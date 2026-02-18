@@ -120,18 +120,96 @@ export default async function polarRoutes(fastify: FastifyInstance) {
       `${process.env.APP_URL || 'http://localhost:3000'}/dashboard?checkout=success&checkout_id={CHECKOUT_ID}`;
 
     try {
-      // Resolve discount code to ID if provided
+      // Check local promo codes first (created in admin panel)
+      if (discountCode) {
+        const localPromo = await fastify.prisma.promoCode.findUnique({
+          where: { code: discountCode.toUpperCase() },
+        });
+
+        if (localPromo) {
+          // Validate the local promo code
+          if (!localPromo.isActive) {
+            return reply.status(400).send({ error: 'This promo code is no longer active' });
+          }
+          const now = new Date();
+          if (localPromo.validFrom > now) {
+            return reply.status(400).send({ error: 'This promo code is not yet valid' });
+          }
+          if (localPromo.validUntil && localPromo.validUntil < now) {
+            return reply.status(400).send({ error: 'This promo code has expired' });
+          }
+          if (localPromo.maxUses && localPromo.usedCount >= localPromo.maxUses) {
+            return reply.status(400).send({ error: 'This promo code has reached its usage limit' });
+          }
+          const existingRedemption = await fastify.prisma.promoRedemption.findUnique({
+            where: {
+              promoCodeId_userId: {
+                promoCodeId: localPromo.id,
+                userId: user.id,
+              },
+            },
+          });
+          if (existingRedemption) {
+            return reply.status(400).send({ error: 'You have already used this promo code' });
+          }
+
+          // For free_trial codes: grant PRO access directly, skip Polar
+          if (localPromo.discountType === 'free_trial' && localPromo.freeTrialDays > 0) {
+            const trialEnd = new Date();
+            trialEnd.setDate(trialEnd.getDate() + localPromo.freeTrialDays);
+
+            await fastify.prisma.subscription.upsert({
+              where: { userId: user.id },
+              create: {
+                userId: user.id,
+                plan: 'PRO',
+                status: 'trialing',
+                currentPeriodEnd: trialEnd,
+              },
+              update: {
+                plan: 'PRO',
+                status: 'trialing',
+                currentPeriodEnd: trialEnd,
+              },
+            });
+
+            // Record redemption
+            await fastify.prisma.$transaction([
+              fastify.prisma.promoRedemption.create({
+                data: {
+                  promoCodeId: localPromo.id,
+                  userId: user.id,
+                },
+              }),
+              fastify.prisma.promoCode.update({
+                where: { id: localPromo.id },
+                data: { usedCount: { increment: 1 } },
+              }),
+            ]);
+
+            const appUrl = process.env.APP_URL || 'http://localhost:3000';
+            return { url: `${appUrl}/dashboard?promo=success&days=${localPromo.freeTrialDays}` };
+          }
+
+          // For percent/fixed local codes: these need to exist in Polar too
+          // Fall through to Polar discount lookup below
+        }
+      }
+
+      // Resolve discount code to Polar discount ID if provided
       let discountId: string | undefined;
       if (discountCode) {
-        let found = false;
-        for await (const discount of fastify.polar.discounts.list({})) {
-          if (discount.code && discount.code.toLowerCase() === discountCode.toLowerCase()) {
-            discountId = discount.id;
-            found = true;
-            break;
+        try {
+          for await (const discount of fastify.polar.discounts.list({})) {
+            if (discount.code && discount.code.toLowerCase() === discountCode.toLowerCase()) {
+              discountId = discount.id;
+              break;
+            }
           }
+        } catch (polarDiscountError) {
+          fastify.log.warn(polarDiscountError, 'Failed to lookup Polar discounts');
         }
-        if (!found) {
+        if (!discountId) {
           return reply.status(400).send({ error: 'Invalid promo code' });
         }
       }
