@@ -49,12 +49,18 @@ const DEMO_SLIDES = [
   { src: '/demos/demo4.png', label: 'Style & Layout' },
   { src: '/demos/demo5.png', label: 'Generate' },
   { src: '/demos/demo6.png', label: 'Review' },
-  { src: '/demos/demo7.png', label: 'Translate' },
 ];
 
 const DemoSlideshow: React.FC = () => {
   const [current, setCurrent] = useState(0);
   const [fade, setFade] = useState(true);
+  const [resetKey, setResetKey] = useState(0);
+
+  const goTo = (idx: number) => {
+    setFade(false);
+    setTimeout(() => { setCurrent(idx); setFade(true); }, 200);
+    setResetKey(k => k + 1);
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -65,7 +71,28 @@ const DemoSlideshow: React.FC = () => {
       }, 300);
     }, 4500);
     return () => clearInterval(timer);
-  }, []);
+  }, [resetKey]);
+
+  const prev = () => goTo((current - 1 + DEMO_SLIDES.length) % DEMO_SLIDES.length);
+  const next = () => goTo((current + 1) % DEMO_SLIDES.length);
+
+  const arrowBtn: React.CSSProperties = {
+    position: 'absolute',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    width: 36,
+    height: 36,
+    borderRadius: '50%',
+    border: 'none',
+    backgroundColor: 'rgba(255,255,255,0.85)',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+    transition: 'background-color 0.2s',
+  };
 
   return (
     <div style={{ position: 'relative' }}>
@@ -74,7 +101,7 @@ const DemoSlideshow: React.FC = () => {
         {DEMO_SLIDES.map((slide, i) => (
           <button
             key={i}
-            onClick={() => { setFade(false); setTimeout(() => { setCurrent(i); setFade(true); }, 200); }}
+            onClick={() => goTo(i)}
             style={{
               ...slideshowStyles.indicator,
               ...(i === current ? slideshowStyles.indicatorActive : {}),
@@ -95,8 +122,11 @@ const DemoSlideshow: React.FC = () => {
         ))}
       </div>
 
-      {/* Image */}
+      {/* Image + arrows */}
       <div style={slideshowStyles.imageContainer}>
+        <button onClick={prev} style={{ ...arrowBtn, left: 10 }} aria-label="Previous">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </button>
         <img
           src={DEMO_SLIDES[current].src}
           alt={DEMO_SLIDES[current].label}
@@ -105,6 +135,9 @@ const DemoSlideshow: React.FC = () => {
             opacity: fade ? 1 : 0,
           }}
         />
+        <button onClick={next} style={{ ...arrowBtn, right: 10 }} aria-label="Next">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </button>
       </div>
     </div>
   );
