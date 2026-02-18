@@ -259,9 +259,7 @@ export default async function polarRoutes(fastify: FastifyInstance) {
         customerId: user.polarCustomerId,
       });
 
-      // Polar customer portal URL
-      const portalUrl = `https://polar.sh/customer-portal?token=${session.token}`;
-      return { url: portalUrl };
+      return { url: session.customerPortalUrl };
     } catch (error) {
       fastify.log.error(error, 'Failed to create Polar portal session');
       return reply.status(500).send({ error: 'Failed to create portal session' });
