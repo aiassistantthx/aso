@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { billing, PricingResponse } from '../services/api';
+import { InteractiveDemo } from './InteractiveDemo';
 
 interface Props {
   onGetStarted: () => void;
@@ -41,125 +42,6 @@ const SectionHeader: React.FC<{ label: string; title: string; subtitle: string }
   </div>
 );
 
-// Demo slideshow for hero section
-const DEMO_SLIDES = [
-  { src: '/demos/demo1.png', label: 'App Info' },
-  { src: '/demos/demo2.png', label: 'Screenshots' },
-  { src: '/demos/demo3.png', label: 'Generate' },
-  { src: '/demos/demo4.png', label: 'Style & Layout' },
-  { src: '/demos/demo5.png', label: 'Review' },
-  { src: '/demos/demo6.png', label: 'Translate' },
-];
-
-const DemoSlideshow: React.FC = () => {
-  const [current, setCurrent] = useState(0);
-  const [fade, setFade] = useState(true);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setFade(false);
-      setTimeout(() => {
-        setCurrent(prev => (prev + 1) % DEMO_SLIDES.length);
-        setFade(true);
-      }, 300);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, []);
-
-  return (
-    <div style={{ position: 'relative' }}>
-      {/* Step indicators */}
-      <div style={slideshowStyles.indicators}>
-        {DEMO_SLIDES.map((slide, i) => (
-          <button
-            key={i}
-            onClick={() => { setFade(false); setTimeout(() => { setCurrent(i); setFade(true); }, 200); }}
-            style={{
-              ...slideshowStyles.indicator,
-              ...(i === current ? slideshowStyles.indicatorActive : {}),
-            }}
-          >
-            <span style={{
-              ...slideshowStyles.indicatorDot,
-              backgroundColor: i === current ? colors.accent : colors.border,
-            }} />
-            <span style={{
-              ...slideshowStyles.indicatorLabel,
-              color: i === current ? colors.text : colors.textMuted,
-              fontWeight: i === current ? 600 : 400,
-            }}>
-              {slide.label}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* Image */}
-      <div style={slideshowStyles.imageContainer}>
-        <img
-          src={DEMO_SLIDES[current].src}
-          alt={DEMO_SLIDES[current].label}
-          style={{
-            ...slideshowStyles.image,
-            opacity: fade ? 1 : 0,
-          }}
-        />
-      </div>
-    </div>
-  );
-};
-
-const slideshowStyles: Record<string, React.CSSProperties> = {
-  indicators: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: 4,
-    padding: '12px 16px',
-    backgroundColor: '#F9F9F7',
-    borderBottom: `1px solid ${colors.borderLight}`,
-    flexWrap: 'wrap',
-  },
-  indicator: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-    padding: '6px 10px',
-    border: 'none',
-    background: 'none',
-    cursor: 'pointer',
-    borderRadius: 6,
-    transition: 'background-color 0.2s',
-  },
-  indicatorActive: {
-    backgroundColor: colors.accentBg,
-  },
-  indicatorDot: {
-    width: 6,
-    height: 6,
-    borderRadius: '50%',
-    display: 'inline-block',
-    transition: 'background-color 0.3s',
-  },
-  indicatorLabel: {
-    fontSize: 12,
-    transition: 'color 0.3s',
-    whiteSpace: 'nowrap' as const,
-  },
-  imageContainer: {
-    position: 'relative' as const,
-    overflow: 'hidden',
-    maxHeight: 550,
-    backgroundColor: colors.bg,
-  },
-  image: {
-    width: '100%',
-    height: 'auto',
-    display: 'block',
-    transition: 'opacity 0.3s ease-in-out',
-    objectFit: 'cover' as const,
-    objectPosition: 'top',
-  },
-};
 
 export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) => {
   const [scrolled, setScrolled] = useState(false);
@@ -266,7 +148,7 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
 
               {/* App Screenshot Slideshow */}
               <div style={styles.appScreenshot}>
-                <DemoSlideshow />
+                <InteractiveDemo />
               </div>
             </div>
           </div>
@@ -839,12 +721,6 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: colors.bg,
     overflow: 'hidden',
   },
-  screenshotImage: {
-    width: '100%',
-    height: 'auto',
-    display: 'block',
-  },
-
   // Problem/Solution
   problemSolution: {
     padding: '70px 24px',
