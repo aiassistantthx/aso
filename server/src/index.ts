@@ -65,17 +65,7 @@ async function start() {
 
   // Security headers (CSP, XSS protection, etc.)
   await fastify.register(helmet, {
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://apis.google.com", "https://www.gstatic.com", "https://datafa.st", "https://www.googletagmanager.com", "https://googletagmanager.com", "https://*.usercentrics.eu"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        fontSrc: ["'self'", "https://fonts.gstatic.com"],
-        imgSrc: ["'self'", "data:", "blob:", "https:", "https://www.googletagmanager.com"],
-        connectSrc: ["'self'", "https://identitytoolkit.googleapis.com", "https://securetoken.googleapis.com", "https://firebaseinstallations.googleapis.com", "https://accounts.google.com", "https://oauth2.googleapis.com", "https://www.googleapis.com", "https://www.google-analytics.com", "https://analytics.google.com", "https://region1.google-analytics.com", "https://datafa.st", "https://*.usercentrics.eu"],
-        frameSrc: ["'self'", "https://accounts.google.com", "https://*.firebaseapp.com", "https://www.googletagmanager.com"],
-      },
-    },
+    contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
     // Allow popups to communicate back (required for Firebase Auth popup flow)
     crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
