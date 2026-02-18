@@ -580,6 +580,19 @@ export const ProfilePage: React.FC<Props> = ({ onNavigate }) => {
         </div>
 
         <div style={styles.card}>
+          <h2 style={styles.cardTitle}>Contact</h2>
+          <p style={{ fontSize: '15px', color: '#424245', lineHeight: 1.6 }}>
+            Have any questions, feedback, or suggestions? Feel free to reach out at{' '}
+            <a
+              href="mailto:i@sparrowcorp.io"
+              style={{ color: '#0071e3', textDecoration: 'none', fontWeight: 600 }}
+            >
+              i@sparrowcorp.io
+            </a>
+          </p>
+        </div>
+
+        <div style={styles.card}>
           <button
             style={styles.logoutButton}
             onClick={() => {
