@@ -308,38 +308,41 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
 
       {/* Problem → Solution */}
       <section style={styles.problemSolution}>
+        <SectionHeader
+          label="Why"
+          title="Stop wasting time on screenshots"
+          subtitle="What used to take days now takes minutes"
+        />
         <div style={styles.psContainer} className="landing-ps-container">
           <div style={styles.psCard} className="landing-ps-card">
             <div style={styles.psIconBad}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="12" r="10" stroke="#DC2626" strokeWidth="1.5"/>
                 <path d="M15 9l-6 6M9 9l6 6" stroke="#DC2626" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             </div>
-            <h3 style={styles.psTitle}>Without LocalizeShots</h3>
+            <h3 style={styles.psTitle}>The old way</h3>
             <div style={styles.psDivider} />
             <ul style={styles.psList}>
               <li>Manually resize screenshots for each device</li>
-              <li>Hire translators for each language</li>
-              <li>Design headlines in Figma/Photoshop</li>
-              <li>Days or weeks of work</li>
+              <li>Hire translators for every language</li>
+              <li>Design headlines in Figma or Photoshop</li>
+              <li>Weeks of back-and-forth</li>
             </ul>
           </div>
           <div style={styles.psArrow} className="landing-ps-arrow">
-            <div style={styles.psArrowLine} />
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M5 12h14M12 5l7 7-7 7" stroke={colors.accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12h14M12 5l7 7-7 7" stroke={colors.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <div style={styles.psArrowLine} />
           </div>
           <div style={{ ...styles.psCard, ...styles.psCardGood }} className="landing-ps-card">
             <div style={styles.psIconGood}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="12" r="10" stroke={colors.success} strokeWidth="1.5"/>
                 <path d="M9 12l2 2 4-4" stroke={colors.success} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <h3 style={styles.psTitle}>With LocalizeShots</h3>
+            <h3 style={{ ...styles.psTitle, color: colors.success }}>With LocalizeShots</h3>
             <div style={{ ...styles.psDivider, backgroundColor: `${colors.success}30` }} />
             <ul style={styles.psList}>
               <li>Headlines generated in seconds</li>
@@ -356,56 +359,56 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
         <SectionHeader
           label="Process"
           title="How it works"
-          subtitle="Four simple steps to localized screenshots"
+          subtitle="From screenshots to localized store assets in four steps"
         />
 
         <div style={styles.stepsGrid} className="landing-steps-grid">
           {[
             {
-              num: '01',
-              title: 'Upload',
-              desc: 'Add your app screenshots and basic info',
+              num: '1',
+              title: 'Upload screenshots',
+              desc: 'Drop your app screenshots and fill in basic app info — name, description, keywords.',
               icon: (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke={colors.accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               )
             },
             {
-              num: '02',
-              title: 'Generate',
-              desc: 'Get headlines, metadata & screenshots',
+              num: '2',
+              title: 'Pick style & generate',
+              desc: 'Choose a visual tone and layout. Headlines, metadata, and mockups are generated instantly.',
               icon: (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
                   <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke={colors.accent} strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
               )
             },
             {
-              num: '03',
+              num: '3',
               title: 'Translate',
-              desc: 'Localize to any of 40+ languages',
+              desc: 'Select target languages — your screenshots and metadata are localized in one click.',
               icon: (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
                   <circle cx="12" cy="12" r="10" stroke={colors.accent} strokeWidth="1.5"/>
                   <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke={colors.accent} strokeWidth="1.5"/>
                 </svg>
               )
             },
             {
-              num: '04',
-              title: 'Export',
-              desc: 'Download ready-to-upload ZIP',
+              num: '4',
+              title: 'Export & upload',
+              desc: 'Download a ready-to-upload ZIP organized by language and device. Done.',
               icon: (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" stroke={colors.accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               )
             },
           ].map((step, i) => (
             <div key={i} style={styles.stepCard} className="landing-step-card">
-              <div style={styles.stepNum}>{step.num}</div>
               <div style={styles.stepIcon}>{step.icon}</div>
+              <div style={styles.stepNum}>{step.num}</div>
               <h3 style={styles.stepTitle}>{step.title}</h3>
               <p style={styles.stepDesc}>{step.desc}</p>
               {i < 3 && <div style={styles.stepConnector} className="landing-step-connector" />}
@@ -580,24 +583,6 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
               Start Free Trial
             </button>
           </div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section style={styles.finalCta} className="landing-final-cta">
-        <div style={styles.finalCtaInner}>
-          <div style={styles.finalCtaLines}>
-            <div style={styles.finalCtaLine} />
-            <div style={styles.finalCtaLine} />
-          </div>
-          <h2 style={styles.finalCtaTitle} className="landing-final-cta-title">Ready to localize your app?</h2>
-          <p style={styles.finalCtaSubtitle}>Join developers who save hours on App Store assets</p>
-          <button style={styles.finalCtaBtn} onClick={onGetStarted}>
-            Get Started Free
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ marginLeft: 10 }}>
-              <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
         </div>
       </section>
 
@@ -861,77 +846,73 @@ const styles: Record<string, React.CSSProperties> = {
   },
   // Problem/Solution
   problemSolution: {
-    padding: '70px 24px',
+    padding: '80px 24px',
   },
   psContainer: {
-    maxWidth: 850,
+    maxWidth: 920,
     margin: '0 auto',
     display: 'flex',
-    alignItems: 'center',
-    gap: 20,
+    alignItems: 'stretch',
+    gap: 24,
   },
   psCard: {
     flex: 1,
     backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 28,
+    borderRadius: 20,
+    padding: '36px 32px',
     border: `1px solid ${colors.borderLight}`,
   },
   psCardGood: {
-    borderColor: `${colors.success}30`,
-    backgroundColor: '#FAFDFB',
+    borderColor: `${colors.success}40`,
+    borderWidth: 2,
+    backgroundColor: '#F7FDF9',
   },
   psIconBad: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+    width: 52,
+    height: 52,
+    borderRadius: 14,
     backgroundColor: '#FEF2F2',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   psIconGood: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+    width: 52,
+    height: 52,
+    borderRadius: 14,
     backgroundColor: '#ECFDF5',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   psTitle: {
-    fontSize: 17,
-    fontWeight: 500,
+    fontSize: 20,
+    fontWeight: 600,
     color: colors.text,
-    marginBottom: 12,
-    letterSpacing: '-0.2px',
+    marginBottom: 16,
+    letterSpacing: '-0.3px',
   },
   psDivider: {
-    height: '0.5px',
+    height: 1,
     backgroundColor: colors.borderLight,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   psList: {
     margin: 0,
-    paddingLeft: 16,
-    fontSize: 15,
-    lineHeight: 2.1,
+    paddingLeft: 18,
+    fontSize: 16,
+    lineHeight: 2.2,
     color: colors.textSecondary,
     fontWeight: 400,
   },
   psArrow: {
     display: 'flex',
-    flexDirection: 'column',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
     flexShrink: 0,
-  },
-  psArrowLine: {
-    width: '0.5px',
-    height: 16,
-    backgroundColor: colors.border,
+    width: 48,
   },
 
   // Section Header
@@ -983,31 +964,37 @@ const styles: Record<string, React.CSSProperties> = {
   },
   stepCard: {
     textAlign: 'center',
-    padding: '28px 18px',
+    padding: '32px 22px',
     backgroundColor: colors.bg,
-    borderRadius: 14,
+    borderRadius: 18,
     position: 'relative',
     border: `1px solid ${colors.borderLight}`,
   },
   stepNum: {
-    fontSize: 12,
-    fontWeight: 600,
-    color: colors.textMuted,
-    letterSpacing: '1px',
-    marginBottom: 16,
+    fontSize: 13,
+    fontWeight: 700,
+    color: colors.accent,
+    marginBottom: 10,
   },
   stepIcon: {
-    marginBottom: 16,
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    backgroundColor: colors.accentBg,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: '0 auto 16px',
   },
   stepTitle: {
-    fontSize: 17,
-    fontWeight: 500,
+    fontSize: 18,
+    fontWeight: 600,
     color: colors.text,
-    marginBottom: 8,
-    letterSpacing: '-0.2px',
+    marginBottom: 10,
+    letterSpacing: '-0.3px',
   },
   stepDesc: {
-    fontSize: 14,
+    fontSize: 15,
     color: colors.textSecondary,
     lineHeight: 1.6,
     margin: 0,
@@ -1236,57 +1223,6 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: '0.3px',
   },
 
-  // Final CTA
-  finalCta: {
-    padding: '90px 24px',
-    textAlign: 'center',
-    backgroundColor: colors.text,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  finalCtaInner: {
-    position: 'relative',
-    zIndex: 1,
-  },
-  finalCtaLines: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: 8,
-    marginBottom: 24,
-  },
-  finalCtaLine: {
-    width: 25,
-    height: '0.5px',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-  },
-  finalCtaTitle: {
-    fontSize: 34,
-    fontWeight: 400,
-    color: '#fff',
-    marginBottom: 12,
-    letterSpacing: '-0.3px',
-  },
-  finalCtaSubtitle: {
-    fontSize: 17,
-    color: 'rgba(255, 255, 255, 0.5)',
-    marginBottom: 32,
-    fontWeight: 400,
-    letterSpacing: '0.2px',
-  },
-  finalCtaBtn: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    padding: '14px 30px',
-    fontSize: 16,
-    fontWeight: 600,
-    color: colors.text,
-    backgroundColor: '#fff',
-    border: 'none',
-    borderRadius: 10,
-    cursor: 'pointer',
-    letterSpacing: '0.3px',
-  },
-
   // Footer
   footer: {
     padding: '28px 24px',
@@ -1464,14 +1400,6 @@ styleSheet.textContent = `
     }
     .landing-pricing-card {
       max-width: 100% !important;
-    }
-
-    /* Final CTA */
-    .landing-final-cta {
-      padding: 60px 20px !important;
-    }
-    .landing-final-cta-title {
-      font-size: 26px !important;
     }
 
     /* Footer */
