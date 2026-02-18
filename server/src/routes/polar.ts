@@ -204,11 +204,12 @@ export default async function polarRoutes(fastify: FastifyInstance) {
       // Resolve discount code to Polar discount ID if not already resolved
       if (discountCode && !discountId) {
         try {
-          for await (const discount of fastify.polar.discounts.list({})) {
-            if (discount.code && discount.code.toLowerCase() === discountCode.toLowerCase()) {
-              discountId = discount.id;
-              break;
-            }
+          const discountsResponse = await fastify.polar.discounts.list({});
+          const match = discountsResponse.result.items.find(
+            (d: { code?: string | null }) => d.code && d.code.toLowerCase() === discountCode.toLowerCase(),
+          );
+          if (match) {
+            discountId = match.id;
           }
         } catch (polarDiscountError) {
           fastify.log.warn(polarDiscountError, 'Failed to lookup Polar discounts');
