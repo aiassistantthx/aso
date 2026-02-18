@@ -354,6 +354,7 @@ export function calculatePreviewFontSize(
 ): number {
   const minFontSize = 8;
   const maxFontSize = 24;
+  const hasHighlights = text.includes('[');
 
   let low = minFontSize;
   let high = maxFontSize;
@@ -362,11 +363,26 @@ export function calculatePreviewFontSize(
   while (low <= high) {
     const mid = Math.floor((low + high) / 2);
     ctx.font = `bold ${mid}px ${fontFamily}`;
-    const lines = wrapText(ctx, text, maxWidth);
+
+    // Reserve space for highlight backgrounds
+    const effectiveWidth = hasHighlights ? maxWidth - mid * 0.5 : maxWidth;
+    const lines = wrapFormattedText(ctx, text, effectiveWidth);
     const lineHeight = mid * 1.3;
     const totalHeight = lines.length * lineHeight;
 
-    if (totalHeight <= maxHeight) {
+    let fits = totalHeight <= maxHeight;
+
+    // Check that no line overflows width
+    if (fits) {
+      for (const line of lines) {
+        if (measureLineWidth(ctx, line) > effectiveWidth) {
+          fits = false;
+          break;
+        }
+      }
+    }
+
+    if (fits) {
       bestFit = mid;
       low = mid + 1;
     } else {
@@ -465,14 +481,27 @@ export function drawText(
   const adaptiveScale = Math.max(0.4, Math.min(1.3, spaceRatio));
   const targetFontSize = Math.max(8, Math.min(baseFontSize * adaptiveScale, baseFontSize * 1.3));
 
-  // Check if text fits at target size
+  // Check if text fits at target size (both height and width)
+  const hasHighlights = text.includes('[');
+  const testHighlightReserve = hasHighlights ? targetFontSize * 0.5 : 0;
+  const testEffectiveWidth = maxWidth - testHighlightReserve;
   ctx.font = `bold ${targetFontSize}px ${style.fontFamily}`;
-  const testLines = wrapFormattedText(ctx, text, maxWidth);
+  const testLines = wrapFormattedText(ctx, text, testEffectiveWidth);
   const testLineHeight = targetFontSize * 1.3;
   const testTotalHeight = testLines.length * testLineHeight;
 
+  let testFits = testTotalHeight <= availableHeight;
+  if (testFits) {
+    for (const line of testLines) {
+      if (measureLineWidth(ctx, line) > testEffectiveWidth) {
+        testFits = false;
+        break;
+      }
+    }
+  }
+
   let fontSize: number;
-  if (testTotalHeight <= availableHeight) {
+  if (testFits) {
     // Text fits at adaptive target size
     fontSize = targetFontSize;
   } else {
@@ -480,9 +509,13 @@ export function drawText(
     fontSize = Math.max(10, calculatePreviewFontSize(ctx, text, maxWidth, availableHeight, style.fontFamily));
   }
 
+  // Use effective width accounting for highlight padding at final font size
+  const highlightReserve = hasHighlights ? fontSize * 0.5 : 0;
+  const effectiveMaxWidth = maxWidth - highlightReserve;
+
   ctx.font = `bold ${fontSize}px ${style.fontFamily}`;
 
-  const lines = wrapFormattedText(ctx, text, maxWidth);
+  const lines = wrapFormattedText(ctx, text, effectiveMaxWidth);
   const lineHeight = fontSize * 1.3;
   const totalTextHeight = lines.length * lineHeight;
 

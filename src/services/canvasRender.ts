@@ -178,16 +178,24 @@ const renderText = (
 
   const adaptiveFontSize = calculateAdaptiveFontSize(
     ctx, text, style.fontSize,
-    textArea.width, textArea.height, style.fontFamily
+    textArea.width, textArea.height, style.fontFamily,
+    style.highlightPadding
   );
 
   const adaptiveStyle = { ...style, fontSize: adaptiveFontSize };
+
+  // Reserve space for highlight backgrounds (must match calculateAdaptiveFontSize logic)
+  const hasHighlights = text.includes('[');
+  const highlightReserve = hasHighlights
+    ? 2 * Math.max(style.highlightPadding || 12, adaptiveFontSize * 0.2)
+    : 0;
+  const effectiveTextWidth = textArea.width - highlightReserve;
 
   ctx.fillStyle = style.textColor;
   ctx.font = `bold ${adaptiveFontSize}px ${style.fontFamily}`;
   ctx.textAlign = 'left';
 
-  const lines = wrapFormattedText(ctx, text, textArea.width);
+  const lines = wrapFormattedText(ctx, text, effectiveTextWidth);
   const lineHeight = adaptiveFontSize * 1.4;
   const totalTextHeight = lines.length * lineHeight;
 
@@ -202,10 +210,10 @@ const renderText = (
   const textOffsetYValue = mockupSettings?.textOffsetY ?? style.textOffset?.y ?? 0;
   const textOffsetX = (textOffsetXValue / 100) * canvasWidth;
   const textOffsetY = (textOffsetYValue / 100) * canvasHeight;
-  const finalX = textArea.x + textOffsetX;
+  const finalX = textArea.x + textOffsetX + highlightReserve / 2;
   const finalY = textY + textOffsetY;
 
-  drawFormattedText(ctx, lines, finalX, finalY, lineHeight, adaptiveStyle, textArea.width);
+  drawFormattedText(ctx, lines, finalX, finalY, lineHeight, adaptiveStyle, effectiveTextWidth);
 };
 
 const drawLegacyScreenshot = async (

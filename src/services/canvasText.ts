@@ -69,10 +69,12 @@ export const calculateAdaptiveFontSize = (
   baseFontSize: number,
   maxWidth: number,
   maxHeight: number,
-  fontFamily: string
+  fontFamily: string,
+  highlightPadding?: number
 ): number => {
   const minFontSize = Math.max(16, baseFontSize * 0.2);
   const maxFontSize = Math.min(baseFontSize * 2, 200);
+  const hasHighlights = text.includes('[');
 
   let low = minFontSize;
   let high = maxFontSize;
@@ -81,7 +83,13 @@ export const calculateAdaptiveFontSize = (
   while (low <= high) {
     const mid = Math.floor((low + high) / 2);
     ctx.font = `bold ${mid}px ${fontFamily}`;
-    const lines = wrapFormattedText(ctx, text, maxWidth);
+
+    // Reserve space for highlight backgrounds so they don't overflow edges
+    const effectiveWidth = hasHighlights
+      ? maxWidth - 2 * Math.max(highlightPadding || 12, mid * 0.2)
+      : maxWidth;
+
+    const lines = wrapFormattedText(ctx, text, effectiveWidth);
     const lineHeight = mid * 1.4;
     const totalHeight = lines.length * lineHeight;
 
@@ -90,7 +98,7 @@ export const calculateAdaptiveFontSize = (
     if (fits) {
       for (const line of lines) {
         const lineWidth = measureLineWidth(ctx, line);
-        if (lineWidth > maxWidth * 1.02) {
+        if (lineWidth > effectiveWidth) {
           fits = false;
           break;
         }
