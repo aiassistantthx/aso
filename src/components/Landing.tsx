@@ -251,7 +251,7 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
         <div style={styles.heroContent}>
           <div style={styles.heroBadge} className="landing-hero-badge">
             <span style={styles.heroBadgeLine} />
-            <span style={styles.heroBadgeText}>AI-Powered ASO Tool</span>
+            <span style={styles.heroBadgeText}>App Store Screenshot Tool</span>
             <span style={styles.heroBadgeLine} />
           </div>
           <h1 style={styles.heroTitle} className="landing-hero-title">
@@ -259,8 +259,8 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
             screenshots <span style={styles.heroAccent}>in minutes</span>
           </h1>
           <p style={styles.heroSubtitle} className="landing-hero-subtitle">
-            AI generates headlines and metadata, translates to 40+ languages.<br />
-            Export ready-to-upload assets with one click.
+            Generate headlines, metadata, and localized screenshots in minutes.<br />
+            Export ready-to-upload assets for 40+ languages with one click.
           </p>
           <div style={styles.heroCtas} className="landing-hero-ctas">
             <button style={styles.heroCtaPrimary} className="landing-hero-cta-primary" onClick={onGetStarted}>
@@ -342,7 +342,7 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
             <h3 style={styles.psTitle}>With LocalizeShots</h3>
             <div style={{ ...styles.psDivider, backgroundColor: `${colors.success}30` }} />
             <ul style={styles.psList}>
-              <li>AI generates optimized headlines</li>
+              <li>Headlines generated in seconds</li>
               <li>One-click translation to 40+ languages</li>
               <li>Automatic device mockups</li>
               <li>Done in minutes, not days</li>
@@ -374,7 +374,7 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
             {
               num: '02',
               title: 'Generate',
-              desc: 'AI creates headlines, metadata & icons',
+              desc: 'Get headlines, metadata & screenshots',
               icon: (
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                   <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke={colors.accent} strokeWidth="1.5" strokeLinecap="round"/>
@@ -430,8 +430,8 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
                   <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               ),
-              title: 'AI Headlines',
-              description: 'GPT-4 generates compelling headlines with smart [bracket] highlighting.',
+              title: 'Smart Headlines',
+              description: 'Compelling marketing headlines with smart [bracket] highlighting.',
             },
             {
               icon: (
@@ -441,7 +441,7 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
                 </svg>
               ),
               title: '40+ Languages',
-              description: 'Translate to every App Store language with context-aware AI.',
+              description: 'Translate to every App Store language with context-aware accuracy.',
             },
             {
               icon: (
@@ -452,17 +452,6 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
               ),
               title: 'Device Mockups',
               description: 'Beautiful iPhone frames with pixel-perfect control.',
-            },
-            {
-              icon: (
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                  <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-                  <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
-                  <path d="M21 15l-5-5L5 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              ),
-              title: 'AI App Icons',
-              description: 'Generate unique icons with DALL-E 3 to match your brand.',
             },
             {
               icon: (
@@ -548,7 +537,7 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
               <div style={styles.pricingDivider} />
             </div>
             <ul style={styles.pricingFeatures}>
-              {['3 projects', '2 languages', 'All mockup styles', 'AI headlines', 'ZIP export'].map((f, i) => (
+              {['3 projects', '2 languages', 'All mockup styles', 'Smart headlines', 'ZIP export'].map((f, i) => (
                 <li key={i} style={styles.pricingFeature}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                     <path d="M20 6L9 17l-5-5" stroke={colors.success} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -578,7 +567,7 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
               <div style={{ ...styles.pricingDivider, backgroundColor: `${colors.accent}30` }} />
             </div>
             <ul style={styles.pricingFeatures}>
-              {['Unlimited projects', 'All 40+ languages', 'AI app icons', 'Priority processing', 'Priority support'].map((f, i) => (
+              {['Unlimited projects', 'All 40+ languages', 'ASO metadata', 'Priority processing', 'Priority support'].map((f, i) => (
                 <li key={i} style={styles.pricingFeature}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                     <path d="M20 6L9 17l-5-5" stroke={colors.accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
