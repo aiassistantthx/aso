@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { MDXProvider } from '@mdx-js/react';
 import { getPostBySlug, getAllPosts, BlogPost } from '../content/blog';
-import { ComponentType, ReactNode } from 'react';
+import { HTMLAttributes, TableHTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from 'react';
+import { MDXComponents } from 'mdx/types';
 
 // Color palette matching Landing.tsx
 const colors = {
@@ -24,7 +25,7 @@ interface BlogPostPageProps {
 }
 
 // Custom MDX components with styling - using coral accent
-const mdxComponents: Record<string, ComponentType<{ children?: ReactNode }>> = {
+const mdxComponents: MDXComponents = {
   h1: ({ children }) => (
     <h1
       style={{
@@ -175,9 +176,10 @@ const mdxComponents: Record<string, ComponentType<{ children?: ReactNode }>> = {
       }}
     />
   ),
-  table: ({ children }) => (
+  table: (props: TableHTMLAttributes<HTMLTableElement>) => (
     <div style={{ overflowX: 'auto', margin: '24px 0' }}>
       <table
+        {...props}
         style={{
           width: '100%',
           borderCollapse: 'collapse',
@@ -186,55 +188,54 @@ const mdxComponents: Record<string, ComponentType<{ children?: ReactNode }>> = {
           borderRadius: '12px',
           overflow: 'hidden',
           border: `1px solid ${colors.border}`,
+          ...props.style,
         }}
-      >
-        {children}
-      </table>
+      />
     </div>
   ),
-  thead: ({ children }) => (
+  thead: (props: HTMLAttributes<HTMLTableSectionElement>) => (
     <thead
+      {...props}
       style={{
         backgroundColor: colors.bg,
         borderBottom: `2px solid ${colors.border}`,
+        ...props.style,
       }}
-    >
-      {children}
-    </thead>
+    />
   ),
-  tbody: ({ children }) => <tbody>{children}</tbody>,
-  tr: ({ children }) => (
+  tbody: (props: HTMLAttributes<HTMLTableSectionElement>) => <tbody {...props} />,
+  tr: (props: HTMLAttributes<HTMLTableRowElement>) => (
     <tr
+      {...props}
       style={{
         borderBottom: `1px solid ${colors.borderLight}`,
+        ...props.style,
       }}
-    >
-      {children}
-    </tr>
+    />
   ),
-  th: ({ children }) => (
+  th: (props: ThHTMLAttributes<HTMLTableCellElement>) => (
     <th
+      {...props}
       style={{
         padding: '14px 16px',
-        textAlign: 'left',
+        textAlign: (props.align as 'left' | 'center' | 'right') || 'left',
         fontWeight: 600,
         color: colors.text,
         whiteSpace: 'nowrap',
+        ...props.style,
       }}
-    >
-      {children}
-    </th>
+    />
   ),
-  td: ({ children }) => (
+  td: (props: TdHTMLAttributes<HTMLTableCellElement>) => (
     <td
+      {...props}
       style={{
         padding: '12px 16px',
         color: colors.text,
         verticalAlign: 'top',
+        ...props.style,
       }}
-    >
-      {children}
-    </td>
+    />
   ),
 };
 
