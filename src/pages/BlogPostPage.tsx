@@ -175,6 +175,67 @@ const mdxComponents: Record<string, ComponentType<{ children?: ReactNode }>> = {
       }}
     />
   ),
+  table: ({ children }) => (
+    <div style={{ overflowX: 'auto', margin: '24px 0' }}>
+      <table
+        style={{
+          width: '100%',
+          borderCollapse: 'collapse',
+          fontSize: '15px',
+          backgroundColor: colors.card,
+          borderRadius: '12px',
+          overflow: 'hidden',
+          border: `1px solid ${colors.border}`,
+        }}
+      >
+        {children}
+      </table>
+    </div>
+  ),
+  thead: ({ children }) => (
+    <thead
+      style={{
+        backgroundColor: colors.bg,
+        borderBottom: `2px solid ${colors.border}`,
+      }}
+    >
+      {children}
+    </thead>
+  ),
+  tbody: ({ children }) => <tbody>{children}</tbody>,
+  tr: ({ children }) => (
+    <tr
+      style={{
+        borderBottom: `1px solid ${colors.borderLight}`,
+      }}
+    >
+      {children}
+    </tr>
+  ),
+  th: ({ children }) => (
+    <th
+      style={{
+        padding: '14px 16px',
+        textAlign: 'left',
+        fontWeight: 600,
+        color: colors.text,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {children}
+    </th>
+  ),
+  td: ({ children }) => (
+    <td
+      style={{
+        padding: '12px 16px',
+        color: colors.text,
+        verticalAlign: 'top',
+      }}
+    >
+      {children}
+    </td>
+  ),
 };
 
 // Related post card component
