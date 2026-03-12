@@ -433,6 +433,97 @@ export const AlternativesPage: React.FC<AlternativesPageProps> = ({ onBack, onNa
         </div>
       </section>
 
+      {/* More Resources Section */}
+      <section style={styles.section}>
+        <div style={styles.sectionInner}>
+          <h2 style={styles.sectionTitle}>More Resources</h2>
+          <p style={styles.sectionSubtitle}>
+            Explore platform guides, features, and ASO tips to maximize your app's visibility
+          </p>
+          <div style={styles.resourcesGrid}>
+            {/* Platform Guides */}
+            <div style={styles.resourceCard}>
+              <div style={styles.resourceIcon}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                  <rect x="5" y="2" width="14" height="20" rx="3" stroke={colors.accent} strokeWidth="1.5"/>
+                  <path d="M12 18h.01" stroke={colors.accent} strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <h3 style={styles.resourceTitle}>Platform Guides</h3>
+              <p style={styles.resourceText}>Learn best practices for each platform</p>
+              <div style={styles.resourceLinks}>
+                <a
+                  href="/ios-screenshots"
+                  onClick={(e) => { e.preventDefault(); onNavigate?.('ios-screenshots'); }}
+                  style={styles.resourceLink}
+                >
+                  iOS App Store Screenshots
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ marginLeft: 6 }}>
+                    <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </a>
+                <a
+                  href="/android-screenshots"
+                  onClick={(e) => { e.preventDefault(); onNavigate?.('android-screenshots'); }}
+                  style={styles.resourceLink}
+                >
+                  Google Play Screenshots
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ marginLeft: 6 }}>
+                    <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+            {/* Features */}
+            <div style={styles.resourceCard}>
+              <div style={styles.resourceIcon}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke={colors.accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <h3 style={styles.resourceTitle}>Features</h3>
+              <p style={styles.resourceText}>Discover all LocalizeShots capabilities</p>
+              <div style={styles.resourceLinks}>
+                <a
+                  href="/features"
+                  onClick={(e) => { e.preventDefault(); onNavigate?.('features'); }}
+                  style={styles.resourceLink}
+                >
+                  View All Features
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ marginLeft: 6 }}>
+                    <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+            {/* ASO Blog */}
+            <div style={styles.resourceCard}>
+              <div style={styles.resourceIcon}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13c-1.168-.776-2.754-1.253-4.5-1.253s-3.332.477-4.5 1.253" stroke={colors.accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <h3 style={styles.resourceTitle}>ASO Blog</h3>
+              <p style={styles.resourceText}>Tips and strategies for app success</p>
+              <div style={styles.resourceLinks}>
+                <a
+                  href="/blog"
+                  onClick={(e) => { e.preventDefault(); onNavigate?.('blog'); }}
+                  style={styles.resourceLink}
+                >
+                  Read ASO Tips
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ marginLeft: 6 }}>
+                    <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section style={styles.ctaSection}>
         <div style={styles.ctaContent}>
@@ -850,6 +941,57 @@ const styles: Record<string, React.CSSProperties> = {
   },
   tableCellHighlight: {
     backgroundColor: `${colors.accentBg}50`,
+  },
+
+  // Resources Grid
+  resourcesGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: 24,
+    marginTop: 48,
+  },
+  resourceCard: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 28,
+    border: `1px solid ${colors.borderLight}`,
+  },
+  resourceIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: colors.accentBg,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  resourceTitle: {
+    fontSize: 18,
+    fontWeight: 600,
+    color: colors.text,
+    marginBottom: 8,
+  },
+  resourceText: {
+    fontSize: 15,
+    lineHeight: 1.6,
+    color: colors.textSecondary,
+    margin: 0,
+    marginBottom: 16,
+  },
+  resourceLinks: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+  },
+  resourceLink: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    fontSize: 14,
+    fontWeight: 600,
+    color: colors.accent,
+    textDecoration: 'none',
+    cursor: 'pointer',
   },
 
   // CTA Section

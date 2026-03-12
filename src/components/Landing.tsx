@@ -338,9 +338,10 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
             <span style={styles.logoText} className="landing-logo-text">LocalizeShots</span>
           </div>
           <div style={styles.navLinks} className="landing-nav-links">
-            <a href="#features" style={styles.navLink}>Features</a>
+            <button onClick={() => onNavigate?.('features')} style={styles.navLinkButton}>Features</button>
             <a href="#how-it-works" style={styles.navLink}>How it works</a>
             <a href="#pricing" style={styles.navLink}>Pricing</a>
+            <button onClick={() => onNavigate?.('blog')} style={styles.navLinkButton}>Blog</button>
           </div>
           <div style={styles.navButtons} className="landing-nav-buttons">
             <button style={styles.loginBtn} className="landing-login-btn" onClick={onLogin}>Sign In</button>
@@ -720,50 +721,119 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
         </div>
       </section>
 
+      {/* Related Resources Section */}
+      <section style={styles.relatedResources}>
+        <SectionHeader
+          label="Explore"
+          title="Related resources"
+          subtitle="More tools and guides to help you succeed on the App Store"
+        />
+        <div style={styles.resourcesGrid} className="landing-resources-grid">
+          {/* Compare Section */}
+          <div style={styles.resourceCategory}>
+            <h3 style={styles.resourceCategoryTitle}>Compare</h3>
+            <div style={styles.resourceLinks}>
+              <button onClick={() => onNavigate?.('compare-appscreens')} style={styles.resourceLink}>
+                LocalizeShots vs AppScreens
+              </button>
+              <button onClick={() => onNavigate?.('compare-applaunchpad')} style={styles.resourceLink}>
+                LocalizeShots vs AppLaunchpad
+              </button>
+              <button onClick={() => onNavigate?.('compare-screenshots-pro')} style={styles.resourceLink}>
+                LocalizeShots vs Screenshots Pro
+              </button>
+              <button onClick={() => onNavigate?.('compare-appure')} style={styles.resourceLink}>
+                LocalizeShots vs Appure
+              </button>
+            </div>
+          </div>
+
+          {/* Use Cases Section */}
+          <div style={styles.resourceCategory}>
+            <h3 style={styles.resourceCategoryTitle}>Use Cases</h3>
+            <div style={styles.resourceLinks}>
+              <button onClick={() => onNavigate?.('for-indie-developers')} style={styles.resourceLink}>
+                For Indie Developers
+              </button>
+              <button onClick={() => onNavigate?.('ios-screenshots')} style={styles.resourceLink}>
+                iOS Screenshot Guide
+              </button>
+              <button onClick={() => onNavigate?.('android-screenshots')} style={styles.resourceLink}>
+                Android Screenshot Guide
+              </button>
+            </div>
+          </div>
+
+          {/* Tools Section */}
+          <div style={styles.resourceCategory}>
+            <h3 style={styles.resourceCategoryTitle}>Tools</h3>
+            <div style={styles.resourceLinks}>
+              <button onClick={() => onNavigate?.('size-calculator')} style={styles.resourceLink}>
+                Screenshot Size Calculator
+              </button>
+              <button onClick={() => onNavigate?.('alternatives')} style={styles.resourceLink}>
+                Screenshot Tool Alternatives
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer style={styles.footer}>
-        <div style={styles.footerInner} className="landing-footer-inner">
-          <div style={styles.footerLogo}>
-            <div style={{ ...styles.logoIcon, width: 28, height: 28 }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="2" width="18" height="20" rx="3" fill="white"/>
-                <rect x="6" y="5" width="12" height="3" rx="1" fill={colors.accent}/>
-                <rect x="6" y="10" width="12" height="8" rx="1" fill={colors.accent} fillOpacity="0.3"/>
-              </svg>
+        <div style={styles.footerContent} className="landing-footer-content">
+          {/* Footer Top - Logo and Link Columns */}
+          <div style={styles.footerTop} className="landing-footer-top">
+            <div style={styles.footerBrand}>
+              <div style={styles.footerLogo}>
+                <div style={{ ...styles.logoIcon, width: 28, height: 28 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="2" width="18" height="20" rx="3" fill="white"/>
+                    <rect x="6" y="5" width="12" height="3" rx="1" fill={colors.accent}/>
+                    <rect x="6" y="10" width="12" height="8" rx="1" fill={colors.accent} fillOpacity="0.3"/>
+                  </svg>
+                </div>
+                <span style={{ ...styles.logoText, fontSize: 15, color: colors.textSecondary }}>LocalizeShots</span>
+              </div>
+              <p style={styles.footerTagline}>
+                AI-powered App Store screenshot generator and localization tool.
+              </p>
             </div>
-            <span style={{ ...styles.logoText, fontSize: 15, color: colors.textSecondary }}>LocalizeShots</span>
+
+            <div style={styles.footerColumns} className="landing-footer-columns">
+              {/* Product Column */}
+              <div style={styles.footerColumn}>
+                <h4 style={styles.footerColumnTitle}>Product</h4>
+                <button onClick={() => onNavigate?.('features')} style={styles.footerLink}>Features</button>
+                <a href="#pricing" style={styles.footerLink}>Pricing</a>
+                <button onClick={() => onNavigate?.('blog')} style={styles.footerLink}>Blog</button>
+              </div>
+
+              {/* Resources Column */}
+              <div style={styles.footerColumn}>
+                <h4 style={styles.footerColumnTitle}>Resources</h4>
+                <button onClick={() => onNavigate?.('ios-screenshots')} style={styles.footerLink}>iOS Screenshots</button>
+                <button onClick={() => onNavigate?.('android-screenshots')} style={styles.footerLink}>Android Screenshots</button>
+                <button onClick={() => onNavigate?.('size-calculator')} style={styles.footerLink}>Size Calculator</button>
+                <button onClick={() => onNavigate?.('alternatives')} style={styles.footerLink}>Alternatives</button>
+              </div>
+
+              {/* Company Column */}
+              <div style={styles.footerColumn}>
+                <h4 style={styles.footerColumnTitle}>Company</h4>
+                <button onClick={() => onNavigate?.('about')} style={styles.footerLink}>About</button>
+                <button onClick={() => onNavigate?.('terms')} style={styles.footerLink}>Terms of Service</button>
+                <button onClick={() => onNavigate?.('privacy')} style={styles.footerLink}>Privacy Policy</button>
+                <button onClick={() => onNavigate?.('refund')} style={styles.footerLink}>Refund Policy</button>
+              </div>
+            </div>
           </div>
-          <div style={styles.footerLinks} className="landing-footer-links">
-            <button
-              onClick={() => onNavigate?.('about')}
-              style={styles.footerLink}
-            >
-              About
-            </button>
-            <span style={styles.footerLinkDivider}>|</span>
-            <button
-              onClick={() => onNavigate?.('terms')}
-              style={styles.footerLink}
-            >
-              Terms of Service
-            </button>
-            <span style={styles.footerLinkDivider}>|</span>
-            <button
-              onClick={() => onNavigate?.('privacy')}
-              style={styles.footerLink}
-            >
-              Privacy Policy
-            </button>
-            <span style={styles.footerLinkDivider}>|</span>
-            <button
-              onClick={() => onNavigate?.('refund')}
-              style={styles.footerLink}
-            >
-              Refund Policy
-            </button>
+
+          {/* Footer Bottom - Copyright */}
+          <div style={styles.footerBottom}>
+            <div style={styles.footerDividerHorizontal} />
+            <p style={styles.footerCopy}>&copy; {new Date().getFullYear()} LocalizeShots. All rights reserved.</p>
           </div>
-          <div style={styles.footerDivider} />
-          <p style={styles.footerCopy}>&copy; {new Date().getFullYear()} LocalizeShots</p>
         </div>
       </footer>
     </div>
@@ -826,6 +896,17 @@ const styles: Record<string, React.CSSProperties> = {
     textDecoration: 'none',
     letterSpacing: '0.3px',
     textTransform: 'uppercase',
+  },
+  navLinkButton: {
+    fontSize: 14,
+    fontWeight: 500,
+    color: colors.textSecondary,
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    letterSpacing: '0.3px',
+    textTransform: 'uppercase',
+    padding: 0,
   },
   navButtons: {
     display: 'flex',
@@ -1377,29 +1458,104 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 12,
   },
 
+  // Related Resources
+  relatedResources: {
+    padding: '80px 24px',
+    backgroundColor: colors.card,
+  },
+  resourcesGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: 32,
+    maxWidth: 900,
+    margin: '0 auto',
+  },
+  resourceCategory: {
+    backgroundColor: colors.bg,
+    borderRadius: 14,
+    padding: 24,
+    border: `1px solid ${colors.borderLight}`,
+  },
+  resourceCategoryTitle: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: colors.text,
+    marginBottom: 16,
+    letterSpacing: '-0.2px',
+    textTransform: 'uppercase',
+  },
+  resourceLinks: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+  },
+  resourceLink: {
+    background: 'none',
+    border: 'none',
+    fontSize: 14,
+    color: colors.textSecondary,
+    cursor: 'pointer',
+    padding: 0,
+    textAlign: 'left',
+    fontWeight: 400,
+    transition: 'color 0.2s',
+  },
+
   // Footer
   footer: {
-    padding: '28px 24px',
+    padding: '48px 24px 28px',
     backgroundColor: colors.bg,
     borderTop: `1px solid ${colors.borderLight}`,
   },
-  footerInner: {
+  footerContent: {
     maxWidth: 1100,
     margin: '0 auto',
+  },
+  footerTop: {
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 20,
+    justifyContent: 'space-between',
+    gap: 48,
+    marginBottom: 32,
+  },
+  footerBrand: {
+    maxWidth: 280,
   },
   footerLogo: {
     display: 'flex',
     alignItems: 'center',
     gap: 8,
+    marginBottom: 12,
   },
-  footerDivider: {
-    width: '0.5px',
-    height: 14,
-    backgroundColor: colors.border,
+  footerTagline: {
+    fontSize: 14,
+    color: colors.textMuted,
+    lineHeight: 1.6,
+    margin: 0,
+  },
+  footerColumns: {
+    display: 'flex',
+    gap: 48,
+  },
+  footerColumn: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+  },
+  footerColumnTitle: {
+    fontSize: 12,
+    fontWeight: 600,
+    color: colors.text,
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
+    marginBottom: 6,
+  },
+  footerBottom: {
+    textAlign: 'center',
+  },
+  footerDividerHorizontal: {
+    height: 1,
+    backgroundColor: colors.borderLight,
+    marginBottom: 20,
   },
   footerCopy: {
     fontSize: 12,
@@ -1408,25 +1564,18 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 400,
     letterSpacing: '0.2px',
   },
-  footerLinks: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
-  },
   footerLink: {
     background: 'none',
     border: 'none',
-    fontSize: 12,
-    color: colors.textMuted,
+    fontSize: 13,
+    color: colors.textSecondary,
     cursor: 'pointer',
     padding: 0,
+    textAlign: 'left',
     fontWeight: 400,
     letterSpacing: '0.2px',
     transition: 'color 0.2s',
-  },
-  footerLinkDivider: {
-    color: colors.border,
-    fontSize: 12,
+    textDecoration: 'none',
   },
 };
 
@@ -1551,14 +1700,23 @@ styleSheet.textContent = `
       padding: 16px 18px !important;
     }
 
-    /* Footer */
-    .landing-footer-inner {
-      flex-direction: column !important;
-      gap: 12px !important;
+    /* Related Resources */
+    .landing-resources-grid {
+      grid-template-columns: 1fr !important;
+      gap: 16px !important;
     }
-    .landing-footer-links {
+
+    /* Footer */
+    .landing-footer-content {
+      padding: 0 !important;
+    }
+    .landing-footer-top {
+      flex-direction: column !important;
+      gap: 32px !important;
+    }
+    .landing-footer-columns {
       flex-wrap: wrap !important;
-      justify-content: center !important;
+      gap: 24px !important;
     }
   }
 

@@ -20,6 +20,17 @@ const colors = {
   success: '#22C55E',
 };
 
+// Feature type
+interface Feature {
+  id: string;
+  icon: React.ReactNode;
+  title: string;
+  shortDesc: string;
+  longDesc: string;
+  benefits: string[];
+  link?: { text: string; href: string };
+}
+
 // Section header with decorative lines
 const SectionHeader: React.FC<{ label: string; title: string; subtitle: string }> = ({ label, title, subtitle }) => (
   <div style={styles.sectionHeader} className="features-section-header">
@@ -31,7 +42,7 @@ const SectionHeader: React.FC<{ label: string; title: string; subtitle: string }
 );
 
 // Feature data
-const FEATURES = [
+const FEATURES: Feature[] = [
   {
     id: 'ai-headlines',
     icon: (
@@ -48,6 +59,7 @@ const FEATURES = [
       'Multiple variations to choose from',
       'ASO-optimized copy',
     ],
+    link: { text: 'Learn more about ASO best practices', href: '/blog' },
   },
   {
     id: 'languages',
@@ -66,6 +78,7 @@ const FEATURES = [
       'Preserves marketing tone',
       'One-click batch translation',
     ],
+    link: { text: 'See how we compare to alternatives', href: '/compare/appscreens' },
   },
   {
     id: 'mockups',
@@ -84,6 +97,7 @@ const FEATURES = [
       'Multiple layout options',
       'Pixel-perfect rendering',
     ],
+    link: { text: 'iOS screenshot guidelines', href: '/ios-screenshots' },
   },
   {
     id: 'metadata',
@@ -102,6 +116,7 @@ const FEATURES = [
       'Description generation',
       'What\'s New updates',
     ],
+    link: { text: 'Read our ASO guides', href: '/blog' },
   },
   {
     id: 'icons',
@@ -121,6 +136,7 @@ const FEATURES = [
       'App Store compliant',
       'High-resolution output',
     ],
+    link: { text: 'Android screenshot specs', href: '/android-screenshots' },
   },
   {
     id: 'export',
@@ -138,6 +154,7 @@ const FEATURES = [
       'Metadata JSON included',
       'One-click download',
     ],
+    link: { text: 'Check screenshot size requirements', href: '/tools/size-calculator' },
   },
 ];
 
@@ -212,6 +229,23 @@ export const FeaturesPage: React.FC<Props> = ({ onGetStarted, onNavigate }) => {
               Explore Features
             </button>
           </div>
+          <div style={styles.heroQuickLinks} className="features-hero-quick-links">
+            <button onClick={() => onNavigate('ios-screenshots')} style={styles.heroQuickLink}>
+              iOS Screenshots
+            </button>
+            <span style={styles.heroQuickLinkDivider}>/</span>
+            <button onClick={() => onNavigate('android-screenshots')} style={styles.heroQuickLink}>
+              Android Screenshots
+            </button>
+            <span style={styles.heroQuickLinkDivider}>/</span>
+            <button onClick={() => onNavigate('tools/size-calculator')} style={styles.heroQuickLink}>
+              Size Calculator
+            </button>
+            <span style={styles.heroQuickLinkDivider}>/</span>
+            <button onClick={() => onNavigate('blog')} style={styles.heroQuickLink}>
+              ASO Blog
+            </button>
+          </div>
         </div>
       </section>
 
@@ -264,6 +298,17 @@ export const FeaturesPage: React.FC<Props> = ({ onGetStarted, onNavigate }) => {
                     </li>
                   ))}
                 </ul>
+                {feature.link && (
+                  <button
+                    onClick={() => onNavigate(feature.link!.href.replace('/', ''))}
+                    style={styles.featureDetailLink}
+                  >
+                    {feature.link.text}
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ marginLeft: 6 }}>
+                      <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                )}
               </div>
               <div style={{
                 ...styles.featureDetailVisual,
@@ -304,11 +349,17 @@ export const FeaturesPage: React.FC<Props> = ({ onGetStarted, onNavigate }) => {
             <span style={{ ...styles.logoText, fontSize: 15, color: colors.textSecondary }}>LocalizeShots</span>
           </div>
           <div style={styles.footerLinks} className="features-footer-links">
-            <button onClick={() => onNavigate('terms')} style={styles.footerLink}>Terms of Service</button>
+            <button onClick={() => onNavigate('about')} style={styles.footerLink}>About</button>
             <span style={styles.footerLinkDivider}>|</span>
-            <button onClick={() => onNavigate('privacy')} style={styles.footerLink}>Privacy Policy</button>
+            <button onClick={() => onNavigate('blog')} style={styles.footerLink}>Blog</button>
             <span style={styles.footerLinkDivider}>|</span>
-            <button onClick={() => onNavigate('refund')} style={styles.footerLink}>Refund Policy</button>
+            <button onClick={() => onNavigate('alternatives')} style={styles.footerLink}>Alternatives</button>
+            <span style={styles.footerLinkDivider}>|</span>
+            <button onClick={() => onNavigate('terms')} style={styles.footerLink}>Terms</button>
+            <span style={styles.footerLinkDivider}>|</span>
+            <button onClick={() => onNavigate('privacy')} style={styles.footerLink}>Privacy</button>
+            <span style={styles.footerLinkDivider}>|</span>
+            <button onClick={() => onNavigate('refund')} style={styles.footerLink}>Refund</button>
           </div>
           <div style={styles.footerDivider} />
           <p style={styles.footerCopy}>&copy; {new Date().getFullYear()} LocalizeShots</p>
@@ -482,6 +533,28 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     letterSpacing: '0.3px',
   },
+  heroQuickLinks: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 32,
+    flexWrap: 'wrap' as const,
+  },
+  heroQuickLink: {
+    padding: 0,
+    fontSize: 13,
+    fontWeight: 500,
+    color: colors.textSecondary,
+    backgroundColor: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'color 0.2s',
+  },
+  heroQuickLinkDivider: {
+    color: colors.border,
+    fontSize: 13,
+  },
 
   // Section Header
   sectionHeader: {
@@ -641,6 +714,19 @@ const styles: Record<string, React.CSSProperties> = {
     color: colors.text,
     fontWeight: 400,
   },
+  featureDetailLink: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    marginTop: 20,
+    padding: 0,
+    fontSize: 15,
+    fontWeight: 500,
+    color: colors.accent,
+    backgroundColor: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'opacity 0.2s',
+  },
 
   // CTA Section
   ctaSection: {
@@ -780,6 +866,10 @@ styleSheet.textContent = `
       width: 100% !important;
       justify-content: center !important;
       padding: 12px 20px !important;
+    }
+    .features-hero-quick-links {
+      margin-top: 24px !important;
+      gap: 6px !important;
     }
 
     /* Section Headers */

@@ -419,6 +419,73 @@ export const AndroidScreenshotsPage: React.FC<Props> = ({ onGetStarted, onNaviga
         </div>
       </section>
 
+      {/* Related Resources Section */}
+      <section style={styles.relatedSection}>
+        <div style={styles.relatedInner}>
+          <h2 style={styles.relatedTitle}>Related Resources</h2>
+          <div style={styles.relatedGrid} className="android-related-grid">
+            <a href="/ios-screenshots" style={styles.relatedCard} onClick={(e) => { e.preventDefault(); onNavigate?.('ios-screenshots'); }}>
+              <div style={styles.relatedIcon}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <rect x="5" y="2" width="14" height="20" rx="3" stroke={colors.android} strokeWidth="1.5"/>
+                  <path d="M12 18h.01" stroke={colors.android} strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <h3 style={styles.relatedCardTitle}>iOS Screenshots</h3>
+              <p style={styles.relatedCardDesc}>Create App Store screenshots for iPhone and iPad</p>
+            </a>
+            <a href="/features" style={styles.relatedCard} onClick={(e) => { e.preventDefault(); onNavigate?.('features'); }}>
+              <div style={styles.relatedIcon}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4" stroke={colors.android} strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <h3 style={styles.relatedCardTitle}>All Features</h3>
+              <p style={styles.relatedCardDesc}>Explore AI headlines, localization, and mockup generation</p>
+            </a>
+            <a href="/tools/size-calculator" style={styles.relatedCard} onClick={(e) => { e.preventDefault(); onNavigate?.('size-calculator'); }}>
+              <div style={styles.relatedIcon}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <rect x="4" y="4" width="16" height="16" rx="2" stroke={colors.android} strokeWidth="1.5"/>
+                  <path d="M4 9h16M9 4v16" stroke={colors.android} strokeWidth="1.5"/>
+                </svg>
+              </div>
+              <h3 style={styles.relatedCardTitle}>Size Calculator</h3>
+              <p style={styles.relatedCardDesc}>Find exact screenshot dimensions for all devices</p>
+            </a>
+            <a href="/blog" style={styles.relatedCard} onClick={(e) => { e.preventDefault(); onNavigate?.('blog'); }}>
+              <div style={styles.relatedIcon}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke={colors.android} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke={colors.android} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <h3 style={styles.relatedCardTitle}>Blog</h3>
+              <p style={styles.relatedCardDesc}>ASO tips, screenshot best practices, and app marketing guides</p>
+            </a>
+            <a href="/alternatives" style={styles.relatedCard} onClick={(e) => { e.preventDefault(); onNavigate?.('alternatives'); }}>
+              <div style={styles.relatedIcon}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" stroke={colors.android} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <h3 style={styles.relatedCardTitle}>Alternatives</h3>
+              <p style={styles.relatedCardDesc}>Compare LocalizeShots with other screenshot tools</p>
+            </a>
+            <a href="/about" style={styles.relatedCard} onClick={(e) => { e.preventDefault(); onNavigate?.('about'); }}>
+              <div style={styles.relatedIcon}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke={colors.android} strokeWidth="1.5"/>
+                  <path d="M12 16v-4M12 8h.01" stroke={colors.android} strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <h3 style={styles.relatedCardTitle}>About Us</h3>
+              <p style={styles.relatedCardDesc}>Learn about our mission to simplify app localization</p>
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer style={styles.footer}>
         <div style={styles.footerInner} className="android-footer-inner">
@@ -976,6 +1043,61 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: `0 6px 24px ${colors.android}35`,
   },
 
+  // Related Resources
+  relatedSection: {
+    padding: '80px 24px',
+    backgroundColor: colors.bg,
+  },
+  relatedInner: {
+    maxWidth: 1000,
+    margin: '0 auto',
+  },
+  relatedTitle: {
+    fontSize: 28,
+    fontWeight: 500,
+    color: colors.text,
+    textAlign: 'center' as const,
+    marginBottom: 40,
+    letterSpacing: '-0.5px',
+  },
+  relatedGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: 20,
+  },
+  relatedCard: {
+    display: 'block',
+    padding: 24,
+    backgroundColor: colors.card,
+    borderRadius: 14,
+    border: `1px solid ${colors.borderLight}`,
+    textDecoration: 'none',
+    transition: 'all 0.2s ease',
+    cursor: 'pointer',
+  },
+  relatedIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: `${colors.android}15`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  relatedCardTitle: {
+    fontSize: 17,
+    fontWeight: 600,
+    color: colors.text,
+    marginBottom: 8,
+  },
+  relatedCardDesc: {
+    fontSize: 14,
+    lineHeight: 1.5,
+    color: colors.textSecondary,
+    margin: 0,
+  },
+
   // Footer
   footer: {
     padding: '28px 24px',
@@ -1120,6 +1242,12 @@ styleSheet.textContent = `
       padding: 20px !important;
     }
 
+    /* Related Resources Grid */
+    .android-related-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 14px !important;
+    }
+
     /* Footer */
     .android-footer-inner {
       flex-direction: column !important;
@@ -1143,6 +1271,9 @@ styleSheet.textContent = `
     }
     .android-hero-badge {
       display: none !important;
+    }
+    .android-related-grid {
+      grid-template-columns: 1fr !important;
     }
   }
 `;

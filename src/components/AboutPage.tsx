@@ -115,7 +115,11 @@ export const AboutPage: React.FC<Props> = ({ onBack, onNavigate }) => {
           <p style={styles.text}>
             LocalizeShots was built to democratize App Store Optimization. We combine the power of AI
             with intuitive design tools to help indie developers and teams of all sizes create
-            professional, localized screenshots in minutes instead of days.
+            professional, localized screenshots in minutes instead of days. Discover all our{' '}
+            <button onClick={() => onNavigate?.('features')} style={styles.inlineLink}>
+              powerful features
+            </button>{' '}
+            designed to streamline your localization workflow.
           </p>
         </section>
 
@@ -128,9 +132,12 @@ export const AboutPage: React.FC<Props> = ({ onBack, onNavigate }) => {
             headlines in Photoshop — it took weeks of work for each app update.
           </p>
           <p style={styles.text}>
-            We knew there had to be a better way. So we built LocalizeShots — a tool that generates
-            compelling marketing headlines, translates them to 40+ languages, and renders beautiful
-            device mockups, all in one streamlined workflow.
+            We knew there had to be a better way. So we built LocalizeShots — a tool that{' '}
+            <button onClick={() => onNavigate?.('features')} style={styles.inlineLink}>
+              generates compelling marketing headlines
+            </button>
+            , translates them to 40+ languages, and renders beautiful device mockups, all in one
+            streamlined workflow.
           </p>
         </section>
 
@@ -227,8 +234,80 @@ export const AboutPage: React.FC<Props> = ({ onBack, onNavigate }) => {
           </div>
         </section>
 
+        {/* Learn More Section */}
+        <section style={styles.section}>
+          <h2 style={styles.heading}>Learn More</h2>
+          <p style={styles.text}>
+            Explore more about LocalizeShots and how we can help you optimize your App Store presence.
+          </p>
+          <div style={styles.learnMoreGrid} className="about-learn-more-grid">
+            <button onClick={() => onNavigate?.('features')} style={styles.learnMoreCard}>
+              <div style={styles.learnMoreIcon}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke={colors.accent} strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <div style={styles.learnMoreContent}>
+                <h3 style={styles.learnMoreTitle}>Features</h3>
+                <p style={styles.learnMoreDescription}>
+                  Discover all the powerful tools and capabilities LocalizeShots offers.
+                </p>
+              </div>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={styles.learnMoreArrow}>
+                <path d="M9 18l6-6-6-6" stroke={colors.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <button onClick={() => onNavigate?.('blog')} style={styles.learnMoreCard}>
+              <div style={styles.learnMoreIcon}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke={colors.accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke={colors.accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div style={styles.learnMoreContent}>
+                <h3 style={styles.learnMoreTitle}>Blog</h3>
+                <p style={styles.learnMoreDescription}>
+                  Tips, guides, and insights on App Store Optimization and localization.
+                </p>
+              </div>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={styles.learnMoreArrow}>
+                <path d="M9 18l6-6-6-6" stroke={colors.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <button onClick={() => onNavigate?.('alternatives')} style={styles.learnMoreCard}>
+              <div style={styles.learnMoreIcon}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" stroke={colors.accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div style={styles.learnMoreContent}>
+                <h3 style={styles.learnMoreTitle}>Alternatives</h3>
+                <p style={styles.learnMoreDescription}>
+                  Compare LocalizeShots with other screenshot localization tools.
+                </p>
+              </div>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={styles.learnMoreArrow}>
+                <path d="M9 18l6-6-6-6" stroke={colors.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </section>
+
         {/* Footer Links */}
         <section style={styles.footerSection}>
+          <div style={styles.footerLinksMain}>
+            <button onClick={() => onNavigate?.('features')} style={styles.footerLinkAccent}>
+              Features
+            </button>
+            <span style={styles.footerDivider}>|</span>
+            <button onClick={() => onNavigate?.('blog')} style={styles.footerLinkAccent}>
+              Blog
+            </button>
+            <span style={styles.footerDivider}>|</span>
+            <button onClick={() => onNavigate?.('tools/size-calculator')} style={styles.footerLinkAccent}>
+              Size Calculator
+            </button>
+          </div>
           <div style={styles.footerLinks}>
             <button onClick={() => onNavigate?.('terms')} style={styles.footerLink}>
               Terms of Service
@@ -426,6 +505,84 @@ const styles: Record<string, React.CSSProperties> = {
     color: colors.textMuted,
     margin: 0,
   },
+  inlineLink: {
+    background: 'none',
+    border: 'none',
+    color: colors.accent,
+    fontSize: 'inherit',
+    fontWeight: 600,
+    cursor: 'pointer',
+    padding: 0,
+    textDecoration: 'underline',
+    textDecorationColor: `${colors.accent}50`,
+    textUnderlineOffset: '2px',
+  },
+  learnMoreGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr',
+    gap: '12px',
+    marginTop: '24px',
+  },
+  learnMoreCard: {
+    backgroundColor: colors.card,
+    borderRadius: '16px',
+    padding: '20px 24px',
+    border: `1px solid ${colors.borderLight}`,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+    cursor: 'pointer',
+    textAlign: 'left',
+    transition: 'all 0.2s ease',
+    width: '100%',
+  },
+  learnMoreIcon: {
+    width: '48px',
+    height: '48px',
+    borderRadius: '12px',
+    backgroundColor: colors.accentBg,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  learnMoreContent: {
+    flex: 1,
+  },
+  learnMoreTitle: {
+    fontSize: '17px',
+    fontWeight: 600,
+    color: colors.text,
+    marginBottom: '4px',
+    margin: 0,
+  },
+  learnMoreDescription: {
+    fontSize: '14px',
+    lineHeight: 1.5,
+    color: colors.textSecondary,
+    margin: 0,
+    marginTop: '4px',
+  },
+  learnMoreArrow: {
+    flexShrink: 0,
+    opacity: 0.5,
+  },
+  footerLinksMain: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '16px',
+    marginBottom: '12px',
+  },
+  footerLinkAccent: {
+    background: 'none',
+    border: 'none',
+    fontSize: '14px',
+    color: colors.accent,
+    cursor: 'pointer',
+    padding: 0,
+    fontWeight: 600,
+  },
 };
 
 // Add responsive styles
@@ -437,6 +594,13 @@ if (typeof document !== 'undefined' && !document.getElementById('about-page-resp
       .about-benefits-grid {
         grid-template-columns: 1fr !important;
       }
+      .about-learn-more-grid {
+        grid-template-columns: 1fr !important;
+      }
+    }
+    .about-learn-more-grid button:hover {
+      border-color: #FF6B4A !important;
+      box-shadow: 0 4px 12px rgba(255, 107, 74, 0.15);
     }
   `;
   document.head.appendChild(styleEl);

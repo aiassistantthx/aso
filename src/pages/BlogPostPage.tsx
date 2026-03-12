@@ -412,8 +412,273 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
             </MDXProvider>
           </div>
 
+          {/* Related Resources */}
+          <div
+            style={{
+              marginTop: '40px',
+              backgroundColor: '#fff',
+              borderRadius: '16px',
+              padding: '32px',
+              boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
+            }}
+          >
+            <h3
+              style={{
+                fontSize: '22px',
+                fontWeight: 600,
+                color: '#1d1d1f',
+                margin: '0 0 20px 0',
+              }}
+            >
+              Related Resources
+            </h3>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '16px',
+              }}
+            >
+              <a
+                href="/features"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigate('features');
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '16px',
+                  backgroundColor: '#f5f5f7',
+                  borderRadius: '12px',
+                  textDecoration: 'none',
+                  transition: 'background-color 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#e8e8ed';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f5f5f7';
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '24px',
+                    width: '40px',
+                    height: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#0071e3',
+                    borderRadius: '10px',
+                    color: '#fff',
+                  }}
+                >
+                  &#x2728;
+                </span>
+                <div>
+                  <div
+                    style={{
+                      fontSize: '15px',
+                      fontWeight: 600,
+                      color: '#1d1d1f',
+                    }}
+                  >
+                    All Features
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '13px',
+                      color: '#86868b',
+                    }}
+                  >
+                    Explore all capabilities
+                  </div>
+                </div>
+              </a>
+
+              <a
+                href="/tools/size-calculator"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigate('size-calculator');
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '16px',
+                  backgroundColor: '#f5f5f7',
+                  borderRadius: '12px',
+                  textDecoration: 'none',
+                  transition: 'background-color 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#e8e8ed';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f5f5f7';
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '24px',
+                    width: '40px',
+                    height: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#34c759',
+                    borderRadius: '10px',
+                    color: '#fff',
+                  }}
+                >
+                  &#x1F4D0;
+                </span>
+                <div>
+                  <div
+                    style={{
+                      fontSize: '15px',
+                      fontWeight: 600,
+                      color: '#1d1d1f',
+                    }}
+                  >
+                    Size Calculator
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '13px',
+                      color: '#86868b',
+                    }}
+                  >
+                    Get exact dimensions
+                  </div>
+                </div>
+              </a>
+
+              <a
+                href="/alternatives"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigate('alternatives');
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '16px',
+                  backgroundColor: '#f5f5f7',
+                  borderRadius: '12px',
+                  textDecoration: 'none',
+                  transition: 'background-color 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#e8e8ed';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f5f5f7';
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '24px',
+                    width: '40px',
+                    height: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#ff9500',
+                    borderRadius: '10px',
+                    color: '#fff',
+                  }}
+                >
+                  &#x2696;
+                </span>
+                <div>
+                  <div
+                    style={{
+                      fontSize: '15px',
+                      fontWeight: 600,
+                      color: '#1d1d1f',
+                    }}
+                  >
+                    Compare Tools
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '13px',
+                      color: '#86868b',
+                    }}
+                  >
+                    See how we compare
+                  </div>
+                </div>
+              </a>
+
+              <a
+                href="/"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigate('landing');
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '16px',
+                  backgroundColor: '#f5f5f7',
+                  borderRadius: '12px',
+                  textDecoration: 'none',
+                  transition: 'background-color 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#e8e8ed';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f5f5f7';
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '24px',
+                    width: '40px',
+                    height: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#5856d6',
+                    borderRadius: '10px',
+                    color: '#fff',
+                  }}
+                >
+                  &#x1F3E0;
+                </span>
+                <div>
+                  <div
+                    style={{
+                      fontSize: '15px',
+                      fontWeight: 600,
+                      color: '#1d1d1f',
+                    }}
+                  >
+                    LocalizeShots
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '13px',
+                      color: '#86868b',
+                    }}
+                  >
+                    Back to homepage
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+
           {/* Back to Blog */}
-          <div style={{ marginTop: '40px', textAlign: 'center' }}>
+          <div style={{ marginTop: '32px', textAlign: 'center' }}>
             <button
               onClick={() => onNavigate('blog')}
               style={{

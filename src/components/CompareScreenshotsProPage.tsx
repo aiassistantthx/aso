@@ -16,7 +16,7 @@ const colors = {
   successBg: '#F0FDF4',
 };
 
-interface CompareAppScreensPageProps {
+interface CompareScreenshotsProPageProps {
   onBack: () => void;
   onGetStarted: () => void;
   onNavigate?: (page: string) => void;
@@ -29,26 +29,34 @@ const faqSchema = {
   mainEntity: [
     {
       '@type': 'Question',
-      name: 'What is the main difference between LocalizeShots and AppScreens?',
+      name: 'What is the main difference between LocalizeShots and Screenshots Pro?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'LocalizeShots uses AI to automatically generate marketing headlines and translate content to 40+ languages in one click. AppScreens focuses on template-based design with manual text editing.',
+        text: 'LocalizeShots uses AI to automatically generate marketing headlines and translate content to 40+ languages in one click. Screenshots Pro focuses on professional design tools with manual text editing and no AI features.',
       },
     },
     {
       '@type': 'Question',
-      name: 'Which tool is better for indie developers?',
+      name: 'Does Screenshots Pro offer AI features?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'LocalizeShots is ideal for indie developers who want to quickly localize their app without hiring designers or translators. The AI-powered workflow saves hours of manual work.',
+        text: 'No, Screenshots Pro does not include AI-powered features. All text creation and translation must be done manually. LocalizeShots offers AI headline generation and one-click translation to 40+ languages.',
       },
     },
     {
       '@type': 'Question',
-      name: 'Does LocalizeShots support all App Store languages?',
+      name: 'Which tool is more affordable?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Yes, LocalizeShots supports 40+ languages including all languages available in the App Store. Translation is done with AI that understands app marketing context.',
+        text: 'LocalizeShots Pro costs $4.99/month (billed yearly) compared to Screenshots Pro at approximately $19/month. LocalizeShots also includes AI features that would require additional tools or services with Screenshots Pro.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Does Screenshots Pro support API integration?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Yes, Screenshots Pro offers API access for CI/CD integration. LocalizeShots focuses on a user-friendly web interface optimized for indie developers and small teams.',
       },
     },
     {
@@ -56,21 +64,13 @@ const faqSchema = {
       name: 'Can I try LocalizeShots for free?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Yes, LocalizeShots offers a free plan with 3 projects and 2 languages. You can test the AI headline generation and screenshot creation before upgrading.',
-      },
-    },
-    {
-      '@type': 'Question',
-      name: 'Is LocalizeShots cheaper than AppScreens?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'LocalizeShots Pro costs $4.99/month (billed yearly) compared to AppScreens starting at $9/month. LocalizeShots also includes AI features that would require additional tools or services with AppScreens.',
+        text: 'Yes, LocalizeShots offers a free plan with 3 projects and 2 languages. You can test the AI headline generation and screenshot creation before upgrading to Pro.',
       },
     },
   ],
 };
 
-export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
+export const CompareScreenshotsProPage: React.FC<CompareScreenshotsProPageProps> = ({
   onBack,
   onGetStarted,
   onNavigate,
@@ -79,12 +79,12 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
   useEffect(() => {
     const script = document.createElement('script');
     script.type = 'application/ld+json';
-    script.id = 'faq-schema';
+    script.id = 'faq-schema-screenshots-pro';
     script.textContent = JSON.stringify(faqSchema);
     document.head.appendChild(script);
 
     return () => {
-      const existing = document.getElementById('faq-schema');
+      const existing = document.getElementById('faq-schema-screenshots-pro');
       if (existing) {
         existing.remove();
       }
@@ -96,64 +96,64 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
       feature: 'AI Headline Generation',
       localizeshots: true,
       localizeshotsNote: 'GPT-4 powered',
-      appscreens: false,
-      appscreensNote: 'Manual text only',
+      screenshotspro: false,
+      screenshotsproNote: 'Manual text only',
     },
     {
       feature: 'AI Translation',
       localizeshots: true,
       localizeshotsNote: '40+ languages, one-click',
-      appscreens: false,
-      appscreensNote: 'Manual or third-party',
+      screenshotspro: false,
+      screenshotsproNote: 'Manual translation',
     },
     {
       feature: 'ASO Metadata Generation',
       localizeshots: true,
       localizeshotsNote: 'Title, subtitle, keywords',
-      appscreens: false,
-      appscreensNote: 'Screenshots only',
+      screenshotspro: false,
+      screenshotsproNote: 'Screenshots only',
     },
     {
       feature: 'Device Mockups',
       localizeshots: true,
       localizeshotsNote: 'iPhone frames included',
-      appscreens: true,
-      appscreensNote: 'Multiple device frames',
+      screenshotspro: true,
+      screenshotsproNote: 'Multiple device frames',
     },
     {
-      feature: 'Template Library',
+      feature: 'Professional Templates',
       localizeshots: true,
       localizeshotsNote: 'Style presets',
-      appscreens: true,
-      appscreensNote: 'Large template library',
+      screenshotspro: true,
+      screenshotsproNote: 'Extensive library',
     },
     {
-      feature: 'Drag & Drop Editor',
+      feature: 'Precise Layout Controls',
       localizeshots: true,
-      localizeshotsNote: 'Canvas-based editor',
-      appscreens: true,
-      appscreensNote: 'Full visual editor',
+      localizeshotsNote: 'Drag-and-drop editor',
+      screenshotspro: true,
+      screenshotsproNote: 'Advanced controls',
     },
     {
-      feature: 'Batch Export',
-      localizeshots: true,
-      localizeshotsNote: 'All languages at once',
-      appscreens: true,
-      appscreensNote: 'Multiple sizes',
+      feature: 'API for CI/CD',
+      localizeshots: false,
+      localizeshotsNote: 'Web interface only',
+      screenshotspro: true,
+      screenshotsproNote: 'API available',
     },
     {
       feature: 'Free Plan',
       localizeshots: true,
       localizeshotsNote: '3 projects, 2 languages',
-      appscreens: true,
-      appscreensNote: 'Limited features',
+      screenshotspro: false,
+      screenshotsproNote: 'Paid only',
     },
     {
       feature: 'Starting Price',
       localizeshots: true,
       localizeshotsNote: '$4.99/mo (yearly)',
-      appscreens: true,
-      appscreensNote: '$9/mo',
+      screenshotspro: true,
+      screenshotsproNote: '~$19/mo',
     },
   ];
 
@@ -163,60 +163,61 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
     'Generates ASO metadata (title, subtitle, keywords)',
     'Lower price point ($4.99/mo yearly)',
     'No design skills needed - AI does the work',
-    'Fast workflow - minutes instead of hours',
+    'Free plan available to get started',
   ];
 
   const localizeshotsCons = [
-    'Smaller template library',
-    'Fewer device frame options',
+    'No API for CI/CD automation',
+    'Fewer professional template options',
     'Newer product with smaller user base',
   ];
 
-  const appscreensPros = [
-    'Large template library',
-    'Multiple device mockup options',
-    'Established product with proven track record',
-    'Advanced visual editor features',
+  const screenshotsproPros = [
+    'Professional design templates',
+    'Precise layout controls',
+    'API for CI/CD integration',
+    'Good export quality',
   ];
 
-  const appscreensCons = [
+  const screenshotsproCons = [
     'No AI headline generation',
     'Manual translation required',
     'No ASO metadata generation',
-    'Higher starting price',
-    'More time-consuming workflow',
+    'Higher price point (~$19/mo)',
+    'Steep learning curve',
+    'No free plan',
   ];
 
   const faqs = [
     {
-      question: 'What is the main difference between LocalizeShots and AppScreens?',
+      question: 'What is the main difference between LocalizeShots and Screenshots Pro?',
       answer:
-        'LocalizeShots uses AI to automatically generate marketing headlines and translate content to 40+ languages in one click. AppScreens focuses on template-based design with manual text editing. If you want speed and automation, LocalizeShots is the better choice. If you prefer full manual control over design, AppScreens might suit you.',
+        'LocalizeShots uses AI to automatically generate marketing headlines and translate content to 40+ languages in one click. Screenshots Pro focuses on professional design tools with precise layout controls but requires manual text entry and translation. If you want speed and automation, LocalizeShots is the better choice. If you need API integration and advanced design controls, Screenshots Pro might suit you.',
     },
     {
-      question: 'Which tool is better for indie developers?',
+      question: 'Does Screenshots Pro offer AI features?',
       answer:
-        'LocalizeShots is ideal for indie developers who want to quickly localize their app without hiring designers or translators. The AI-powered workflow saves hours of manual work and the lower price point fits indie budgets.',
+        'No, Screenshots Pro does not include AI-powered features. All text creation and translation must be done manually or with third-party tools. LocalizeShots includes built-in AI for headline generation and translation.',
     },
     {
-      question: 'Does LocalizeShots support all App Store languages?',
+      question: 'Which tool is more affordable?',
       answer:
-        'Yes, LocalizeShots supports 40+ languages including all major App Store languages. Translation is done with AI that understands app marketing context, ensuring natural-sounding localized content.',
+        'LocalizeShots Pro costs $4.99/month when billed yearly, compared to Screenshots Pro at approximately $19/month. Additionally, LocalizeShots includes AI translation and metadata generation that would require separate tools or services with Screenshots Pro.',
+    },
+    {
+      question: 'Does Screenshots Pro support API integration?',
+      answer:
+        'Yes, Screenshots Pro offers API access for CI/CD integration, which can be valuable for teams with automated build pipelines. LocalizeShots focuses on a user-friendly web interface optimized for indie developers and small teams.',
     },
     {
       question: 'Can I try LocalizeShots for free?',
       answer:
-        'Yes, LocalizeShots offers a free plan with 3 projects and 2 languages. You can test the AI headline generation and screenshot creation before deciding to upgrade to Pro.',
+        'Yes, LocalizeShots offers a free plan with 3 projects and 2 languages. You can test the AI headline generation and screenshot creation before deciding to upgrade to Pro. Screenshots Pro does not offer a free tier.',
     },
     {
-      question: 'Is LocalizeShots cheaper than AppScreens?',
+      question: 'Can I migrate from Screenshots Pro to LocalizeShots?',
       answer:
-        'Yes, LocalizeShots Pro costs $4.99/month when billed yearly, compared to AppScreens starting at $9/month. Additionally, LocalizeShots includes AI translation and metadata generation that would require separate tools or services with other solutions.',
-    },
-    {
-      question: 'Can I migrate from AppScreens to LocalizeShots?',
-      answer:
-        'Yes, you can easily switch to LocalizeShots. Simply upload your existing screenshots to LocalizeShots, and the AI will generate new headlines and handle translations. Your workflow will become significantly faster.',
+        'Yes, you can easily switch to LocalizeShots. Simply upload your existing screenshots to LocalizeShots, and the AI will generate new headlines and handle translations automatically. Your workflow will become significantly faster.',
     },
   ];
 
@@ -246,12 +247,12 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
       {/* Hero Section */}
       <section style={styles.hero}>
         <div style={styles.heroContent}>
-          <span style={styles.heroBadge}>AppScreens Alternative</span>
+          <span style={styles.heroBadge}>Screenshots Pro Alternative</span>
           <h1 style={styles.heroTitle}>
-            LocalizeShots vs AppScreens
+            LocalizeShots vs Screenshots Pro
           </h1>
           <p style={styles.heroSubtitle}>
-            Looking for an AppScreens alternative? Compare features, pricing, and see why developers
+            Looking for a Screenshots Pro alternative? Compare features, pricing, and see why developers
             are switching to LocalizeShots for AI-powered screenshot localization.
           </p>
           <button style={styles.heroCtaButton} onClick={onGetStarted}>
@@ -292,7 +293,7 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
             </div>
             <h3 style={styles.quickCompareTitle}>AI-Powered</h3>
             <p style={styles.quickCompareText}>
-              LocalizeShots generates headlines automatically. AppScreens requires manual text entry.
+              LocalizeShots generates headlines automatically. Screenshots Pro requires manual text entry.
             </p>
           </div>
           <div style={styles.quickCompareCard}>
@@ -308,7 +309,7 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
             </div>
             <h3 style={styles.quickCompareTitle}>40+ Languages</h3>
             <p style={styles.quickCompareText}>
-              One-click AI translation vs manual translation with AppScreens.
+              One-click AI translation vs manual translation with Screenshots Pro.
             </p>
           </div>
           <div style={styles.quickCompareCard}>
@@ -323,9 +324,9 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
                 />
               </svg>
             </div>
-            <h3 style={styles.quickCompareTitle}>50% Cheaper</h3>
+            <h3 style={styles.quickCompareTitle}>75% Cheaper</h3>
             <p style={styles.quickCompareText}>
-              $4.99/mo vs $9/mo - save money without sacrificing features.
+              $4.99/mo vs ~$19/mo - save significantly without sacrificing quality.
             </p>
           </div>
         </div>
@@ -335,7 +336,7 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
       <section style={styles.comparisonSection}>
         <h2 style={styles.sectionTitle}>Feature Comparison</h2>
         <p style={styles.sectionSubtitle}>
-          A detailed look at how LocalizeShots and AppScreens compare
+          A detailed look at how LocalizeShots and Screenshots Pro compare
         </p>
 
         <div style={styles.tableWrapper}>
@@ -364,7 +365,7 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
                   </div>
                 </th>
                 <th style={styles.tableHeader}>
-                  <span style={styles.competitorName}>AppScreens</span>
+                  <span style={styles.competitorName}>Screenshots Pro</span>
                 </th>
               </tr>
             </thead>
@@ -401,7 +402,7 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
                   </td>
                   <td style={styles.tableCell}>
                     <div style={styles.featureCheck}>
-                      {row.appscreens ? (
+                      {row.screenshotspro ? (
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                           <circle cx="12" cy="12" r="10" fill={colors.successBg} />
                           <path
@@ -423,7 +424,7 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
                           />
                         </svg>
                       )}
-                      <span style={styles.featureNote}>{row.appscreensNote}</span>
+                      <span style={styles.featureNote}>{row.screenshotsproNote}</span>
                     </div>
                   </td>
                 </tr>
@@ -506,10 +507,10 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
             </div>
           </div>
 
-          {/* AppScreens */}
+          {/* Screenshots Pro */}
           <div style={styles.prosConsCard}>
             <div style={styles.prosConsHeader}>
-              <span style={styles.competitorName}>AppScreens</span>
+              <span style={styles.competitorName}>Screenshots Pro</span>
             </div>
             <div style={styles.prosList}>
               <h4 style={styles.prosTitle}>
@@ -525,7 +526,7 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
                 Pros
               </h4>
               <ul style={styles.prosListItems}>
-                {appscreensPros.map((pro, i) => (
+                {screenshotsproPros.map((pro, i) => (
                   <li key={i} style={styles.prosItem}>
                     {pro}
                   </li>
@@ -545,7 +546,7 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
                 Cons
               </h4>
               <ul style={styles.consListItems}>
-                {appscreensCons.map((con, i) => (
+                {screenshotsproCons.map((con, i) => (
                   <li key={i} style={styles.consItem}>
                     {con}
                   </li>
@@ -559,7 +560,7 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
       {/* FAQ Section */}
       <section style={styles.faqSection}>
         <h2 style={styles.sectionTitle}>Frequently Asked Questions</h2>
-        <p style={styles.sectionSubtitle}>Common questions about LocalizeShots vs AppScreens</p>
+        <p style={styles.sectionSubtitle}>Common questions about LocalizeShots vs Screenshots Pro</p>
 
         <div style={styles.faqList}>
           {faqs.map((faq, index) => (
@@ -588,6 +589,15 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
               More Comparisons
             </h3>
             <ul style={styles.relatedList}>
+              <li>
+                <a
+                  href="/compare/appscreens"
+                  onClick={(e) => { e.preventDefault(); onNavigate?.('compare-appscreens'); }}
+                  style={styles.relatedLink}
+                >
+                  LocalizeShots vs AppScreens
+                </a>
+              </li>
               <li>
                 <a
                   href="/compare/applaunchpad"
@@ -1137,7 +1147,9 @@ styleSheet.textContent = `
     }
   }
 `;
-if (!document.getElementById('compare-appscreens-styles')) {
-  styleSheet.id = 'compare-appscreens-styles';
+if (!document.getElementById('compare-screenshots-pro-styles')) {
+  styleSheet.id = 'compare-screenshots-pro-styles';
   document.head.appendChild(styleSheet);
 }
+
+export default CompareScreenshotsProPage;

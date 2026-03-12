@@ -532,6 +532,109 @@ export const CompareAppLaunchpadPage: React.FC<Props> = ({ onBack, onGetStarted,
         </div>
       </section>
 
+      {/* Related Comparisons Section */}
+      <section style={styles.relatedSection}>
+        <div style={styles.sectionHeader}>
+          <span style={styles.sectionLabel}>Related Content</span>
+          <h2 style={styles.sectionTitle}>Explore More</h2>
+          <div style={styles.sectionTitleLine} />
+          <p style={styles.sectionSubtitle}>Find more comparisons and resources to help you choose</p>
+        </div>
+
+        <div style={styles.relatedGrid}>
+          {/* Other Comparisons */}
+          <div style={styles.relatedCard}>
+            <h3 style={styles.relatedCardTitle}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ marginRight: 10 }}>
+                <path d="M16 3h5v5M21 3l-7 7M8 21H3v-5M3 21l7-7" stroke={colors.accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              More Comparisons
+            </h3>
+            <ul style={styles.relatedList}>
+              <li>
+                <a
+                  href="/compare/appscreens"
+                  onClick={(e) => { e.preventDefault(); onNavigate?.('compare-appscreens'); }}
+                  style={styles.relatedLink}
+                >
+                  LocalizeShots vs AppScreens
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/alternatives"
+                  onClick={(e) => { e.preventDefault(); onNavigate?.('alternatives'); }}
+                  style={styles.relatedLink}
+                >
+                  All Screenshot Tool Alternatives
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Platform Pages */}
+          <div style={styles.relatedCard}>
+            <h3 style={styles.relatedCardTitle}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ marginRight: 10 }}>
+                <rect x="5" y="2" width="14" height="20" rx="3" stroke={colors.accent} strokeWidth="1.5"/>
+                <path d="M12 18h.01" stroke={colors.accent} strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              Platform Guides
+            </h3>
+            <ul style={styles.relatedList}>
+              <li>
+                <a
+                  href="/ios-screenshots"
+                  onClick={(e) => { e.preventDefault(); onNavigate?.('ios-screenshots'); }}
+                  style={styles.relatedLink}
+                >
+                  iOS App Store Screenshots
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/android-screenshots"
+                  onClick={(e) => { e.preventDefault(); onNavigate?.('android-screenshots'); }}
+                  style={styles.relatedLink}
+                >
+                  Google Play Screenshots
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Resources */}
+          <div style={styles.relatedCard}>
+            <h3 style={styles.relatedCardTitle}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ marginRight: 10 }}>
+                <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13c-1.168-.776-2.754-1.253-4.5-1.253s-3.332.477-4.5 1.253" stroke={colors.accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Resources
+            </h3>
+            <ul style={styles.relatedList}>
+              <li>
+                <a
+                  href="/features"
+                  onClick={(e) => { e.preventDefault(); onNavigate?.('features'); }}
+                  style={styles.relatedLink}
+                >
+                  All Features
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/blog"
+                  onClick={(e) => { e.preventDefault(); onNavigate?.('blog'); }}
+                  style={styles.relatedLink}
+                >
+                  ASO Blog & Tips
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
       {/* Final CTA */}
       <section style={styles.finalCta}>
         <div style={styles.finalCtaContent}>
@@ -1061,6 +1164,46 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 15,
     color: colors.textSecondary,
     lineHeight: 1.7,
+  },
+
+  // Related Comparisons
+  relatedSection: {
+    padding: '80px 24px',
+  },
+  relatedGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: 20,
+    maxWidth: 900,
+    margin: '0 auto',
+  },
+  relatedCard: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 24,
+    border: `1px solid ${colors.borderLight}`,
+  },
+  relatedCardTitle: {
+    display: 'flex',
+    alignItems: 'center',
+    fontSize: 16,
+    fontWeight: 600,
+    color: colors.text,
+    marginBottom: 16,
+  },
+  relatedList: {
+    listStyle: 'none',
+    padding: 0,
+    margin: 0,
+  },
+  relatedLink: {
+    display: 'block',
+    fontSize: 14,
+    color: colors.accent,
+    textDecoration: 'none',
+    padding: '8px 0',
+    cursor: 'pointer',
+    fontWeight: 500,
   },
 
   // Final CTA

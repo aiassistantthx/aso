@@ -267,33 +267,191 @@ export function BlogPage({ onNavigate }: BlogPageProps) {
             padding: '40px 24px 80px',
           }}
         >
-          {posts.length === 0 ? (
-            <div
-              style={{
-                textAlign: 'center',
-                padding: '60px 24px',
-                color: '#86868b',
-              }}
-            >
-              <p style={{ fontSize: '18px' }}>No blog posts yet. Check back soon!</p>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 300px',
+              gap: '40px',
+            }}
+          >
+            {/* Main Content */}
+            <div>
+              {posts.length === 0 ? (
+                <div
+                  style={{
+                    textAlign: 'center',
+                    padding: '60px 24px',
+                    color: '#86868b',
+                  }}
+                >
+                  <p style={{ fontSize: '18px' }}>No blog posts yet. Check back soon!</p>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+                    gap: '24px',
+                  }}
+                >
+                  {posts.map((post) => (
+                    <BlogPostCard
+                      key={post.frontmatter.slug}
+                      post={post}
+                      onNavigate={onNavigate}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-          ) : (
-            <div
+
+            {/* Sidebar */}
+            <aside
               style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+                display: 'flex',
+                flexDirection: 'column',
                 gap: '24px',
               }}
             >
-              {posts.map((post) => (
-                <BlogPostCard
-                  key={post.frontmatter.slug}
-                  post={post}
-                  onNavigate={onNavigate}
-                />
-              ))}
-            </div>
-          )}
+              {/* Resources Card */}
+              <div
+                style={{
+                  backgroundColor: '#fff',
+                  borderRadius: '16px',
+                  padding: '24px',
+                  boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
+                }}
+              >
+                <h3
+                  style={{
+                    fontSize: '18px',
+                    fontWeight: 600,
+                    color: '#1d1d1f',
+                    margin: '0 0 16px 0',
+                  }}
+                >
+                  Resources
+                </h3>
+                <ul
+                  style={{
+                    listStyle: 'none',
+                    margin: 0,
+                    padding: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                  }}
+                >
+                  <li>
+                    <a
+                      href="/features"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onNavigate('features');
+                      }}
+                      style={{
+                        color: '#0071e3',
+                        textDecoration: 'none',
+                        fontSize: '15px',
+                        fontWeight: 500,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}
+                    >
+                      <span style={{ fontSize: '18px' }}>&#x2192;</span> All Features
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="/tools/size-calculator"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onNavigate('size-calculator');
+                      }}
+                      style={{
+                        color: '#0071e3',
+                        textDecoration: 'none',
+                        fontSize: '15px',
+                        fontWeight: 500,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}
+                    >
+                      <span style={{ fontSize: '18px' }}>&#x2192;</span> Screenshot Size Calculator
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="/alternatives"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onNavigate('alternatives');
+                      }}
+                      style={{
+                        color: '#0071e3',
+                        textDecoration: 'none',
+                        fontSize: '15px',
+                        fontWeight: 500,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}
+                    >
+                      <span style={{ fontSize: '18px' }}>&#x2192;</span> Compare Alternatives
+                    </a>
+                  </li>
+                </ul>
+              </div>
+
+              {/* CTA Card */}
+              <div
+                style={{
+                  backgroundColor: '#0071e3',
+                  borderRadius: '16px',
+                  padding: '24px',
+                  color: '#fff',
+                }}
+              >
+                <h3
+                  style={{
+                    fontSize: '18px',
+                    fontWeight: 600,
+                    margin: '0 0 12px 0',
+                  }}
+                >
+                  Create Screenshots Now
+                </h3>
+                <p
+                  style={{
+                    fontSize: '14px',
+                    margin: '0 0 16px 0',
+                    opacity: 0.9,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Generate professional App Store screenshots with AI-powered localization.
+                </p>
+                <button
+                  onClick={() => onNavigate('register')}
+                  style={{
+                    backgroundColor: '#fff',
+                    color: '#0071e3',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    width: '100%',
+                  }}
+                >
+                  Get Started Free
+                </button>
+              </div>
+            </aside>
+          </div>
         </section>
 
         {/* Footer */}

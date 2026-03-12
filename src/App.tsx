@@ -10,8 +10,17 @@ import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { RefundPolicy } from './components/RefundPolicy';
 import { SizeCalculatorPage } from './pages/SizeCalculatorPage';
 import { IOSScreenshotsPage } from './pages/IOSScreenshotsPage';
+import { AndroidScreenshotsPage } from './pages/AndroidScreenshotsPage';
+import { ForIndieDevelopersPage } from './pages/ForIndieDevelopersPage';
 import { BlogPage } from './pages/BlogPage';
 import { BlogPostPage } from './pages/BlogPostPage';
+import { FeaturesPage } from './components/FeaturesPage';
+import { AlternativesPage } from './components/AlternativesPage';
+import { CompareAppScreensPage } from './components/CompareAppScreensPage';
+import { CompareAppLaunchpadPage } from './components/CompareAppLaunchpadPage';
+import { CompareScreenshotsProPage } from './components/CompareScreenshotsProPage';
+import { CompareAppurePage } from './components/CompareAppurePage';
+import { AboutPage } from './components/AboutPage';
 import { auth as authApi } from './services/api';
 type Route =
   | { page: 'landing' }
@@ -25,6 +34,15 @@ type Route =
   | { page: 'refund' }
   | { page: 'size-calculator' }
   | { page: 'ios-screenshots' }
+  | { page: 'android-screenshots' }
+  | { page: 'for-indie-developers' }
+  | { page: 'features' }
+  | { page: 'alternatives' }
+  | { page: 'compare-appscreens' }
+  | { page: 'compare-applaunchpad' }
+  | { page: 'compare-screenshots-pro' }
+  | { page: 'compare-appure' }
+  | { page: 'about' }
   | { page: 'blog' }
   | { page: 'blog-post'; slug: string };
 
@@ -125,6 +143,24 @@ function AppRouter() {
         setRoute({ page: 'size-calculator' });
       } else if (path === '/ios-screenshots') {
         setRoute({ page: 'ios-screenshots' });
+      } else if (path === '/android-screenshots') {
+        setRoute({ page: 'android-screenshots' });
+      } else if (path === '/for-indie-developers') {
+        setRoute({ page: 'for-indie-developers' });
+      } else if (path === '/features') {
+        setRoute({ page: 'features' });
+      } else if (path === '/alternatives') {
+        setRoute({ page: 'alternatives' });
+      } else if (path === '/compare/appscreens') {
+        setRoute({ page: 'compare-appscreens' });
+      } else if (path === '/compare/applaunchpad') {
+        setRoute({ page: 'compare-applaunchpad' });
+      } else if (path === '/compare/screenshots-pro') {
+        setRoute({ page: 'compare-screenshots-pro' });
+      } else if (path === '/compare/appure') {
+        setRoute({ page: 'compare-appure' });
+      } else if (path === '/about') {
+        setRoute({ page: 'about' });
       } else if (path === '/blog') {
         setRoute({ page: 'blog' });
       } else if (path.startsWith('/blog/')) {
@@ -146,8 +182,14 @@ function AppRouter() {
   useEffect(() => {
     if (loading) return;
 
-    // Legal and tool pages are always accessible, skip redirect logic
-    if (route.page === 'terms' || route.page === 'privacy' || route.page === 'refund' || route.page === 'size-calculator' || route.page === 'ios-screenshots' || route.page === 'blog' || route.page === 'blog-post') {
+    // Legal, tool, and marketing pages are always accessible, skip redirect logic
+    const publicPages = [
+      'terms', 'privacy', 'refund', 'size-calculator', 'ios-screenshots',
+      'android-screenshots', 'for-indie-developers', 'features', 'alternatives',
+      'compare-appscreens', 'compare-applaunchpad', 'compare-screenshots-pro',
+      'compare-appure', 'about', 'blog', 'blog-post'
+    ];
+    if (publicPages.includes(route.page)) {
       return;
     }
 
@@ -199,6 +241,33 @@ function AppRouter() {
     } else if (page === 'ios-screenshots') {
       path = '/ios-screenshots';
       newRoute = { page: 'ios-screenshots' };
+    } else if (page === 'android-screenshots') {
+      path = '/android-screenshots';
+      newRoute = { page: 'android-screenshots' };
+    } else if (page === 'for-indie-developers') {
+      path = '/for-indie-developers';
+      newRoute = { page: 'for-indie-developers' };
+    } else if (page === 'features') {
+      path = '/features';
+      newRoute = { page: 'features' };
+    } else if (page === 'alternatives') {
+      path = '/alternatives';
+      newRoute = { page: 'alternatives' };
+    } else if (page === 'compare-appscreens') {
+      path = '/compare/appscreens';
+      newRoute = { page: 'compare-appscreens' };
+    } else if (page === 'compare-applaunchpad') {
+      path = '/compare/applaunchpad';
+      newRoute = { page: 'compare-applaunchpad' };
+    } else if (page === 'compare-screenshots-pro') {
+      path = '/compare/screenshots-pro';
+      newRoute = { page: 'compare-screenshots-pro' };
+    } else if (page === 'compare-appure') {
+      path = '/compare/appure';
+      newRoute = { page: 'compare-appure' };
+    } else if (page === 'about') {
+      path = '/about';
+      newRoute = { page: 'about' };
     } else if (page === 'blog') {
       path = '/blog';
       newRoute = { page: 'blog' };
@@ -324,6 +393,83 @@ function AppRouter() {
         <BlogPostPage
           slug={route.slug}
           onNavigate={(page, slug) => navigate(page, slug)}
+        />
+      );
+
+    case 'android-screenshots':
+      return (
+        <AndroidScreenshotsPage
+          onGetStarted={() => navigate('register')}
+          onNavigate={(page) => navigate(page)}
+        />
+      );
+
+    case 'for-indie-developers':
+      return (
+        <ForIndieDevelopersPage
+          onGetStarted={() => navigate('register')}
+          onNavigate={(page) => navigate(page)}
+        />
+      );
+
+    case 'features':
+      return (
+        <FeaturesPage
+          onGetStarted={() => navigate('register')}
+          onNavigate={(page) => navigate(page)}
+        />
+      );
+
+    case 'alternatives':
+      return (
+        <AlternativesPage
+          onBack={() => navigate('landing')}
+          onNavigate={(page) => navigate(page)}
+          onGetStarted={() => navigate('register')}
+        />
+      );
+
+    case 'compare-appscreens':
+      return (
+        <CompareAppScreensPage
+          onBack={() => navigate('landing')}
+          onGetStarted={() => navigate('register')}
+          onNavigate={(page) => navigate(page)}
+        />
+      );
+
+    case 'compare-applaunchpad':
+      return (
+        <CompareAppLaunchpadPage
+          onBack={() => navigate('landing')}
+          onGetStarted={() => navigate('register')}
+          onNavigate={(page) => navigate(page)}
+        />
+      );
+
+    case 'compare-screenshots-pro':
+      return (
+        <CompareScreenshotsProPage
+          onBack={() => navigate('landing')}
+          onGetStarted={() => navigate('register')}
+          onNavigate={(page) => navigate(page)}
+        />
+      );
+
+    case 'compare-appure':
+      return (
+        <CompareAppurePage
+          onBack={() => navigate('landing')}
+          onGetStarted={() => navigate('register')}
+          onNavigate={(page) => navigate(page)}
+        />
+      );
+
+    case 'about':
+      return (
+        <AboutPage
+          onBack={() => navigate('landing')}
+          onNavigate={(page) => navigate(page)}
         />
       );
 

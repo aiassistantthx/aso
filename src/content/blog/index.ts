@@ -20,11 +20,35 @@ import AppStoreScreenshotBestPractices, {
   frontmatter as appStoreScreenshotBestPracticesMeta,
 } from './app-store-screenshot-best-practices.mdx';
 
+import BestAppScreenshotTools2026, {
+  frontmatter as bestAppScreenshotTools2026Meta,
+} from './best-app-screenshot-tools-2026.mdx';
+
+import AppStoreScreenshotSizes2026, {
+  frontmatter as appStoreScreenshotSizes2026Meta,
+} from './app-store-screenshot-sizes-2026.mdx';
+
+import HowToCreateAppStoreScreenshots, {
+  frontmatter as howToCreateAppStoreScreenshotsMeta,
+} from './how-to-create-app-store-screenshots.mdx';
+
 // Export all posts
 export const blogPosts: BlogPost[] = [
   {
     frontmatter: appStoreScreenshotBestPracticesMeta,
     Component: AppStoreScreenshotBestPractices,
+  },
+  {
+    frontmatter: bestAppScreenshotTools2026Meta,
+    Component: BestAppScreenshotTools2026,
+  },
+  {
+    frontmatter: appStoreScreenshotSizes2026Meta,
+    Component: AppStoreScreenshotSizes2026,
+  },
+  {
+    frontmatter: howToCreateAppStoreScreenshotsMeta,
+    Component: HowToCreateAppStoreScreenshots,
   },
 ];
 

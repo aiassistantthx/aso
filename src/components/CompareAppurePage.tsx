@@ -16,7 +16,7 @@ const colors = {
   successBg: '#F0FDF4',
 };
 
-interface CompareAppScreensPageProps {
+interface CompareAppurePageProps {
   onBack: () => void;
   onGetStarted: () => void;
   onNavigate?: (page: string) => void;
@@ -29,48 +29,48 @@ const faqSchema = {
   mainEntity: [
     {
       '@type': 'Question',
-      name: 'What is the main difference between LocalizeShots and AppScreens?',
+      name: 'What is the main difference between LocalizeShots and Appure?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'LocalizeShots uses AI to automatically generate marketing headlines and translate content to 40+ languages in one click. AppScreens focuses on template-based design with manual text editing.',
+        text: 'LocalizeShots uses AI to automatically generate marketing headlines, translate content to 40+ languages, and create ASO metadata. Appure focuses on design-first approach with basic templates but lacks AI-powered features.',
       },
     },
     {
       '@type': 'Question',
-      name: 'Which tool is better for indie developers?',
+      name: 'Is LocalizeShots more expensive than Appure?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'LocalizeShots is ideal for indie developers who want to quickly localize their app without hiring designers or translators. The AI-powered workflow saves hours of manual work.',
+        text: 'LocalizeShots Pro costs $4.99/month (billed yearly) compared to Appure at around $9/month. Despite being cheaper, LocalizeShots includes AI headline generation, AI translation, and ASO metadata features not available in Appure.',
       },
     },
     {
       '@type': 'Question',
-      name: 'Does LocalizeShots support all App Store languages?',
+      name: 'Does Appure support AI translation?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Yes, LocalizeShots supports 40+ languages including all languages available in the App Store. Translation is done with AI that understands app marketing context.',
+        text: 'No, Appure does not offer AI translation features. You would need to manually translate your content or use third-party translation services. LocalizeShots provides one-click AI translation to 40+ languages.',
       },
     },
     {
       '@type': 'Question',
-      name: 'Can I try LocalizeShots for free?',
+      name: 'Which tool is better for localizing my app to multiple languages?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Yes, LocalizeShots offers a free plan with 3 projects and 2 languages. You can test the AI headline generation and screenshot creation before upgrading.',
+        text: 'LocalizeShots is significantly better for localization. It offers AI-powered translation to 40+ languages with a single click, while Appure has limited language support and requires manual translation.',
       },
     },
     {
       '@type': 'Question',
-      name: 'Is LocalizeShots cheaper than AppScreens?',
+      name: 'Can I migrate from Appure to LocalizeShots?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'LocalizeShots Pro costs $4.99/month (billed yearly) compared to AppScreens starting at $9/month. LocalizeShots also includes AI features that would require additional tools or services with AppScreens.',
+        text: 'Yes, migration is easy. Simply upload your existing screenshots to LocalizeShots, and the AI will generate new marketing headlines and handle all translations automatically. Your workflow will become much faster.',
       },
     },
   ],
 };
 
-export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
+export const CompareAppurePage: React.FC<CompareAppurePageProps> = ({
   onBack,
   onGetStarted,
   onNavigate,
@@ -79,12 +79,12 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
   useEffect(() => {
     const script = document.createElement('script');
     script.type = 'application/ld+json';
-    script.id = 'faq-schema';
+    script.id = 'faq-schema-appure';
     script.textContent = JSON.stringify(faqSchema);
     document.head.appendChild(script);
 
     return () => {
-      const existing = document.getElementById('faq-schema');
+      const existing = document.getElementById('faq-schema-appure');
       if (existing) {
         existing.remove();
       }
@@ -96,64 +96,64 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
       feature: 'AI Headline Generation',
       localizeshots: true,
       localizeshotsNote: 'GPT-4 powered',
-      appscreens: false,
-      appscreensNote: 'Manual text only',
+      appure: false,
+      appureNote: 'Manual text only',
     },
     {
       feature: 'AI Translation',
       localizeshots: true,
       localizeshotsNote: '40+ languages, one-click',
-      appscreens: false,
-      appscreensNote: 'Manual or third-party',
+      appure: false,
+      appureNote: 'Limited languages',
     },
     {
       feature: 'ASO Metadata Generation',
       localizeshots: true,
       localizeshotsNote: 'Title, subtitle, keywords',
-      appscreens: false,
-      appscreensNote: 'Screenshots only',
+      appure: false,
+      appureNote: 'Not available',
     },
     {
       feature: 'Device Mockups',
       localizeshots: true,
       localizeshotsNote: 'iPhone frames included',
-      appscreens: true,
-      appscreensNote: 'Multiple device frames',
+      appure: true,
+      appureNote: 'Basic mockups',
     },
     {
       feature: 'Template Library',
       localizeshots: true,
       localizeshotsNote: 'Style presets',
-      appscreens: true,
-      appscreensNote: 'Large template library',
+      appure: true,
+      appureNote: 'Basic templates',
     },
     {
       feature: 'Drag & Drop Editor',
       localizeshots: true,
       localizeshotsNote: 'Canvas-based editor',
-      appscreens: true,
-      appscreensNote: 'Full visual editor',
+      appure: true,
+      appureNote: 'Design-first editor',
     },
     {
       feature: 'Batch Export',
       localizeshots: true,
       localizeshotsNote: 'All languages at once',
-      appscreens: true,
-      appscreensNote: 'Multiple sizes',
+      appure: true,
+      appureNote: 'Standard export',
     },
     {
       feature: 'Free Plan',
       localizeshots: true,
       localizeshotsNote: '3 projects, 2 languages',
-      appscreens: true,
-      appscreensNote: 'Limited features',
+      appure: true,
+      appureNote: 'Limited features',
     },
     {
       feature: 'Starting Price',
       localizeshots: true,
       localizeshotsNote: '$4.99/mo (yearly)',
-      appscreens: true,
-      appscreensNote: '$9/mo',
+      appure: true,
+      appureNote: '~$9/mo',
     },
   ];
 
@@ -167,31 +167,42 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
   ];
 
   const localizeshotsCons = [
-    'Smaller template library',
+    'Smaller template library than some competitors',
     'Fewer device frame options',
     'Newer product with smaller user base',
   ];
 
-  const appscreensPros = [
-    'Large template library',
-    'Multiple device mockup options',
-    'Established product with proven track record',
-    'Advanced visual editor features',
+  const appurePros = [
+    'Design-first approach for creative control',
+    'Budget-friendly option at ~$9/month',
+    'Simple interface for basic use cases',
+    'Basic template library included',
   ];
 
-  const appscreensCons = [
+  const appureCons = [
     'No AI headline generation',
-    'Manual translation required',
+    'No AI translation feature',
     'No ASO metadata generation',
-    'Higher starting price',
-    'More time-consuming workflow',
+    'Limited language support',
+    'More manual work required',
+    'No advanced automation features',
   ];
 
   const faqs = [
     {
-      question: 'What is the main difference between LocalizeShots and AppScreens?',
+      question: 'What is the main difference between LocalizeShots and Appure?',
       answer:
-        'LocalizeShots uses AI to automatically generate marketing headlines and translate content to 40+ languages in one click. AppScreens focuses on template-based design with manual text editing. If you want speed and automation, LocalizeShots is the better choice. If you prefer full manual control over design, AppScreens might suit you.',
+        'LocalizeShots uses AI to automatically generate marketing headlines, translate content to 40+ languages, and create ASO metadata. Appure focuses on a design-first approach with basic templates but lacks AI-powered automation features. If you want speed and automation, LocalizeShots is the better choice.',
+    },
+    {
+      question: 'Is LocalizeShots more expensive than Appure?',
+      answer:
+        'Actually, LocalizeShots is cheaper. LocalizeShots Pro costs $4.99/month when billed yearly, while Appure costs around $9/month. Despite the lower price, LocalizeShots includes advanced AI features that Appure does not offer.',
+    },
+    {
+      question: 'Does Appure support AI translation?',
+      answer:
+        'No, Appure does not offer AI translation features. You would need to manually translate your content or use third-party translation services. LocalizeShots provides one-click AI translation to 40+ languages, saving hours of work.',
     },
     {
       question: 'Which tool is better for indie developers?',
@@ -199,24 +210,14 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
         'LocalizeShots is ideal for indie developers who want to quickly localize their app without hiring designers or translators. The AI-powered workflow saves hours of manual work and the lower price point fits indie budgets.',
     },
     {
-      question: 'Does LocalizeShots support all App Store languages?',
+      question: 'Which tool is better for localizing to multiple languages?',
       answer:
-        'Yes, LocalizeShots supports 40+ languages including all major App Store languages. Translation is done with AI that understands app marketing context, ensuring natural-sounding localized content.',
+        'LocalizeShots is significantly better for multi-language localization. It offers AI-powered translation to 40+ languages with a single click, while Appure has limited language support and requires manual translation work.',
     },
     {
-      question: 'Can I try LocalizeShots for free?',
+      question: 'Can I migrate from Appure to LocalizeShots?',
       answer:
-        'Yes, LocalizeShots offers a free plan with 3 projects and 2 languages. You can test the AI headline generation and screenshot creation before deciding to upgrade to Pro.',
-    },
-    {
-      question: 'Is LocalizeShots cheaper than AppScreens?',
-      answer:
-        'Yes, LocalizeShots Pro costs $4.99/month when billed yearly, compared to AppScreens starting at $9/month. Additionally, LocalizeShots includes AI translation and metadata generation that would require separate tools or services with other solutions.',
-    },
-    {
-      question: 'Can I migrate from AppScreens to LocalizeShots?',
-      answer:
-        'Yes, you can easily switch to LocalizeShots. Simply upload your existing screenshots to LocalizeShots, and the AI will generate new headlines and handle translations. Your workflow will become significantly faster.',
+        'Yes, migration is straightforward. Simply upload your existing screenshots to LocalizeShots, and the AI will generate new marketing headlines and handle all translations automatically. Your workflow will become much faster and more efficient.',
     },
   ];
 
@@ -246,12 +247,12 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
       {/* Hero Section */}
       <section style={styles.hero}>
         <div style={styles.heroContent}>
-          <span style={styles.heroBadge}>AppScreens Alternative</span>
+          <span style={styles.heroBadge}>Appure Alternative</span>
           <h1 style={styles.heroTitle}>
-            LocalizeShots vs AppScreens
+            LocalizeShots vs Appure
           </h1>
           <p style={styles.heroSubtitle}>
-            Looking for an AppScreens alternative? Compare features, pricing, and see why developers
+            Looking for an Appure alternative? Compare features, pricing, and see why developers
             are switching to LocalizeShots for AI-powered screenshot localization.
           </p>
           <button style={styles.heroCtaButton} onClick={onGetStarted}>
@@ -292,7 +293,7 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
             </div>
             <h3 style={styles.quickCompareTitle}>AI-Powered</h3>
             <p style={styles.quickCompareText}>
-              LocalizeShots generates headlines automatically. AppScreens requires manual text entry.
+              LocalizeShots generates headlines automatically. Appure requires manual text entry.
             </p>
           </div>
           <div style={styles.quickCompareCard}>
@@ -308,7 +309,7 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
             </div>
             <h3 style={styles.quickCompareTitle}>40+ Languages</h3>
             <p style={styles.quickCompareText}>
-              One-click AI translation vs manual translation with AppScreens.
+              One-click AI translation vs limited language support with Appure.
             </p>
           </div>
           <div style={styles.quickCompareCard}>
@@ -323,9 +324,9 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
                 />
               </svg>
             </div>
-            <h3 style={styles.quickCompareTitle}>50% Cheaper</h3>
+            <h3 style={styles.quickCompareTitle}>45% Cheaper</h3>
             <p style={styles.quickCompareText}>
-              $4.99/mo vs $9/mo - save money without sacrificing features.
+              $4.99/mo vs ~$9/mo - get more features for less money.
             </p>
           </div>
         </div>
@@ -335,7 +336,7 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
       <section style={styles.comparisonSection}>
         <h2 style={styles.sectionTitle}>Feature Comparison</h2>
         <p style={styles.sectionSubtitle}>
-          A detailed look at how LocalizeShots and AppScreens compare
+          A detailed look at how LocalizeShots and Appure compare
         </p>
 
         <div style={styles.tableWrapper}>
@@ -364,7 +365,7 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
                   </div>
                 </th>
                 <th style={styles.tableHeader}>
-                  <span style={styles.competitorName}>AppScreens</span>
+                  <span style={styles.competitorName}>Appure</span>
                 </th>
               </tr>
             </thead>
@@ -401,7 +402,7 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
                   </td>
                   <td style={styles.tableCell}>
                     <div style={styles.featureCheck}>
-                      {row.appscreens ? (
+                      {row.appure ? (
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                           <circle cx="12" cy="12" r="10" fill={colors.successBg} />
                           <path
@@ -423,7 +424,7 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
                           />
                         </svg>
                       )}
-                      <span style={styles.featureNote}>{row.appscreensNote}</span>
+                      <span style={styles.featureNote}>{row.appureNote}</span>
                     </div>
                   </td>
                 </tr>
@@ -506,10 +507,10 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
             </div>
           </div>
 
-          {/* AppScreens */}
+          {/* Appure */}
           <div style={styles.prosConsCard}>
             <div style={styles.prosConsHeader}>
-              <span style={styles.competitorName}>AppScreens</span>
+              <span style={styles.competitorName}>Appure</span>
             </div>
             <div style={styles.prosList}>
               <h4 style={styles.prosTitle}>
@@ -525,7 +526,7 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
                 Pros
               </h4>
               <ul style={styles.prosListItems}>
-                {appscreensPros.map((pro, i) => (
+                {appurePros.map((pro, i) => (
                   <li key={i} style={styles.prosItem}>
                     {pro}
                   </li>
@@ -545,7 +546,7 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
                 Cons
               </h4>
               <ul style={styles.consListItems}>
-                {appscreensCons.map((con, i) => (
+                {appureCons.map((con, i) => (
                   <li key={i} style={styles.consItem}>
                     {con}
                   </li>
@@ -556,10 +557,113 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
         </div>
       </section>
 
+      {/* Pricing Comparison */}
+      <section style={styles.pricingSection}>
+        <h2 style={styles.sectionTitle}>Pricing Comparison</h2>
+        <p style={styles.sectionSubtitle}>
+          See how the pricing stacks up between LocalizeShots and Appure
+        </p>
+
+        <div style={styles.pricingGrid}>
+          <div style={styles.pricingCard}>
+            <div style={styles.pricingHeader}>
+              <div style={styles.logoMini}>
+                <div style={styles.logoIconMini}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="2" width="18" height="20" rx="3" fill="white" />
+                    <rect x="6" y="5" width="12" height="3" rx="1" fill={colors.accent} />
+                    <rect
+                      x="6"
+                      y="10"
+                      width="12"
+                      height="8"
+                      rx="1"
+                      fill={colors.accent}
+                      fillOpacity="0.3"
+                    />
+                  </svg>
+                </div>
+                LocalizeShots
+              </div>
+            </div>
+            <div style={styles.pricingBody}>
+              <div style={styles.pricingPrice}>
+                <span style={styles.pricingAmount}>$4.99</span>
+                <span style={styles.pricingPeriod}>/month (yearly)</span>
+              </div>
+              <div style={styles.pricingFeatures}>
+                <div style={styles.pricingFeature}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17l-5-5" stroke={colors.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  AI headline generation
+                </div>
+                <div style={styles.pricingFeature}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17l-5-5" stroke={colors.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  40+ languages translation
+                </div>
+                <div style={styles.pricingFeature}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17l-5-5" stroke={colors.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  ASO metadata generation
+                </div>
+                <div style={styles.pricingFeature}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17l-5-5" stroke={colors.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Unlimited projects
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={styles.pricingCard}>
+            <div style={styles.pricingHeader}>
+              <span style={styles.competitorName}>Appure</span>
+            </div>
+            <div style={styles.pricingBody}>
+              <div style={styles.pricingPrice}>
+                <span style={styles.pricingAmount}>~$9</span>
+                <span style={styles.pricingPeriod}>/month</span>
+              </div>
+              <div style={styles.pricingFeatures}>
+                <div style={styles.pricingFeature}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17l-5-5" stroke={colors.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Design-first approach
+                </div>
+                <div style={styles.pricingFeature}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17l-5-5" stroke={colors.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Basic template library
+                </div>
+                <div style={styles.pricingFeatureMissing}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M18 6L6 18M6 6l12 12" stroke="#DC2626" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  No AI features
+                </div>
+                <div style={styles.pricingFeatureMissing}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M18 6L6 18M6 6l12 12" stroke="#DC2626" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  Limited language support
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ Section */}
       <section style={styles.faqSection}>
         <h2 style={styles.sectionTitle}>Frequently Asked Questions</h2>
-        <p style={styles.sectionSubtitle}>Common questions about LocalizeShots vs AppScreens</p>
+        <p style={styles.sectionSubtitle}>Common questions about LocalizeShots vs Appure</p>
 
         <div style={styles.faqList}>
           {faqs.map((faq, index) => (
@@ -588,6 +692,15 @@ export const CompareAppScreensPage: React.FC<CompareAppScreensPageProps> = ({
               More Comparisons
             </h3>
             <ul style={styles.relatedList}>
+              <li>
+                <a
+                  href="/compare/appscreens"
+                  onClick={(e) => { e.preventDefault(); onNavigate?.('compare-appscreens'); }}
+                  style={styles.relatedLink}
+                >
+                  LocalizeShots vs AppScreens
+                </a>
+              </li>
               <li>
                 <a
                   href="/compare/applaunchpad"
@@ -1010,10 +1123,67 @@ const styles: Record<string, React.CSSProperties> = {
     position: 'relative',
   },
 
+  // Pricing
+  pricingSection: {
+    padding: '60px 24px',
+    backgroundColor: colors.card,
+  },
+  pricingGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: 24,
+    maxWidth: 700,
+    margin: '0 auto',
+  },
+  pricingCard: {
+    backgroundColor: colors.bg,
+    borderRadius: 16,
+    overflow: 'hidden',
+    border: `1px solid ${colors.borderLight}`,
+  },
+  pricingHeader: {
+    padding: '20px 24px',
+    borderBottom: `1px solid ${colors.borderLight}`,
+    backgroundColor: colors.card,
+  },
+  pricingBody: {
+    padding: '24px',
+  },
+  pricingPrice: {
+    marginBottom: 20,
+  },
+  pricingAmount: {
+    fontSize: 36,
+    fontWeight: 600,
+    color: colors.text,
+  },
+  pricingPeriod: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  pricingFeatures: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+  },
+  pricingFeature: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    fontSize: 14,
+    color: colors.text,
+  },
+  pricingFeatureMissing: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    fontSize: 14,
+    color: colors.textMuted,
+  },
+
   // FAQ
   faqSection: {
     padding: '60px 24px',
-    backgroundColor: colors.card,
   },
   faqList: {
     maxWidth: 700,
@@ -1039,6 +1209,7 @@ const styles: Record<string, React.CSSProperties> = {
   // Related Comparisons
   relatedSection: {
     padding: '60px 24px',
+    backgroundColor: colors.card,
   },
   relatedGrid: {
     display: 'grid',
@@ -1048,7 +1219,7 @@ const styles: Record<string, React.CSSProperties> = {
     margin: '0 auto',
   },
   relatedCard: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.bg,
     borderRadius: 16,
     padding: 24,
     border: `1px solid ${colors.borderLight}`,
@@ -1129,15 +1300,23 @@ const styles: Record<string, React.CSSProperties> = {
 const styleSheet = document.createElement('style');
 styleSheet.textContent = `
   @media (max-width: 768px) {
-    .compare-quick-grid {
+    .compare-appure-quick-grid {
       grid-template-columns: 1fr !important;
     }
-    .compare-pros-cons-grid {
+    .compare-appure-pros-cons-grid {
+      grid-template-columns: 1fr !important;
+    }
+    .compare-appure-pricing-grid {
+      grid-template-columns: 1fr !important;
+    }
+    .compare-appure-related-grid {
       grid-template-columns: 1fr !important;
     }
   }
 `;
-if (!document.getElementById('compare-appscreens-styles')) {
-  styleSheet.id = 'compare-appscreens-styles';
+if (!document.getElementById('compare-appure-styles')) {
+  styleSheet.id = 'compare-appure-styles';
   document.head.appendChild(styleSheet);
 }
+
+export default CompareAppurePage;
