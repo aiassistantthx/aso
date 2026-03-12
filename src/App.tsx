@@ -8,8 +8,11 @@ import { WizardPage } from './components/WizardPage';
 import { TermsOfService } from './components/TermsOfService';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { RefundPolicy } from './components/RefundPolicy';
+import { SizeCalculatorPage } from './pages/SizeCalculatorPage';
+import { IOSScreenshotsPage } from './pages/IOSScreenshotsPage';
+import { BlogPage } from './pages/BlogPage';
+import { BlogPostPage } from './pages/BlogPostPage';
 import { auth as authApi } from './services/api';
-
 type Route =
   | { page: 'landing' }
   | { page: 'login' }
@@ -19,7 +22,11 @@ type Route =
   | { page: 'project'; projectId: string }
   | { page: 'terms' }
   | { page: 'privacy' }
-  | { page: 'refund' };
+  | { page: 'refund' }
+  | { page: 'size-calculator' }
+  | { page: 'ios-screenshots' }
+  | { page: 'blog' }
+  | { page: 'blog-post'; slug: string };
 
 function AdminPlanToggle() {
   const { user, refreshUser } = useAuth();
@@ -114,6 +121,17 @@ function AppRouter() {
         setRoute({ page: 'privacy' });
       } else if (path === '/refund') {
         setRoute({ page: 'refund' });
+      } else if (path === '/tools/size-calculator') {
+        setRoute({ page: 'size-calculator' });
+      } else if (path === '/ios-screenshots') {
+        setRoute({ page: 'ios-screenshots' });
+      } else if (path === '/blog') {
+        setRoute({ page: 'blog' });
+      } else if (path.startsWith('/blog/')) {
+        const slug = path.replace('/blog/', '');
+        if (slug) {
+          setRoute({ page: 'blog-post', slug });
+        }
       } else {
         setRoute({ page: 'landing' });
       }
@@ -128,8 +146,8 @@ function AppRouter() {
   useEffect(() => {
     if (loading) return;
 
-    // Legal pages are always accessible, skip redirect logic
-    if (route.page === 'terms' || route.page === 'privacy' || route.page === 'refund') {
+    // Legal and tool pages are always accessible, skip redirect logic
+    if (route.page === 'terms' || route.page === 'privacy' || route.page === 'refund' || route.page === 'size-calculator' || route.page === 'ios-screenshots' || route.page === 'blog' || route.page === 'blog-post') {
       return;
     }
 
@@ -175,6 +193,18 @@ function AppRouter() {
     } else if (page === 'refund') {
       path = '/refund';
       newRoute = { page: 'refund' };
+    } else if (page === 'size-calculator') {
+      path = '/tools/size-calculator';
+      newRoute = { page: 'size-calculator' };
+    } else if (page === 'ios-screenshots') {
+      path = '/ios-screenshots';
+      newRoute = { page: 'ios-screenshots' };
+    } else if (page === 'blog') {
+      path = '/blog';
+      newRoute = { page: 'blog' };
+    } else if (page === 'blog-post' && projectId) {
+      path = `/blog/${projectId}`;
+      newRoute = { page: 'blog-post', slug: projectId };
     } else {
       path = '/';
       newRoute = { page: 'landing' };
@@ -267,6 +297,35 @@ function AppRouter() {
 
     case 'refund':
       return <RefundPolicy onBack={() => navigate('landing')} />;
+
+    case 'size-calculator':
+      return (
+        <SizeCalculatorPage
+          onNavigate={(page) => navigate(page)}
+        />
+      );
+
+    case 'ios-screenshots':
+      return (
+        <IOSScreenshotsPage
+          onGetStarted={() => navigate('register')}
+          onLogin={() => navigate('login')}
+          onNavigate={(page) => navigate(page)}
+        />
+      );
+
+    case 'blog':
+      return (
+        <BlogPage onNavigate={(page, slug) => navigate(page, slug)} />
+      );
+
+    case 'blog-post':
+      return (
+        <BlogPostPage
+          slug={route.slug}
+          onNavigate={(page, slug) => navigate(page, slug)}
+        />
+      );
 
     default:
       return null;

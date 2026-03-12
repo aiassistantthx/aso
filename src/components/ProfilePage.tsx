@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../services/authContext';
 import { AppHeader } from './AppHeader';
 import { billing, PricingResponse } from '../services/api';
+import { Breadcrumbs, breadcrumbConfig } from './Breadcrumbs';
 
 // Inject responsive styles for ProfilePage
 if (typeof document !== 'undefined' && !document.getElementById('profile-page-responsive')) {
@@ -242,6 +243,8 @@ export const ProfilePage: React.FC<Props> = ({ onNavigate }) => {
 
   return (
     <div style={styles.container}>
+      {/* BreadcrumbList Schema for SEO */}
+      <Breadcrumbs items={breadcrumbConfig.profile} />
       <AppHeader currentPage="profile" onNavigate={onNavigate} />
 
       <div style={styles.content}>

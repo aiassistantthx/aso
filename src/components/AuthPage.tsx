@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../services/authContext';
+import { Breadcrumbs, breadcrumbConfig } from './Breadcrumbs';
 
 interface Props {
   mode: 'login' | 'register';
@@ -323,6 +324,8 @@ export const AuthPage: React.FC<Props> = ({ mode, onToggleMode, onSuccess }) => 
 
   return (
     <div style={styles.container}>
+      {/* BreadcrumbList Schema for SEO */}
+      <Breadcrumbs items={mode === 'login' ? breadcrumbConfig.login : breadcrumbConfig.register} />
       <div style={styles.card}>
         <div style={styles.logoContainer as React.CSSProperties}>
           <div style={styles.logoIcon as React.CSSProperties}>

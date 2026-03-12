@@ -3,6 +3,7 @@ import { unified as unifiedApi, UnifiedProjectFull, ApiError } from '../../servi
 import { useAuth } from '../../services/authContext';
 import { AppHeader } from '../AppHeader';
 import { UpgradeModal, UpgradeLimitType } from '../UpgradeModal';
+import { OptimizedImage } from '../OptimizedImage';
 import { TONE_PRESETS, LAYOUT_PRESETS } from '../../constants/tonePresets';
 import { getLanguageName, getLanguagesForPlatform } from '../../constants/languages';
 import { THEME_PRESETS, THEME_PRESET_GROUPS } from '../../constants/templates';
@@ -14,6 +15,8 @@ import JSZip from 'jszip';
 import { WizardProjectData, Props, STEPS, METADATA_FIELDS } from './wizardTypes';
 import { toWizardData, toUnifiedUpdate, resolveStyleConfig, buildEditorScreenshots } from './wizardHelpers';
 import { pageStyles, injectWizardStyles } from './wizardStyles';
+import { HowToSchema } from './HowToSchema';
+import { Breadcrumbs, breadcrumbConfig } from '../Breadcrumbs';
 
 injectWizardStyles();
 
@@ -675,6 +678,9 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
 
   return (
     <div style={pageStyles.container}>
+      {/* BreadcrumbList Schema for SEO */}
+      <Breadcrumbs items={breadcrumbConfig.project(project.appName || 'Project')} />
+      <HowToSchema />
       <AppHeader
         currentPage="wizard"
         onNavigate={onNavigate}
@@ -873,7 +879,14 @@ export const WizardPage: React.FC<Props> = ({ projectId, onBack, onNavigate }) =
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '12px', marginBottom: '20px' }} className="wizard-screenshots-grid">
               {(project.uploadedScreenshots || []).map((url, i) => (
                 <div key={i} style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e5e5ea', aspectRatio: '9/19.5' }}>
-                  <img src={url} alt={`Screenshot ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <OptimizedImage
+                    src={url}
+                    alt={`Screenshot ${i + 1}`}
+                    width={120}
+                    height={260}
+                    lazy={true}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
                   <button
                     style={{
                       position: 'absolute', top: '4px', right: '4px',

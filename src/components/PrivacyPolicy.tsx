@@ -1,4 +1,5 @@
 import React from 'react';
+import { Breadcrumbs, breadcrumbConfig } from './Breadcrumbs';
 
 const colors = {
   bg: '#FFFBF5',
@@ -15,6 +16,8 @@ interface PrivacyPolicyProps {
 export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack }) => {
   return (
     <div style={styles.container}>
+      {/* BreadcrumbList Schema for SEO */}
+      <Breadcrumbs items={breadcrumbConfig.privacy} />
       <nav style={styles.nav}>
         <button onClick={onBack} style={styles.backButton}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">

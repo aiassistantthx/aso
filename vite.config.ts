@@ -1,8 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import mdx from '@mdx-js/rollup'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    { enforce: 'pre', ...mdx() },
+    react(),
+  ],
   server: {
     port: 3000,
     open: true,
@@ -16,5 +20,29 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+  },
+  build: {
+    // Optimize chunk splitting for better caching and faster initial load
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunks for better caching
+          'react-vendor': ['react', 'react-dom'],
+          'helmet': ['react-helmet-async'],
+        },
+      },
+    },
+    // Enable minification
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
+    // Generate sourcemaps for production debugging
+    sourcemap: false,
+    // Target modern browsers for smaller bundles
+    target: 'es2020',
   },
 })

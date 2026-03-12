@@ -1,6 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="UTF-8" />
+
+    <!-- Resource Hints for Performance -->
+    <!-- Preconnect to critical third-party origins -->
+    <link rel="preconnect" href="https://www.googletagmanager.com">
+    <link rel="preconnect" href="https://umami.sparrowapps.io">
+    <link rel="preconnect" href="https://datafa.st">
+
+    <!-- DNS Prefetch as fallback for older browsers -->
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+    <link rel="dns-prefetch" href="https://umami.sparrowapps.io">
+    <link rel="dns-prefetch" href="https://datafa.st">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+
+    <!-- LCP Optimization: Preload hero image -->
+    <link rel="preload" as="image" href="/demos/demo1.png" fetchpriority="high">
+
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
     new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -8,15 +26,19 @@
     'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
     })(window,document,'script','dataLayer','GTM-KDPJMVNF');</script>
     <!-- End Google Tag Manager -->
-    <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>App Store Screenshot Generator</title>
     <script defer src="https://umami.sparrowapps.io/script.js" data-website-id="e03cf230-8be4-45f4-adb2-6131665a2e1b"></script>
-    <!-- Google Fonts -->
+    <!-- Google Fonts - Preconnect first, then non-blocking load -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Lato:wght@100;300;400;700;900&family=Montserrat:wght@100;200;300;400;500;600;700;800;900&family=Open+Sans:wght@300;400;500;600;700;800&family=Oswald:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800;900&family=Poppins:wght@100;200;300;400;500;600;700;800;900&family=Raleway:wght@100;200;300;400;500;600;700;800;900&family=Roboto:wght@100;300;400;500;700;900&family=Source+Sans+3:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Critical fonts: Inter for UI (only essential weights) -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Non-critical fonts: Load asynchronously after page load -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:wght@100;200;300;700;800;900&family=Lato:wght@100;300;400;700;900&family=Montserrat:wght@100;200;300;400;500;600;700;800;900&family=Open+Sans:wght@300;400;500;600;700;800&family=Oswald:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800;900&family=Poppins:wght@100;200;300;400;500;600;700;800;900&family=Raleway:wght@100;200;300;400;500;600;700;800;900&family=Roboto:wght@100;300;400;500;700;900&family=Source+Sans+3:wght@200;300;400;500;600;700;800;900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:wght@100;200;300;700;800;900&family=Lato:wght@100;300;400;700;900&family=Montserrat:wght@100;200;300;400;500;600;700;800;900&family=Open+Sans:wght@300;400;500;600;700;800&family=Oswald:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800;900&family=Poppins:wght@100;200;300;400;500;600;700;800;900&family=Raleway:wght@100;200;300;400;500;600;700;800;900&family=Roboto:wght@100;300;400;500;700;900&family=Source+Sans+3:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet"></noscript>
     <style>
       * {
         margin: 0;
@@ -148,6 +170,42 @@
 
       .slide-in {
         animation: slideIn 0.3s ease-out;
+      }
+
+      /* Critical above-the-fold CSS for Landing page LCP optimization */
+      @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      /* Hero section skeleton to prevent CLS */
+      #root {
+        min-height: 100vh;
+      }
+
+      /* Landing page critical styles - prevents FOUC and improves LCP */
+      .landing-hero-visual img {
+        content-visibility: auto;
+        contain-intrinsic-size: 900px 600px;
+      }
+
+      /* CLS Prevention: Global image and thumbnail styles */
+      img {
+        /* Prevent images from causing layout shifts before load */
+        height: auto;
+        max-width: 100%;
+      }
+
+      /* Dashboard card thumbnails - reserve space */
+      .dashboard-grid img {
+        aspect-ratio: 280 / 180;
+        object-fit: cover;
+      }
+
+      /* Wizard screenshot grid - reserve space */
+      .wizard-screenshots-grid > div {
+        aspect-ratio: 9 / 19.5;
+        min-height: 0;
       }
     </style>
     <script

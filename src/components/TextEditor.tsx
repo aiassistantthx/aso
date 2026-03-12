@@ -1,6 +1,7 @@
 import React from 'react';
 import { Screenshot, TranslationData, LaurelDecoration } from '../types';
 import { APP_STORE_LANGUAGES } from '../constants/languages';
+import { OptimizedImage } from './OptimizedImage';
 
 interface Props {
   screenshots: Screenshot[];
@@ -257,9 +258,12 @@ export const TextEditor: React.FC<Props> = ({
         return (
           <div key={screenshot.id} style={styles.textItem}>
             {screenshot.preview ? (
-              <img
+              <OptimizedImage
                 src={screenshot.preview}
                 alt={`Screenshot ${index + 1}`}
+                width={50}
+                height={86}
+                lazy={true}
                 style={styles.thumbnail}
               />
             ) : (

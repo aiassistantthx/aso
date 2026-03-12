@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TranslationData, Screenshot, LaurelDecoration } from '../types';
 import { APP_STORE_LANGUAGES } from '../constants/languages';
+import { OptimizedImage } from './OptimizedImage';
 
 interface Props {
   translationData: TranslationData;
@@ -242,9 +243,12 @@ export const TranslationEditor: React.FC<Props> = ({
                 <div style={styles.screenshotTitle}>
                   Screenshot {sIdx + 1}
                   {screenshot.preview && (
-                    <img
+                    <OptimizedImage
                       src={screenshot.preview}
                       alt=""
+                      width={23}
+                      height={40}
+                      lazy={true}
                       style={{
                         height: '40px',
                         marginLeft: '12px',

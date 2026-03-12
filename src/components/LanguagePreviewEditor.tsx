@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { TranslationData, Screenshot, StyleConfig, DeviceSize, DEVICE_SIZES, LaurelDecoration, Decoration, PerLanguageScreenshotStyle } from '../types';
 import { APP_STORE_LANGUAGES } from '../constants/languages';
 import { generatePreviewCanvas, getElementBounds } from '../services/canvas';
+import { OptimizedImage } from './OptimizedImage';
 
 interface Props {
   translationData: TranslationData;
@@ -622,10 +623,13 @@ export const LanguagePreviewEditor: React.FC<Props> = ({
         <div style={styles.screenshotStrip}>
           {screenshots.map((s, idx) => (
             s.preview ? (
-              <img
+              <OptimizedImage
                 key={s.id}
                 src={s.preview}
                 alt={`Screenshot ${idx + 1}`}
+                width={40}
+                height={72}
+                lazy={true}
                 style={{
                   ...styles.thumbnail,
                   ...(idx === selectedScreenshot ? styles.thumbnailActive : {})

@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { billing, PricingResponse } from '../services/api';
+import { SchemaMarkup } from './SchemaMarkup';
+import { OptimizedImage } from './OptimizedImage';
+import { Breadcrumbs, breadcrumbConfig } from './Breadcrumbs';
 
 interface Props {
   onGetStarted: () => void;
@@ -61,6 +64,13 @@ const DemoSlideshow: React.FC = () => {
     setTimeout(() => { setCurrent(idx); setFade(true); }, 200);
     setResetKey(k => k + 1);
   };
+
+  // Preload next image for smooth slideshow transitions
+  useEffect(() => {
+    const nextIdx = (current + 1) % DEMO_SLIDES.length;
+    const img = new Image();
+    img.src = DEMO_SLIDES[nextIdx].src;
+  }, [current]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -127,9 +137,13 @@ const DemoSlideshow: React.FC = () => {
         <button onClick={prev} style={{ ...arrowBtn, left: 10 }} aria-label="Previous">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
-        <img
+        <OptimizedImage
           src={DEMO_SLIDES[current].src}
           alt={DEMO_SLIDES[current].label}
+          width={900}
+          height={600}
+          priority={current === 0}
+          lazy={current !== 0}
           style={{
             ...slideshowStyles.image,
             opacity: fade ? 1 : 0,
@@ -141,6 +155,87 @@ const DemoSlideshow: React.FC = () => {
       </div>
     </div>
   );
+};
+
+// FAQ Item component with accordion behavior
+const FAQItem: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div style={faqItemStyles.container} className="landing-faq-item">
+      <button
+        style={faqItemStyles.question}
+        onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+      >
+        <span style={faqItemStyles.questionText}>{question}</span>
+        <span style={{
+          ...faqItemStyles.icon,
+          transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+        }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M6 9l6 6 6-6" stroke={colors.textSecondary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </span>
+      </button>
+      <div style={{
+        ...faqItemStyles.answerWrapper,
+        maxHeight: isOpen ? '200px' : '0px',
+        opacity: isOpen ? 1 : 0,
+        paddingBottom: isOpen ? '20px' : '0px',
+      }}>
+        <p style={faqItemStyles.answer}>{answer}</p>
+      </div>
+    </div>
+  );
+};
+
+const faqItemStyles: Record<string, React.CSSProperties> = {
+  container: {
+    backgroundColor: colors.card,
+    borderRadius: 14,
+    border: `1px solid ${colors.borderLight}`,
+    overflow: 'hidden',
+    transition: 'border-color 0.2s',
+  },
+  question: {
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '20px 24px',
+    border: 'none',
+    background: 'none',
+    cursor: 'pointer',
+    textAlign: 'left',
+  },
+  questionText: {
+    fontSize: 16,
+    fontWeight: 500,
+    color: colors.text,
+    letterSpacing: '-0.2px',
+    paddingRight: 16,
+  },
+  icon: {
+    flexShrink: 0,
+    transition: 'transform 0.3s ease',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  answerWrapper: {
+    overflow: 'hidden',
+    transition: 'max-height 0.3s ease, opacity 0.3s ease, padding-bottom 0.3s ease',
+    paddingLeft: 24,
+    paddingRight: 24,
+  },
+  answer: {
+    margin: 0,
+    fontSize: 15,
+    lineHeight: 1.7,
+    color: colors.textSecondary,
+    fontWeight: 400,
+  },
 };
 
 const slideshowStyles: Record<string, React.CSSProperties> = {
@@ -183,10 +278,13 @@ const slideshowStyles: Record<string, React.CSSProperties> = {
     position: 'relative' as const,
     overflow: 'hidden',
     backgroundColor: colors.bg,
+    // Reserve space for image to prevent CLS (900x600 aspect ratio)
+    aspectRatio: '3 / 2',
   },
   image: {
     width: '100%',
-    height: 'auto',
+    height: '100%',
+    objectFit: 'contain',
     display: 'block',
     transition: 'opacity 0.3s ease-in-out',
   },
@@ -216,6 +314,11 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
 
   return (
     <div style={styles.container}>
+      {/* Schema.org Structured Data */}
+      <SchemaMarkup monthlyPrice={monthlyPrice} yearlyPrice={yearlyTotal} />
+      {/* BreadcrumbList Schema for SEO */}
+      <Breadcrumbs items={breadcrumbConfig.home} />
+
       {/* Navigation */}
       <nav style={{
         ...styles.nav,
@@ -586,6 +689,37 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
         </div>
       </section>
 
+      {/* FAQ Section */}
+      <section id="faq" style={styles.faq}>
+        <SectionHeader
+          label="FAQ"
+          title="Frequently asked questions"
+          subtitle="Everything you need to know about LocalizeShots"
+        />
+        <div style={styles.faqContainer} className="landing-faq-container">
+          <FAQItem
+            question="What's included in the free plan?"
+            answer="The free plan includes 3 projects, 2 target languages, all mockup styles, smart AI-generated headlines, and ZIP export. It's perfect for trying out LocalizeShots before upgrading."
+          />
+          <FAQItem
+            question="What's the difference between Free and Pro plans?"
+            answer="Pro unlocks unlimited projects, all 40+ languages, ASO metadata generation (app name, subtitle, keywords, description), and priority support. The free plan is limited to 3 projects and 2 languages."
+          />
+          <FAQItem
+            question="Can I cancel my subscription anytime?"
+            answer="Yes, you can cancel your Pro subscription at any time. Your access continues until the end of your billing period. No questions asked."
+          />
+          <FAQItem
+            question="Do you offer refunds?"
+            answer="We offer a 7-day money-back guarantee for Pro subscriptions. If you're not satisfied, contact us within 7 days of purchase for a full refund."
+          />
+          <FAQItem
+            question="How does the AI generation work?"
+            answer="Our AI analyzes your app description and keywords to generate compelling marketing headlines and ASO-optimized metadata. It uses advanced language models to create content that converts, then translates everything while preserving marketing impact."
+          />
+        </div>
+      </section>
+
       {/* Footer */}
       <footer style={styles.footer}>
         <div style={styles.footerInner} className="landing-footer-inner">
@@ -600,6 +734,13 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
             <span style={{ ...styles.logoText, fontSize: 15, color: colors.textSecondary }}>LocalizeShots</span>
           </div>
           <div style={styles.footerLinks} className="landing-footer-links">
+            <button
+              onClick={() => onNavigate?.('about')}
+              style={styles.footerLink}
+            >
+              About
+            </button>
+            <span style={styles.footerLinkDivider}>|</span>
             <button
               onClick={() => onNavigate?.('terms')}
               style={styles.footerLink}
@@ -1223,6 +1364,19 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: '0.3px',
   },
 
+  // FAQ
+  faq: {
+    padding: '80px 24px',
+    backgroundColor: colors.bg,
+  },
+  faqContainer: {
+    maxWidth: 700,
+    margin: '0 auto',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+  },
+
   // Footer
   footer: {
     padding: '28px 24px',
@@ -1276,22 +1430,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
 };
 
-// Add CSS animations, Google Fonts, and responsive styles
+// Add CSS responsive styles (fonts and fadeInUp animation loaded in index.html for LCP optimization)
 const styleSheet = document.createElement('style');
 styleSheet.textContent = `
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
   /* Mobile Responsive Styles */
   @media (max-width: 768px) {
     /* Navigation */
@@ -1400,6 +1541,14 @@ styleSheet.textContent = `
     }
     .landing-pricing-card {
       max-width: 100% !important;
+    }
+
+    /* FAQ */
+    .landing-faq-container {
+      gap: 10px !important;
+    }
+    .landing-faq-item button {
+      padding: 16px 18px !important;
     }
 
     /* Footer */

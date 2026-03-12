@@ -4,6 +4,7 @@ import { APP_STORE_LANGUAGES } from '../constants/languages';
 import { Toggle, Slider, ColorPicker } from './ui';
 import { colors } from '../styles/common';
 import { THEME_PRESETS, THEME_PRESET_GROUPS, ThemePreset, PATTERN_OPTIONS } from '../constants/templates';
+import { OptimizedImage } from './OptimizedImage';
 
 // Inject responsive styles for StyleEditor
 if (typeof document !== 'undefined' && !document.getElementById('style-editor-responsive')) {
@@ -475,7 +476,14 @@ export const StyleEditor: React.FC<Props> = ({
                 title={`Use screenshot ${idx + 1}`}
               >
                 {s.preview ? (
-                  <img src={s.preview} alt={`${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '2px' }} />
+                  <OptimizedImage
+                    src={s.preview}
+                    alt={`${idx + 1}`}
+                    width={28}
+                    height={48}
+                    lazy={true}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '2px' }}
+                  />
                 ) : (
                   <div style={{ width: '100%', height: '100%', backgroundColor: colors.background, borderRadius: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: colors.textSecondary }}>
                     {idx + 1}

@@ -1,0 +1,16 @@
+# Robots.txt for LocalizeShots
+# https://localizeshots.com
+
+User-agent: *
+Allow: /
+
+# Disallow private/authenticated routes
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /project/
+Disallow: /editor/
+Disallow: /wizard/
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://localizeshots.com/sitemap.xml

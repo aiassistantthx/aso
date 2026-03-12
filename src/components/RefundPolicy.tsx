@@ -1,4 +1,5 @@
 import React from 'react';
+import { Breadcrumbs, breadcrumbConfig } from './Breadcrumbs';
 
 const colors = {
   bg: '#FFFBF5',
@@ -15,6 +16,8 @@ interface RefundPolicyProps {
 export const RefundPolicy: React.FC<RefundPolicyProps> = ({ onBack }) => {
   return (
     <div style={styles.container}>
+      {/* BreadcrumbList Schema for SEO */}
+      <Breadcrumbs items={breadcrumbConfig.refund} />
       <nav style={styles.nav}>
         <button onClick={onBack} style={styles.backButton}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">

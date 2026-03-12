@@ -3,6 +3,8 @@ import { unified as unifiedApi, UnifiedProjectListItem, ApiError } from '../serv
 import { useAuth } from '../services/authContext';
 import { AppHeader } from './AppHeader';
 import { UpgradeModal, UpgradeLimitType } from './UpgradeModal';
+import { OptimizedImage } from './OptimizedImage';
+import { Breadcrumbs, breadcrumbConfig } from './Breadcrumbs';
 
 interface Props {
   onOpenProject: (id: string) => void;
@@ -207,7 +209,56 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 500,
     marginLeft: '8px',
   },
+  // Skeleton loader styles for CLS prevention
+  skeletonCard: {
+    backgroundColor: '#fff',
+    borderRadius: '16px',
+    border: '1px solid rgba(0, 0, 0, 0.06)',
+    overflow: 'hidden',
+    boxShadow: '0 2px 12px rgba(0, 0, 0, 0.04)',
+  },
+  skeletonThumbnail: {
+    width: '100%',
+    height: '180px',
+    backgroundColor: '#f0f0f5',
+    background: 'linear-gradient(90deg, #f0f0f5 25%, #e8e8ed 50%, #f0f0f5 75%)',
+    backgroundSize: '200% 100%',
+    animation: 'shimmer 1.5s infinite',
+  },
+  skeletonBody: {
+    padding: '16px',
+  },
+  skeletonTitle: {
+    height: '20px',
+    width: '70%',
+    backgroundColor: '#f0f0f5',
+    borderRadius: '4px',
+    marginBottom: '10px',
+    background: 'linear-gradient(90deg, #f0f0f5 25%, #e8e8ed 50%, #f0f0f5 75%)',
+    backgroundSize: '200% 100%',
+    animation: 'shimmer 1.5s infinite',
+  },
+  skeletonMeta: {
+    height: '16px',
+    width: '40%',
+    backgroundColor: '#f0f0f5',
+    borderRadius: '4px',
+    background: 'linear-gradient(90deg, #f0f0f5 25%, #e8e8ed 50%, #f0f0f5 75%)',
+    backgroundSize: '200% 100%',
+    animation: 'shimmer 1.5s infinite',
+  },
 };
+
+// Skeleton card component to prevent CLS during loading
+const SkeletonCard: React.FC = () => (
+  <div style={styles.skeletonCard}>
+    <div style={styles.skeletonThumbnail as React.CSSProperties} />
+    <div style={styles.skeletonBody}>
+      <div style={styles.skeletonTitle as React.CSSProperties} />
+      <div style={styles.skeletonMeta as React.CSSProperties} />
+    </div>
+  </div>
+);
 
 export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
   const { user, refreshUser } = useAuth();
@@ -323,6 +374,8 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
 
   return (
     <div style={styles.container}>
+      {/* BreadcrumbList Schema for SEO */}
+      <Breadcrumbs items={breadcrumbConfig.dashboard} />
       <AppHeader currentPage="dashboard" onNavigate={onNavigate} />
 
       <div style={styles.content} className="dashboard-content">
@@ -405,8 +458,11 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
         </div>
 
         {loading ? (
-          <div style={styles.emptyState as React.CSSProperties}>
-            <p style={styles.emptyText}>Loading...</p>
+          // Skeleton loader grid - prevents CLS by reserving space
+          <div style={styles.grid} className="dashboard-grid">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <SkeletonCard key={i} />
+            ))}
           </div>
         ) : projectList.length === 0 ? (
           <div style={styles.emptyState as React.CSSProperties}>
@@ -446,9 +502,12 @@ export const Dashboard: React.FC<Props> = ({ onOpenProject, onNavigate }) => {
                 >
                   <div style={styles.cardThumbnail as React.CSSProperties}>
                     {project.thumbnail ? (
-                      <img
+                      <OptimizedImage
                         src={project.thumbnail}
                         alt={project.name || project.appName}
+                        width={280}
+                        height={180}
+                        lazy={true}
                         style={styles.cardThumbnailImage}
                       />
                     ) : (
