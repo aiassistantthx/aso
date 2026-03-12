@@ -1,21 +1,36 @@
+import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { MDXProvider } from '@mdx-js/react';
-import { getPostBySlug } from '../content/blog';
+import { getPostBySlug, getAllPosts, BlogPost } from '../content/blog';
 import { ComponentType, ReactNode } from 'react';
+
+// Color palette matching Landing.tsx
+const colors = {
+  bg: '#FAFAF8',
+  card: '#FFFFFF',
+  text: '#1A1A1A',
+  textSecondary: '#6B6B6B',
+  textMuted: '#9A9A9A',
+  accent: '#FF6B4A',
+  accentLight: '#FF8A65',
+  accentBg: '#FFF5F2',
+  border: '#E8E8E8',
+  borderLight: '#F0F0F0',
+};
 
 interface BlogPostPageProps {
   slug: string;
   onNavigate: (page: string, slug?: string) => void;
 }
 
-// Custom MDX components with styling
+// Custom MDX components with styling - using coral accent
 const mdxComponents: Record<string, ComponentType<{ children?: ReactNode }>> = {
   h1: ({ children }) => (
     <h1
       style={{
         fontSize: '36px',
         fontWeight: 700,
-        color: '#1d1d1f',
+        color: colors.text,
         margin: '0 0 24px 0',
         lineHeight: 1.2,
       }}
@@ -28,7 +43,7 @@ const mdxComponents: Record<string, ComponentType<{ children?: ReactNode }>> = {
       style={{
         fontSize: '28px',
         fontWeight: 600,
-        color: '#1d1d1f',
+        color: colors.text,
         margin: '32px 0 16px 0',
         lineHeight: 1.3,
       }}
@@ -41,7 +56,7 @@ const mdxComponents: Record<string, ComponentType<{ children?: ReactNode }>> = {
       style={{
         fontSize: '22px',
         fontWeight: 600,
-        color: '#1d1d1f',
+        color: colors.text,
         margin: '24px 0 12px 0',
         lineHeight: 1.4,
       }}
@@ -53,7 +68,7 @@ const mdxComponents: Record<string, ComponentType<{ children?: ReactNode }>> = {
     <p
       style={{
         fontSize: '17px',
-        color: '#1d1d1f',
+        color: colors.text,
         margin: '0 0 16px 0',
         lineHeight: 1.7,
       }}
@@ -87,7 +102,7 @@ const mdxComponents: Record<string, ComponentType<{ children?: ReactNode }>> = {
     <li
       style={{
         fontSize: '17px',
-        color: '#1d1d1f',
+        color: colors.text,
         marginBottom: '8px',
       }}
     >
@@ -95,12 +110,12 @@ const mdxComponents: Record<string, ComponentType<{ children?: ReactNode }>> = {
     </li>
   ),
   strong: ({ children }) => (
-    <strong style={{ fontWeight: 600, color: '#1d1d1f' }}>{children}</strong>
+    <strong style={{ fontWeight: 600, color: colors.text }}>{children}</strong>
   ),
   a: ({ children, ...props }) => (
     <a
       style={{
-        color: '#0071e3',
+        color: colors.accent,
         textDecoration: 'none',
         fontWeight: 500,
       }}
@@ -114,8 +129,8 @@ const mdxComponents: Record<string, ComponentType<{ children?: ReactNode }>> = {
       style={{
         margin: '24px 0',
         padding: '16px 24px',
-        borderLeft: '4px solid #0071e3',
-        backgroundColor: 'rgba(0, 113, 227, 0.05)',
+        borderLeft: `4px solid ${colors.accent}`,
+        backgroundColor: colors.accentBg,
         borderRadius: '0 8px 8px 0',
       }}
     >
@@ -125,7 +140,7 @@ const mdxComponents: Record<string, ComponentType<{ children?: ReactNode }>> = {
   code: ({ children }) => (
     <code
       style={{
-        backgroundColor: '#f5f5f7',
+        backgroundColor: colors.bg,
         padding: '2px 6px',
         borderRadius: '4px',
         fontSize: '15px',
@@ -138,7 +153,7 @@ const mdxComponents: Record<string, ComponentType<{ children?: ReactNode }>> = {
   pre: ({ children }) => (
     <pre
       style={{
-        backgroundColor: '#1d1d1f',
+        backgroundColor: colors.text,
         color: '#fff',
         padding: '20px',
         borderRadius: '12px',
@@ -155,15 +170,89 @@ const mdxComponents: Record<string, ComponentType<{ children?: ReactNode }>> = {
     <hr
       style={{
         border: 'none',
-        borderTop: '1px solid #e5e5e5',
+        borderTop: `1px solid ${colors.border}`,
         margin: '32px 0',
       }}
     />
   ),
 };
 
+// Related post card component
+function RelatedPostCard({ post, onNavigate }: { post: BlogPost; onNavigate: BlogPostPageProps['onNavigate'] }) {
+  const { frontmatter } = post;
+  const formattedDate = new Date(frontmatter.date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+
+  return (
+    <article
+      style={{
+        backgroundColor: colors.card,
+        borderRadius: '12px',
+        overflow: 'hidden',
+        border: `1px solid ${colors.borderLight}`,
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        cursor: 'pointer',
+      }}
+      onClick={() => onNavigate('blog-post', frontmatter.slug)}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-4px)';
+        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.08)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = 'none';
+      }}
+    >
+      {frontmatter.image && (
+        <div
+          style={{
+            width: '100%',
+            height: '140px',
+            backgroundColor: colors.bg,
+            backgroundImage: `url(${frontmatter.image})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        />
+      )}
+      <div style={{ padding: '16px' }}>
+        <h4
+          style={{
+            fontSize: '16px',
+            fontWeight: 600,
+            color: colors.text,
+            margin: '0 0 8px 0',
+            lineHeight: 1.3,
+          }}
+        >
+          {frontmatter.title}
+        </h4>
+        <div style={{ fontSize: '13px', color: colors.textMuted }}>
+          {formattedDate}
+        </div>
+      </div>
+    </article>
+  );
+}
+
 export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
   const post = getPostBySlug(slug);
+  const allPosts = getAllPosts();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Get related posts (excluding current post, max 3)
+  const relatedPosts = allPosts
+    .filter(p => p.frontmatter.slug !== slug)
+    .slice(0, 3);
 
   if (!post) {
     return (
@@ -173,20 +262,20 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#f5f5f7',
+          backgroundColor: colors.bg,
         }}
       >
         <div style={{ textAlign: 'center' }}>
-          <h1 style={{ fontSize: '48px', color: '#1d1d1f', margin: '0 0 16px 0' }}>
+          <h1 style={{ fontSize: '48px', color: colors.text, margin: '0 0 16px 0' }}>
             404
           </h1>
-          <p style={{ fontSize: '18px', color: '#86868b', margin: '0 0 24px 0' }}>
+          <p style={{ fontSize: '18px', color: colors.textSecondary, margin: '0 0 24px 0' }}>
             Blog post not found
           </p>
           <button
             onClick={() => onNavigate('blog')}
             style={{
-              backgroundColor: '#0071e3',
+              backgroundColor: colors.accent,
               color: '#fff',
               border: 'none',
               padding: '12px 24px',
@@ -276,24 +365,29 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
       <div
         style={{
           minHeight: '100vh',
-          backgroundColor: '#f5f5f7',
+          backgroundColor: colors.bg,
+          fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         }}
       >
-        {/* Header */}
-        <header
+        {/* Header - matching Landing.tsx style */}
+        <nav
           style={{
-            backgroundColor: '#fff',
-            borderBottom: '1px solid #e5e5e5',
-            padding: '16px 24px',
-            position: 'sticky',
+            position: 'fixed',
             top: 0,
-            zIndex: 100,
+            left: 0,
+            right: 0,
+            zIndex: 1000,
+            transition: 'all 0.3s ease',
+            backgroundColor: scrolled ? 'rgba(250, 250, 248, 0.95)' : 'transparent',
+            backdropFilter: scrolled ? 'blur(20px)' : 'none',
+            borderBottom: scrolled ? `1px solid ${colors.borderLight}` : 'none',
           }}
         >
           <div
             style={{
-              maxWidth: '800px',
+              maxWidth: 800,
               margin: '0 auto',
+              padding: '16px 24px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -301,58 +395,116 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
           >
             <div
               style={{
-                fontSize: '20px',
-                fontWeight: 700,
-                color: '#1d1d1f',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
                 cursor: 'pointer',
               }}
               onClick={() => onNavigate('landing')}
             >
-              LocalizeShots
-            </div>
-            <nav style={{ display: 'flex', gap: '24px' }}>
-              <a
-                href="/blog"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigate('blog');
-                }}
+              <div
                 style={{
-                  fontSize: '14px',
+                  width: 34,
+                  height: 34,
+                  borderRadius: 9,
+                  background: `linear-gradient(135deg, ${colors.accent} 0%, ${colors.accentLight} 100%)`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: `0 4px 12px ${colors.accent}40`,
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="2" width="18" height="20" rx="3" fill="white"/>
+                  <rect x="6" y="5" width="12" height="3" rx="1" fill={colors.accent}/>
+                  <rect x="6" y="10" width="12" height="8" rx="1" fill={colors.accent} fillOpacity="0.3"/>
+                </svg>
+              </div>
+              <span
+                style={{
+                  fontSize: 18,
                   fontWeight: 500,
-                  color: '#0071e3',
-                  textDecoration: 'none',
+                  color: colors.text,
+                  letterSpacing: '-0.3px',
+                }}
+              >
+                LocalizeShots
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: 24 }}>
+              <button
+                onClick={() => onNavigate('blog')}
+                style={{
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: colors.accent,
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
                 }}
               >
                 Blog
-              </a>
-              <a
-                href="/login"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigate('login');
-                }}
+              </button>
+              <button
+                onClick={() => onNavigate('login')}
                 style={{
-                  fontSize: '14px',
+                  fontSize: 14,
                   fontWeight: 500,
-                  color: '#1d1d1f',
-                  textDecoration: 'none',
+                  color: colors.textSecondary,
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
                 }}
               >
                 Sign In
-              </a>
-            </nav>
+              </button>
+            </div>
           </div>
-        </header>
+        </nav>
 
         {/* Article */}
         <article
           style={{
             maxWidth: '800px',
             margin: '0 auto',
-            padding: '40px 24px 80px',
+            padding: '100px 24px 60px',
           }}
         >
+          {/* Breadcrumb */}
+          <nav
+            style={{
+              marginBottom: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '14px',
+            }}
+          >
+            <button
+              onClick={() => onNavigate('blog')}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                color: colors.accent,
+                cursor: 'pointer',
+                fontWeight: 500,
+              }}
+            >
+              Blog
+            </button>
+            <span style={{ color: colors.textMuted }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </span>
+            <span style={{ color: colors.textSecondary, maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {frontmatter.title}
+            </span>
+          </nav>
+
           {/* Meta */}
           <div style={{ marginBottom: '32px' }}>
             <div
@@ -369,8 +521,8 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
                   style={{
                     fontSize: '12px',
                     fontWeight: 500,
-                    color: '#0071e3',
-                    backgroundColor: 'rgba(0, 113, 227, 0.1)',
+                    color: colors.accent,
+                    backgroundColor: colors.accentBg,
                     padding: '4px 10px',
                     borderRadius: '12px',
                   }}
@@ -382,7 +534,7 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
             <div
               style={{
                 fontSize: '14px',
-                color: '#86868b',
+                color: colors.textMuted,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
@@ -401,10 +553,10 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
           {/* Content */}
           <div
             style={{
-              backgroundColor: '#fff',
+              backgroundColor: colors.card,
               borderRadius: '16px',
               padding: '40px',
-              boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
+              border: `1px solid ${colors.borderLight}`,
             }}
           >
             <MDXProvider components={mdxComponents}>
@@ -412,21 +564,53 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
             </MDXProvider>
           </div>
 
+          {/* Related Posts */}
+          {relatedPosts.length > 0 && (
+            <div style={{ marginTop: '60px' }}>
+              <h3
+                style={{
+                  fontSize: '24px',
+                  fontWeight: 600,
+                  color: colors.text,
+                  margin: '0 0 24px 0',
+                }}
+              >
+                Related Articles
+              </h3>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gap: '20px',
+                }}
+                className="related-posts-grid"
+              >
+                {relatedPosts.map((relatedPost) => (
+                  <RelatedPostCard
+                    key={relatedPost.frontmatter.slug}
+                    post={relatedPost}
+                    onNavigate={onNavigate}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Related Resources */}
           <div
             style={{
               marginTop: '40px',
-              backgroundColor: '#fff',
+              backgroundColor: colors.card,
               borderRadius: '16px',
               padding: '32px',
-              boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
+              border: `1px solid ${colors.borderLight}`,
             }}
           >
             <h3
               style={{
                 fontSize: '22px',
                 fontWeight: 600,
-                color: '#1d1d1f',
+                color: colors.text,
                 margin: '0 0 20px 0',
               }}
             >
@@ -450,16 +634,17 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
                   alignItems: 'center',
                   gap: '12px',
                   padding: '16px',
-                  backgroundColor: '#f5f5f7',
+                  backgroundColor: colors.bg,
                   borderRadius: '12px',
                   textDecoration: 'none',
                   transition: 'background-color 0.2s',
+                  border: `1px solid ${colors.borderLight}`,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#e8e8ed';
+                  e.currentTarget.style.borderColor = colors.accent;
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f5f5f7';
+                  e.currentTarget.style.borderColor = colors.borderLight;
                 }}
               >
                 <span
@@ -470,7 +655,7 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: '#0071e3',
+                    backgroundColor: colors.accent,
                     borderRadius: '10px',
                     color: '#fff',
                   }}
@@ -482,7 +667,7 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
                     style={{
                       fontSize: '15px',
                       fontWeight: 600,
-                      color: '#1d1d1f',
+                      color: colors.text,
                     }}
                   >
                     All Features
@@ -490,7 +675,7 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
                   <div
                     style={{
                       fontSize: '13px',
-                      color: '#86868b',
+                      color: colors.textSecondary,
                     }}
                   >
                     Explore all capabilities
@@ -509,16 +694,17 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
                   alignItems: 'center',
                   gap: '12px',
                   padding: '16px',
-                  backgroundColor: '#f5f5f7',
+                  backgroundColor: colors.bg,
                   borderRadius: '12px',
                   textDecoration: 'none',
                   transition: 'background-color 0.2s',
+                  border: `1px solid ${colors.borderLight}`,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#e8e8ed';
+                  e.currentTarget.style.borderColor = colors.accent;
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f5f5f7';
+                  e.currentTarget.style.borderColor = colors.borderLight;
                 }}
               >
                 <span
@@ -529,7 +715,7 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: '#34c759',
+                    backgroundColor: '#22C55E',
                     borderRadius: '10px',
                     color: '#fff',
                   }}
@@ -541,7 +727,7 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
                     style={{
                       fontSize: '15px',
                       fontWeight: 600,
-                      color: '#1d1d1f',
+                      color: colors.text,
                     }}
                   >
                     Size Calculator
@@ -549,7 +735,7 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
                   <div
                     style={{
                       fontSize: '13px',
-                      color: '#86868b',
+                      color: colors.textSecondary,
                     }}
                   >
                     Get exact dimensions
@@ -568,16 +754,17 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
                   alignItems: 'center',
                   gap: '12px',
                   padding: '16px',
-                  backgroundColor: '#f5f5f7',
+                  backgroundColor: colors.bg,
                   borderRadius: '12px',
                   textDecoration: 'none',
                   transition: 'background-color 0.2s',
+                  border: `1px solid ${colors.borderLight}`,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#e8e8ed';
+                  e.currentTarget.style.borderColor = colors.accent;
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f5f5f7';
+                  e.currentTarget.style.borderColor = colors.borderLight;
                 }}
               >
                 <span
@@ -588,7 +775,7 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: '#ff9500',
+                    backgroundColor: colors.accentLight,
                     borderRadius: '10px',
                     color: '#fff',
                   }}
@@ -600,7 +787,7 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
                     style={{
                       fontSize: '15px',
                       fontWeight: 600,
-                      color: '#1d1d1f',
+                      color: colors.text,
                     }}
                   >
                     Compare Tools
@@ -608,7 +795,7 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
                   <div
                     style={{
                       fontSize: '13px',
-                      color: '#86868b',
+                      color: colors.textSecondary,
                     }}
                   >
                     See how we compare
@@ -627,16 +814,17 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
                   alignItems: 'center',
                   gap: '12px',
                   padding: '16px',
-                  backgroundColor: '#f5f5f7',
+                  backgroundColor: colors.bg,
                   borderRadius: '12px',
                   textDecoration: 'none',
                   transition: 'background-color 0.2s',
+                  border: `1px solid ${colors.borderLight}`,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#e8e8ed';
+                  e.currentTarget.style.borderColor = colors.accent;
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f5f5f7';
+                  e.currentTarget.style.borderColor = colors.borderLight;
                 }}
               >
                 <span
@@ -659,7 +847,7 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
                     style={{
                       fontSize: '15px',
                       fontWeight: 600,
-                      color: '#1d1d1f',
+                      color: colors.text,
                     }}
                   >
                     LocalizeShots
@@ -667,7 +855,7 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
                   <div
                     style={{
                       fontSize: '13px',
-                      color: '#86868b',
+                      color: colors.textSecondary,
                     }}
                   >
                     Back to homepage
@@ -683,8 +871,8 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
               onClick={() => onNavigate('blog')}
               style={{
                 backgroundColor: 'transparent',
-                color: '#0071e3',
-                border: '1px solid #0071e3',
+                color: colors.accent,
+                border: `1px solid ${colors.accent}`,
                 padding: '12px 24px',
                 borderRadius: '8px',
                 fontSize: '16px',
@@ -693,12 +881,12 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
                 transition: 'all 0.2s',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#0071e3';
+                e.currentTarget.style.backgroundColor = colors.accent;
                 e.currentTarget.style.color = '#fff';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = '#0071e3';
+                e.currentTarget.style.color = colors.accent;
               }}
             >
               Back to Blog
@@ -709,16 +897,30 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
         {/* Footer */}
         <footer
           style={{
-            backgroundColor: '#1d1d1f',
+            backgroundColor: colors.text,
             padding: '40px 24px',
             textAlign: 'center',
           }}
         >
-          <p style={{ color: '#86868b', fontSize: '14px', margin: 0 }}>
+          <p style={{ color: colors.textMuted, fontSize: '14px', margin: 0 }}>
             &copy; {new Date().getFullYear()} LocalizeShots. All rights reserved.
           </p>
         </footer>
       </div>
+
+      {/* Mobile responsive styles */}
+      <style>{`
+        @media (max-width: 768px) {
+          .related-posts-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+        @media (max-width: 600px) {
+          article > div[style*="padding: 40px"] {
+            padding: 24px !important;
+          }
+        }
+      `}</style>
     </>
   );
 }

@@ -11,7 +11,6 @@ import { RefundPolicy } from './components/RefundPolicy';
 import { SizeCalculatorPage } from './pages/SizeCalculatorPage';
 import { IOSScreenshotsPage } from './pages/IOSScreenshotsPage';
 import { AndroidScreenshotsPage } from './pages/AndroidScreenshotsPage';
-import { ForIndieDevelopersPage } from './pages/ForIndieDevelopersPage';
 import { BlogPage } from './pages/BlogPage';
 import { BlogPostPage } from './pages/BlogPostPage';
 import { FeaturesPage } from './components/FeaturesPage';
@@ -35,7 +34,6 @@ type Route =
   | { page: 'size-calculator' }
   | { page: 'ios-screenshots' }
   | { page: 'android-screenshots' }
-  | { page: 'for-indie-developers' }
   | { page: 'features' }
   | { page: 'alternatives' }
   | { page: 'compare-appscreens' }
@@ -145,8 +143,6 @@ function AppRouter() {
         setRoute({ page: 'ios-screenshots' });
       } else if (path === '/android-screenshots') {
         setRoute({ page: 'android-screenshots' });
-      } else if (path === '/for-indie-developers') {
-        setRoute({ page: 'for-indie-developers' });
       } else if (path === '/features') {
         setRoute({ page: 'features' });
       } else if (path === '/alternatives') {
@@ -185,7 +181,7 @@ function AppRouter() {
     // Legal, tool, and marketing pages are always accessible, skip redirect logic
     const publicPages = [
       'terms', 'privacy', 'refund', 'size-calculator', 'ios-screenshots',
-      'android-screenshots', 'for-indie-developers', 'features', 'alternatives',
+      'android-screenshots', 'features', 'alternatives',
       'compare-appscreens', 'compare-applaunchpad', 'compare-screenshots-pro',
       'compare-appure', 'about', 'blog', 'blog-post'
     ];
@@ -244,9 +240,6 @@ function AppRouter() {
     } else if (page === 'android-screenshots') {
       path = '/android-screenshots';
       newRoute = { page: 'android-screenshots' };
-    } else if (page === 'for-indie-developers') {
-      path = '/for-indie-developers';
-      newRoute = { page: 'for-indie-developers' };
     } else if (page === 'features') {
       path = '/features';
       newRoute = { page: 'features' };
@@ -399,14 +392,6 @@ function AppRouter() {
     case 'android-screenshots':
       return (
         <AndroidScreenshotsPage
-          onGetStarted={() => navigate('register')}
-          onNavigate={(page) => navigate(page)}
-        />
-      );
-
-    case 'for-indie-developers':
-      return (
-        <ForIndieDevelopersPage
           onGetStarted={() => navigate('register')}
           onNavigate={(page) => navigate(page)}
         />

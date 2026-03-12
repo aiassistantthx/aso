@@ -752,9 +752,6 @@ export const Landing: React.FC<Props> = ({ onGetStarted, onLogin, onNavigate }) 
           <div style={styles.resourceCategory}>
             <h3 style={styles.resourceCategoryTitle}>Use Cases</h3>
             <div style={styles.resourceLinks}>
-              <button onClick={() => onNavigate?.('for-indie-developers')} style={styles.resourceLink}>
-                For Indie Developers
-              </button>
               <button onClick={() => onNavigate?.('ios-screenshots')} style={styles.resourceLink}>
                 iOS Screenshot Guide
               </button>

@@ -46,14 +46,6 @@
     <priority>0.8</priority>
   </url>
 
-  <!-- Use Case Pages -->
-  <url>
-    <loc>https://localizeshots.com/for/indie-developers</loc>
-    <lastmod>2026-03-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
   <!-- Comparison Pages -->
   <url>
     <loc>https://localizeshots.com/alternatives</loc>
