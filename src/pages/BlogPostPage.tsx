@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { MDXProvider } from '@mdx-js/react';
 import { getPostBySlug, getAllPosts, BlogPost } from '../content/blog';
-import { HTMLAttributes, TableHTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from 'react';
-import { MDXComponents } from 'mdx/types';
 
 // Color palette matching Landing.tsx
 const colors = {
@@ -23,221 +20,6 @@ interface BlogPostPageProps {
   slug: string;
   onNavigate: (page: string, slug?: string) => void;
 }
-
-// Custom MDX components with styling - using coral accent
-const mdxComponents: MDXComponents = {
-  h1: ({ children }) => (
-    <h1
-      style={{
-        fontSize: '36px',
-        fontWeight: 700,
-        color: colors.text,
-        margin: '0 0 24px 0',
-        lineHeight: 1.2,
-      }}
-    >
-      {children}
-    </h1>
-  ),
-  h2: ({ children }) => (
-    <h2
-      style={{
-        fontSize: '28px',
-        fontWeight: 600,
-        color: colors.text,
-        margin: '32px 0 16px 0',
-        lineHeight: 1.3,
-      }}
-    >
-      {children}
-    </h2>
-  ),
-  h3: ({ children }) => (
-    <h3
-      style={{
-        fontSize: '22px',
-        fontWeight: 600,
-        color: colors.text,
-        margin: '24px 0 12px 0',
-        lineHeight: 1.4,
-      }}
-    >
-      {children}
-    </h3>
-  ),
-  p: ({ children }) => (
-    <p
-      style={{
-        fontSize: '17px',
-        color: colors.text,
-        margin: '0 0 16px 0',
-        lineHeight: 1.7,
-      }}
-    >
-      {children}
-    </p>
-  ),
-  ul: ({ children }) => (
-    <ul
-      style={{
-        margin: '0 0 16px 0',
-        paddingLeft: '24px',
-        lineHeight: 1.7,
-      }}
-    >
-      {children}
-    </ul>
-  ),
-  ol: ({ children }) => (
-    <ol
-      style={{
-        margin: '0 0 16px 0',
-        paddingLeft: '24px',
-        lineHeight: 1.7,
-      }}
-    >
-      {children}
-    </ol>
-  ),
-  li: ({ children }) => (
-    <li
-      style={{
-        fontSize: '17px',
-        color: colors.text,
-        marginBottom: '8px',
-      }}
-    >
-      {children}
-    </li>
-  ),
-  strong: ({ children }) => (
-    <strong style={{ fontWeight: 600, color: colors.text }}>{children}</strong>
-  ),
-  a: ({ children, ...props }) => (
-    <a
-      style={{
-        color: colors.accent,
-        textDecoration: 'none',
-        fontWeight: 500,
-      }}
-      {...props}
-    >
-      {children}
-    </a>
-  ),
-  blockquote: ({ children }) => (
-    <blockquote
-      style={{
-        margin: '24px 0',
-        padding: '16px 24px',
-        borderLeft: `4px solid ${colors.accent}`,
-        backgroundColor: colors.accentBg,
-        borderRadius: '0 8px 8px 0',
-      }}
-    >
-      {children}
-    </blockquote>
-  ),
-  code: ({ children }) => (
-    <code
-      style={{
-        backgroundColor: colors.bg,
-        padding: '2px 6px',
-        borderRadius: '4px',
-        fontSize: '15px',
-        fontFamily: 'monospace',
-      }}
-    >
-      {children}
-    </code>
-  ),
-  pre: ({ children }) => (
-    <pre
-      style={{
-        backgroundColor: colors.text,
-        color: '#fff',
-        padding: '20px',
-        borderRadius: '12px',
-        overflow: 'auto',
-        margin: '24px 0',
-        fontSize: '14px',
-        lineHeight: 1.6,
-      }}
-    >
-      {children}
-    </pre>
-  ),
-  hr: () => (
-    <hr
-      style={{
-        border: 'none',
-        borderTop: `1px solid ${colors.border}`,
-        margin: '32px 0',
-      }}
-    />
-  ),
-  table: (props: TableHTMLAttributes<HTMLTableElement>) => (
-    <div style={{ overflowX: 'auto', margin: '24px 0' }}>
-      <table
-        {...props}
-        style={{
-          width: '100%',
-          borderCollapse: 'collapse',
-          fontSize: '15px',
-          backgroundColor: colors.card,
-          borderRadius: '12px',
-          overflow: 'hidden',
-          border: `1px solid ${colors.border}`,
-          ...props.style,
-        }}
-      />
-    </div>
-  ),
-  thead: (props: HTMLAttributes<HTMLTableSectionElement>) => (
-    <thead
-      {...props}
-      style={{
-        backgroundColor: colors.bg,
-        borderBottom: `2px solid ${colors.border}`,
-        ...props.style,
-      }}
-    />
-  ),
-  tbody: (props: HTMLAttributes<HTMLTableSectionElement>) => <tbody {...props} />,
-  tr: (props: HTMLAttributes<HTMLTableRowElement>) => (
-    <tr
-      {...props}
-      style={{
-        borderBottom: `1px solid ${colors.borderLight}`,
-        ...props.style,
-      }}
-    />
-  ),
-  th: (props: ThHTMLAttributes<HTMLTableCellElement>) => (
-    <th
-      {...props}
-      style={{
-        padding: '14px 16px',
-        textAlign: (props.align as 'left' | 'center' | 'right') || 'left',
-        fontWeight: 600,
-        color: colors.text,
-        whiteSpace: 'nowrap',
-        ...props.style,
-      }}
-    />
-  ),
-  td: (props: TdHTMLAttributes<HTMLTableCellElement>) => (
-    <td
-      {...props}
-      style={{
-        padding: '12px 16px',
-        color: colors.text,
-        verticalAlign: 'top',
-        ...props.style,
-      }}
-    />
-  ),
-};
 
 // Related post card component
 function RelatedPostCard({ post, onNavigate }: { post: BlogPost; onNavigate: BlogPostPageProps['onNavigate'] }) {
@@ -614,6 +396,7 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
 
           {/* Content */}
           <div
+            className="blog-content"
             style={{
               backgroundColor: colors.card,
               borderRadius: '16px',
@@ -621,9 +404,7 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
               border: `1px solid ${colors.borderLight}`,
             }}
           >
-            <MDXProvider components={mdxComponents}>
-              <Component />
-            </MDXProvider>
+            <Component />
           </div>
 
           {/* Related Posts */}
@@ -970,16 +751,240 @@ export function BlogPostPage({ slug, onNavigate }: BlogPostPageProps) {
         </footer>
       </div>
 
-      {/* Mobile responsive styles */}
+      {/* Blog article styles */}
       <style>{`
+        /* Typography */
+        .blog-content h1 {
+          font-size: 36px;
+          font-weight: 700;
+          color: #1A1A1A;
+          margin: 0 0 24px 0;
+          line-height: 1.2;
+        }
+        .blog-content h2 {
+          font-size: 26px;
+          font-weight: 700;
+          color: #1A1A1A;
+          margin: 48px 0 20px 0;
+          line-height: 1.3;
+          padding-bottom: 12px;
+          border-bottom: 2px solid #FF6B4A;
+        }
+        .blog-content h3 {
+          font-size: 20px;
+          font-weight: 600;
+          color: #1A1A1A;
+          margin: 32px 0 16px 0;
+          line-height: 1.4;
+        }
+        .blog-content p {
+          font-size: 17px;
+          color: #1A1A1A;
+          margin: 0 0 20px 0;
+          line-height: 1.8;
+        }
+
+        /* Lists */
+        .blog-content ul, .blog-content ol {
+          margin: 0 0 24px 0;
+          padding-left: 0;
+          list-style: none;
+        }
+        .blog-content li {
+          font-size: 17px;
+          color: #1A1A1A;
+          margin-bottom: 12px;
+          line-height: 1.7;
+          padding-left: 28px;
+          position: relative;
+        }
+        .blog-content ul li::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 10px;
+          width: 8px;
+          height: 8px;
+          background: #FF6B4A;
+          border-radius: 50%;
+        }
+        .blog-content ol {
+          counter-reset: item;
+        }
+        .blog-content ol li::before {
+          content: counter(item);
+          counter-increment: item;
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 24px;
+          height: 24px;
+          background: #FFF5F2;
+          color: #FF6B4A;
+          border-radius: 50%;
+          font-size: 13px;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        /* Links */
+        .blog-content a {
+          color: #FF6B4A;
+          text-decoration: none;
+          font-weight: 500;
+          border-bottom: 1px solid transparent;
+          transition: border-color 0.2s;
+        }
+        .blog-content a:hover {
+          border-bottom-color: #FF6B4A;
+        }
+
+        /* Strong & emphasis */
+        .blog-content strong {
+          font-weight: 600;
+          color: #1A1A1A;
+        }
+
+        /* Blockquotes */
+        .blog-content blockquote {
+          margin: 32px 0;
+          padding: 20px 24px;
+          border-left: 4px solid #FF6B4A;
+          background: linear-gradient(135deg, #FFF5F2 0%, #FAFAF8 100%);
+          border-radius: 0 12px 12px 0;
+        }
+        .blog-content blockquote p {
+          margin: 0;
+          font-style: italic;
+          color: #6B6B6B;
+        }
+
+        /* Code */
+        .blog-content code {
+          background: #F0F0F0;
+          padding: 3px 8px;
+          border-radius: 6px;
+          font-size: 15px;
+          font-family: 'SF Mono', Monaco, monospace;
+          color: #FF6B4A;
+        }
+        .blog-content pre {
+          background: #1A1A1A;
+          color: #fff;
+          padding: 24px;
+          border-radius: 12px;
+          overflow-x: auto;
+          margin: 24px 0;
+          font-size: 14px;
+          line-height: 1.6;
+        }
+        .blog-content pre code {
+          background: none;
+          padding: 0;
+          color: inherit;
+        }
+
+        /* Horizontal rule */
+        .blog-content hr {
+          border: none;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, #E8E8E8, transparent);
+          margin: 48px 0;
+        }
+
+        /* Tables */
+        .blog-content table {
+          width: 100%;
+          border-collapse: separate;
+          border-spacing: 0;
+          margin: 32px 0;
+          font-size: 15px;
+          background: #FFFFFF;
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+          border: 1px solid #E8E8E8;
+        }
+        .blog-content thead {
+          background: linear-gradient(135deg, #FF6B4A 0%, #FF8A65 100%);
+        }
+        .blog-content thead th {
+          padding: 16px 20px;
+          text-align: left;
+          font-weight: 600;
+          color: #FFFFFF;
+          font-size: 14px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          border-bottom: none;
+        }
+        .blog-content tbody tr {
+          transition: background-color 0.2s;
+        }
+        .blog-content tbody tr:nth-child(even) {
+          background: #FAFAF8;
+        }
+        .blog-content tbody tr:hover {
+          background: #FFF5F2;
+        }
+        .blog-content td {
+          padding: 14px 20px;
+          color: #1A1A1A;
+          border-bottom: 1px solid #F0F0F0;
+          vertical-align: top;
+        }
+        .blog-content tbody tr:last-child td {
+          border-bottom: none;
+        }
+        .blog-content td strong {
+          color: #FF6B4A;
+        }
+
+        /* Pro tip boxes */
+        .blog-content p strong:first-child {
+          display: inline-block;
+        }
+
+        /* Image styling */
+        .blog-content img {
+          max-width: 100%;
+          height: auto;
+          border-radius: 12px;
+          margin: 24px 0;
+        }
+
+        /* Mobile responsive */
         @media (max-width: 768px) {
           .related-posts-grid {
             grid-template-columns: 1fr !important;
+          }
+          .blog-content h1 {
+            font-size: 28px;
+          }
+          .blog-content h2 {
+            font-size: 22px;
+            margin: 36px 0 16px 0;
+          }
+          .blog-content h3 {
+            font-size: 18px;
+          }
+          .blog-content table {
+            font-size: 13px;
+          }
+          .blog-content thead th,
+          .blog-content td {
+            padding: 10px 12px;
           }
         }
         @media (max-width: 600px) {
           article > div[style*="padding: 40px"] {
             padding: 24px !important;
+          }
+          .blog-content table {
+            display: block;
+            overflow-x: auto;
           }
         }
       `}</style>
