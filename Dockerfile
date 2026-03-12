@@ -2,6 +2,8 @@
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app
 ENV NODE_ENV=development
+# Cache bust: 2026-03-12-v3
+ARG CACHE_BUST=1
 COPY package.json package-lock.json ./
 COPY server/package.json ./server/
 RUN npm ci
