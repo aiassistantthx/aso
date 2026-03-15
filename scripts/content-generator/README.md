@@ -34,13 +34,13 @@ This will:
 
 ```bash
 # Generate blog only
-node generate-content.js --type=blog
+node generate-content.cjs --type=blog
 
 # Generate page only
-node generate-content.js --type=page
+node generate-content.cjs --type=page
 
 # Generate both
-node generate-content.js --type=both
+node generate-content.cjs --type=both
 ```
 
 ## Topic Queues
@@ -78,7 +78,7 @@ node generate-content.js --type=both
 
 ```
 content-generator/
-├── generate-content.js    # Main generator script
+├── generate-content.cjs    # Main generator script
 ├── state.json            # Tracks generation progress
 ├── run-morning.sh        # Morning run wrapper
 ├── run-evening.sh        # Evening run wrapper
@@ -121,7 +121,7 @@ launchctl load ~/Library/LaunchAgents/com.localizeshots.content-evening.plist
 ### Manual test run
 ```bash
 cd /Users/ivorobyev/projects/localizeshots/scripts/content-generator
-node generate-content.js --type=both
+node generate-content.cjs --type=both
 ```
 
 ## Dependencies
