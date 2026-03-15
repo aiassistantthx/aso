@@ -11,6 +11,8 @@
     "dev:server": "npm run dev -w server",
     "dev:all": "concurrently \"npm run dev\" \"npm run dev:server\"",
     "build": "tsc && vite build",
+    "build:prerender": "tsc && vite build && node scripts/prerender.js",
+    "prerender": "node scripts/prerender.js",
     "build:server": "npm run build -w server",
     "build:all": "npm run build && npm run build:server",
     "preview": "vite preview",
@@ -34,11 +36,14 @@
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
+    "@prerenderer/prerenderer": "^1.2.5",
+    "@prerenderer/renderer-puppeteer": "^1.2.4",
     "@types/file-saver": "^2.0.7",
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
     "@vitejs/plugin-react": "^4.2.0",
     "concurrently": "^9.1.2",
+    "puppeteer": "^24.39.1",
     "terser": "^5.46.0",
     "typescript": "^5.2.2",
     "vite": "^5.0.0"

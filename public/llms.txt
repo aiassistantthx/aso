@@ -1,0 +1,41 @@
+# LocalizeShots
+
+> App Store Screenshot Generator & ASO Tool
+
+## What is LocalizeShots?
+
+LocalizeShots is a web-based tool that helps app developers create professional, localized App Store screenshots. It combines AI-powered headline generation with device mockups and one-click translation to 40+ languages.
+
+## Key Features
+
+- AI-powered headline generation for App Store screenshots
+- iPhone and iPad device mockups (iPhone 16, 15 Pro, iPad Pro)
+- One-click translation to 40+ languages
+- ASO metadata generation (app name, subtitle, keywords, description)
+- AI-generated app icons (DALL-E 3)
+- ZIP export organized by language
+- Visual editor with drag-and-drop
+
+## Pricing
+
+- Free Plan: 3 projects, 2 languages, all mockup styles
+- Pro Monthly: $9.99/month - unlimited projects, 40+ languages, ASO metadata
+- Pro Yearly: $59.99/year - same as Pro Monthly, billed annually
+
+## Target Audience
+
+- iOS and Android app developers
+- App Store Optimization (ASO) specialists
+- Mobile app marketing teams
+- Indie developers and studios
+
+## Links
+
+- Website: https://localizeshots.com
+- Features: https://localizeshots.com/features
+- Blog: https://localizeshots.com/blog
+- Size Calculator: https://localizeshots.com/tools/size-calculator
+
+## Contact
+
+For support, visit https://localizeshots.com

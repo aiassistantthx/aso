@@ -10,3 +10,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </HelmetProvider>
   </React.StrictMode>,
 )
+
+// Dispatch event for prerendering plugin
+document.dispatchEvent(new Event('render-event'))

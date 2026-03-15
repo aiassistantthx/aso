@@ -14,3 +14,33 @@ Disallow: /api/
 
 # Sitemap location
 Sitemap: https://localizeshots.com/sitemap.xml
+
+# AI Search Crawlers - Allow for citations and AI search results
+# These crawlers are used for real-time AI search, not model training
+
+User-agent: GPTBot
+Allow: /
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /project/
+Disallow: /editor/
+Disallow: /wizard/
+Disallow: /api/
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /project/
+Disallow: /editor/
+Disallow: /wizard/
+Disallow: /api/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /project/
+Disallow: /editor/
+Disallow: /wizard/
+Disallow: /api/
