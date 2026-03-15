@@ -47,7 +47,10 @@ import AppIconDesignBestPractices, {
 import AppStoreScreenshotMistakes, {
   frontmatter as appStoreScreenshotMistakesMeta,
 } from './app-store-screenshot-mistakes.mdx';
-// Export all posts
+
+import ScreenshotAbTestingGuide, {
+  frontmatter as screenshotAbTestingGuideMeta,
+} from './screenshot-ab-testing-guide.mdx';// Export all posts
 export const blogPosts: BlogPost[] = [
   {
     frontmatter: appStoreScreenshotBestPracticesMeta,
@@ -80,6 +83,10 @@ export const blogPosts: BlogPost[] = [
   {
     frontmatter: appStoreScreenshotMistakesMeta,
     Component: AppStoreScreenshotMistakes,
+  },
+  {
+    frontmatter: screenshotAbTestingGuideMeta,
+    Component: ScreenshotAbTestingGuide,
   },
 ];
 
