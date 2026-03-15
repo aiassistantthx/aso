@@ -32,6 +32,18 @@ import HowToCreateAppStoreScreenshots, {
   frontmatter as howToCreateAppStoreScreenshotsMeta,
 } from './how-to-create-app-store-screenshots.mdx';
 
+import AsoLocalizationGuide, {
+  frontmatter as asoLocalizationGuideMeta,
+} from './aso-localization-guide.mdx';
+
+import AiAppStoreOptimization, {
+  frontmatter as aiAppStoreOptimizationMeta,
+} from './ai-app-store-optimization.mdx';
+
+import AppIconDesignBestPractices, {
+  frontmatter as appIconDesignBestPracticesMeta,
+} from './app-icon-design-best-practices.mdx';
+
 // Export all posts
 export const blogPosts: BlogPost[] = [
   {
@@ -49,6 +61,18 @@ export const blogPosts: BlogPost[] = [
   {
     frontmatter: howToCreateAppStoreScreenshotsMeta,
     Component: HowToCreateAppStoreScreenshots,
+  },
+  {
+    frontmatter: asoLocalizationGuideMeta,
+    Component: AsoLocalizationGuide,
+  },
+  {
+    frontmatter: aiAppStoreOptimizationMeta,
+    Component: AiAppStoreOptimization,
+  },
+  {
+    frontmatter: appIconDesignBestPracticesMeta,
+    Component: AppIconDesignBestPractices,
   },
 ];
 
